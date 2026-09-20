@@ -1,8 +1,16 @@
-import React from 'react'
+
+import React, { useState } from 'react'
+import AdminDashboard from './AdminDashboard'
 
 const App = () => {
+    const [showAdminDashboard, setShowAdminDashboard] = useState(false)
+
   return (
     <div>
+    {showAdminDashboard ? (
+      <AdminDashboard />
+    ) : (
+    
       <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
         {/* Navigation Bar */}
         <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
@@ -19,6 +27,12 @@ const App = () => {
               <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm">
                 Citizen Portal
               </button>
+               <button
+    onClick={() => setShowAdminDashboard(true)}
+    className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm"
+  >
+    Admin Dashboard
+  </button>
             </div>
           </div>
         </nav>
@@ -101,6 +115,7 @@ const App = () => {
           ImuniX 
         </footer>
       </div>
+    )}
     </div>
   )
 }
