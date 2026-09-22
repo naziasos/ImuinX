@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 import Register from "./pages/Register";
@@ -6,11 +5,16 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Login from "./pages/Login";
 import CreateAdmin from "./pages/CreateAdmin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AddClinic from "./pages/admin/AddClinic";
+
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 function App() {
-    const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
   const [page, setPage] = useState("register");
-    useEffect(() => {
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, 5000);
@@ -18,6 +22,7 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Splash Screen
   if (showSplash) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -39,90 +44,58 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 py-10 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-slate-100 flex flex-col">
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-blue-600">
-            ImuinX
-          </h1>
+      {/* Navbar */}
+      <Navbar page={page} setPage={setPage} />
 
-          <p className="text-slate-500 mt-2">
-            Vaccination Management System
-          </p>
-        </div>
+      {/* Main Content */}
+      <main className="flex-1">
 
-        {/* Navigation */}
-        <div className="flex flex-wrap justify-center gap-2 mb-6">
+        <div className="w-full">
 
-          <button
-            onClick={() => setPage("register")}
-            className={`px-5 py-2 rounded-lg font-medium ${
-              page === "register"
-                ? "bg-blue-600 text-white"
-                : "bg-white text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            Register
-          </button>
+          {/* Page Card */}
+          {page !== "dashboard" && (
+            <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
 
-          <button
-            onClick={() => setPage("verify")}
-            className={`px-5 py-2 rounded-lg font-medium ${
-              page === "verify"
-                ? "bg-blue-600 text-white"
-                : "bg-white text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            Verify Email
-          </button>
+              {page === "register" && <Register />}
 
-          <button
-            onClick={() => setPage("login")}
-            className={`px-5 py-2 rounded-lg font-medium ${
-              page === "login"
-                ? "bg-blue-600 text-white"
-                : "bg-white text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            Login
-          </button>
+              {page === "verify" && <VerifyEmail />}
 
-          <button
-            onClick={() => setPage("admin")}
-            className={`px-5 py-2 rounded-lg font-medium ${
-              page === "admin"
-                ? "bg-blue-600 text-white"
-                : "bg-white text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            Create Admin
-          </button>
+              {page === "login" && (
+                <Login
+                  onLoginSuccess={() => setPage("dashboard")}
+                />
+              )}
 
-        </div>
+              {page === "admin" && <CreateAdmin />}
 
-        {/* Page Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+            </div>
+          )}
 
-          {page === "register" && <Register />}
-
-          {page === "verify" && <VerifyEmail />}
-
-          {page === "login" && (
-            <Login
-              onLoginSuccess={() => setPage("dashboard")}
+          {/* Admin Dashboard */}
+          {/* Admin Dashboard */}
+          {page === "dashboard" && (
+            <AdminDashboard
+              onAddClinic={() => setPage("addClinic")}
             />
           )}
 
-          {page === "admin" && <CreateAdmin />}
+          {/* Add Clinic */}
+          {page === "addClinic" && (
+            <AddClinic
+              onBack={() => setPage("dashboard")}
+              onClinicCreated={() => setPage("dashboard")}
+            />
+          )}
 
         </div>
 
-        {/* Admin Dashboard */}
-        {page === "dashboard" && <AdminDashboard />}
+      </main>
 
-      </div>
+      {/* Footer */}
+      {page !== "dashboard" && <Footer />}
+
     </div>
   );
 }
