@@ -1,90 +1,162 @@
-import { useState } from "react";
+// src/pages/Register.jsx
+// Dynamic 3D registration: the vial fills as each field becomes valid, and its liquid
+// shifts from amber (weak password) to mint (strong password).
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import AuthLayout from '../components/AuthLayout';
+import { errorMessage } from '../services/api';
+import PasswordStrength from '../components/PasswordStrength';
+import { register } from '../services/authService';
+import { analyze } from '../utils/password';
 
-function Register() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
+const EMAIL_RX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const [message, setMessage] = useState("");
+export default function Register() {
+  const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [show, setShow] = useState(false);
+  const [status, setStatus] = useState('idle'); // idle | loading | error | success
+  const [error, setError] = useState('');
+  const timers = useRef([]);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const later = (fn, ms) => timers.current.push(setTimeout(fn, ms));
+
+  const nameOk = name.trim().length >= 2;
+  const emailOk = EMAIL_RX.test(email.trim());
+  const a = analyze(password);
+  const { score, lengthOk } = a;
+  const confirmOk = confirm.length > 0 && confirm === password;
+  const mismatch = confirm.length > 0 && confirm !== password;
+  const valid = nameOk && emailOk && lengthOk && confirmOk;
+
+  // vial level: 15% base + name 15% + email 20% + password up to 25% + matching confirm 20%
+  const level = useMemo(() => {
+    if (status === 'success') return 1;
+    return 0.15 + (nameOk ? 0.15 : 0) + (emailOk ? 0.2 : 0) + (score / 4) * 0.25 + (confirmOk && lengthOk ? 0.2 : 0);
+  }, [status, nameOk, emailOk, score, confirmOk, lengthOk]);
+
+
+  const fail = (message) => {
+    setError(message);
+    setStatus('error');
+    later(() => setStatus('idle'), 1300);
   };
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    setMessage("Registering...");
-
+    if (!valid || status === 'loading' || status === 'success') return;
+    setError('');
+    setStatus('loading');
     try {
-      const response = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage(data.message);
-      } else {
-        setMessage(data.message);
-      }
-    } catch (error) {
-      setMessage("Could not connect to server");
+      await register({ name: name.trim(), email: email.trim(), password });
+      setStatus('success');
+      later(
+        () =>
+          navigate('/verify-email', {
+            replace: true,
+            state: { notice: 'We sent a 6-digit code to your email.', email: email.trim() },
+          }),
+        reduced() ? 250 : 1200
+      );
+    } catch (err) {
+      fail(errorMessage(err));
     }
   };
 
+  const busy = status === 'loading' || status === 'success';
+
   return (
-    <div>
-      <h1>ImuinX - Citizen Registration</h1>
+    <AuthLayout
+      title="Create your account"
+      subtitle="Register to use the vaccine system. A system admin can then give you access to a clinic."
+      scene={{ level, status, tint: a.tint, follow: true }}
+      footer={
+        <>
+          Already have an account? <Link to="/login">Log in</Link>
+        </>
+      }
+    >
+      {error && (
+        <p className="notice notice--error" role="alert">
+          {error}
+        </p>
+      )}
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="name"
-          placeholder="Name"
-          value={formData.name}
-          onChange={handleChange}
-        />
+      <form onSubmit={submit}>
+        <div className="field">
+          <label htmlFor="name">Full name</label>
+          <input
+            id="name"
+            className="input"
+            autoComplete="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </div>
 
-        <br />
-        <br />
+        <div className="field">
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            className="input"
+            type="email"
+            autoComplete="email"
+            placeholder="you@gmail.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
 
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-        />
+        <div className="field">
+          <label htmlFor="password">Password</label>
+          <div className="pwd">
+            <input
+              id="password"
+              className="input"
+              type={show ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              aria-describedby="pw-rules"
+              required
+            />
+            <button type="button" className="pwd__toggle" onClick={() => setShow((v) => !v)} aria-pressed={show}>
+              {show ? 'Hide' : 'Show'}
+            </button>
+          </div>
 
-        <br />
-        <br />
+          <PasswordStrength analysis={a} password={password} />
+        </div>
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-        />
+        <div className="field">
+          <label htmlFor="confirm">Confirm password</label>
+          <input
+            id="confirm"
+            className="input"
+            type={show ? 'text' : 'password'}
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            aria-invalid={mismatch}
+            required
+          />
+          {mismatch && <span className="hint hint--error">The passwords do not match.</span>}
+        </div>
 
-        <br />
-        <br />
-
-        <button type="submit">Register</button>
+        <button type="submit" className="btn btn--primary btn--block" disabled={busy || !valid}>
+          {status === 'loading' ? 'Creating account…' : status === 'success' ? 'OTP sent!' : 'Create account'}
+        </button>
+        <p className="sr-only" role="status">
+          {status === 'loading' ? 'Creating your account' : status === 'success' ? 'Account created, OTP sent to your email' : ''}
+        </p>
       </form>
-
-      <p>{message}</p>
-    </div>
+    </AuthLayout>
   );
 }
-
-export default Register;
