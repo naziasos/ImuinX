@@ -65,6 +65,8 @@ function App() {
               {page === "login" && (
                 <Login
                   onLoginSuccess={() => setPage("dashboard")}
+                  onBack={() => setPage("register")}
+                  onSignUp={() => setPage("register")}
                 />
               )}
 

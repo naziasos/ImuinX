@@ -1,7 +1,6 @@
+import React, { useState } from "react";
 
-import { useState } from "react";
-
-function Login({ onLoginSuccess }) {
+function Login({ onBack, onLoginSuccess, onSignUp }) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -34,11 +33,10 @@ function Login({ onLoginSuccess }) {
       if (response.ok) {
         localStorage.setItem("token", data.token);
 
-        if (data.user.role === "admin") {
-          onLoginSuccess();
-        } else {
-          setMessage(`Login successful. Welcome ${data.user.name}!`);
-        }
+        setMessage(`Login successful. Welcome ${data.user.name}!`);
+
+        // Go to Admin Dashboard after successful login
+        onLoginSuccess();
       } else {
         setMessage(data.message);
       }
@@ -48,38 +46,193 @@ function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div>
-      <h1>ImuinX - Login</h1>
+    <div style={styles.page}>
+      <div style={styles.card}>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-        />
+        <h1 style={styles.title}>
+          Welcome to ImuniX
+        </h1>
 
-        <br />
-        <br />
+        <p style={styles.subtitle}>
+          Login to your account
+        </p>
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-        />
+        <form onSubmit={handleSubmit}>
 
-        <br />
-        <br />
+          <label style={styles.label}>
+            Email
+          </label>
 
-        <button type="submit">Login</button>
-      </form>
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter your email"
+            value={formData.email}
+            onChange={handleChange}
+            style={styles.input}
+            required
+          />
 
-      <p>{message}</p>
+          <label style={styles.label}>
+            Password
+          </label>
+
+          <input
+            type="password"
+            name="password"
+            placeholder="Enter your password"
+            value={formData.password}
+            onChange={handleChange}
+            style={styles.input}
+            required
+          />
+
+          <div style={styles.forgotContainer}>
+            <span style={styles.forgotPassword}>
+              Forgot Password?
+            </span>
+          </div>
+
+          <button
+            type="submit"
+            style={styles.button}
+          >
+            Login
+          </button>
+
+        </form>
+
+        {message && (
+          <p style={styles.message}>
+            {message}
+          </p>
+        )}
+
+        <p style={styles.signupText}>
+          Don't have an account?{" "}
+          <span
+            style={styles.signup}
+            onClick={onSignUp}
+          >
+            Sign Up
+          </span>
+        </p>
+
+        <button
+          type="button"
+          onClick={onBack}
+          style={styles.backButton}
+        >
+          ← Back to Home
+        </button>
+
+      </div>
     </div>
   );
 }
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f4f7fb",
+  },
+
+  card: {
+    width: "380px",
+    padding: "35px",
+    backgroundColor: "white",
+    borderRadius: "12px",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+  },
+
+  title: {
+    textAlign: "center",
+    marginBottom: "8px",
+    color: "#1f3c88",
+    fontSize: "32px",
+    fontWeight: "800",
+    letterSpacing: "-0.5px",
+  },
+
+  subtitle: {
+    textAlign: "center",
+    color: "#64748b",
+    fontSize: "15px",
+    marginBottom: "28px",
+    fontWeight: "400",
+  },
+
+  label: {
+    display: "block",
+    marginBottom: "7px",
+    fontWeight: "bold",
+  },
+
+  input: {
+    width: "100%",
+    padding: "12px",
+    marginBottom: "18px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+    boxSizing: "border-box",
+  },
+
+  forgotContainer: {
+    textAlign: "center",
+    marginTop: "-10px",
+    marginBottom: "20px",
+  },
+
+  forgotPassword: {
+    color: "#1f3c88",
+    fontSize: "14px",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
+
+  button: {
+    width: "100%",
+    padding: "12px",
+    backgroundColor: "#1f3c88",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    fontSize: "16px",
+    cursor: "pointer",
+  },
+
+  message: {
+    textAlign: "center",
+    marginTop: "15px",
+    color: "#1f3c88",
+    fontSize: "14px",
+  },
+
+  signupText: {
+    textAlign: "center",
+    marginTop: "20px",
+    color: "#666",
+  },
+
+  signup: {
+    color: "#1f3c88",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+
+  backButton: {
+    width: "100%",
+    marginTop: "10px",
+    padding: "10px",
+    backgroundColor: "transparent",
+    color: "#1f3c88",
+    border: "none",
+    fontSize: "14px",
+    cursor: "pointer",
+  },
+};
 
 export default Login;
