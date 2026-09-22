@@ -32,6 +32,13 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+
+    clinicId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Clinic",
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const OTP = require("../models/OTP");
-const sendOTPEmail = require("../utils/email");
+const { sendOTPEmail } = require("../utils/email");
 
 const router = express.Router();
 

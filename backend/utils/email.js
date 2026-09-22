@@ -8,6 +8,11 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+
+// ===============================
+// OTP EMAIL
+// ===============================
+
 const sendOTPEmail = async (to, otp, purpose) => {
   const subject =
     purpose === "registration"
@@ -27,4 +32,41 @@ const sendOTPEmail = async (to, otp, purpose) => {
   });
 };
 
-module.exports = sendOTPEmail;
+
+// ===============================
+// CLINIC ADMIN CREDENTIALS EMAIL
+// ===============================
+
+const sendClinicAdminCredentials = async (
+  to,
+  name,
+  email,
+  temporaryPassword,
+  clinicName
+) => {
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to,
+    subject: "ImuinX - Clinic Admin Account Created",
+
+    text: `Hello ${name},
+
+Your Clinic Admin account has been created for ${clinicName}.
+
+Login details:
+
+Email: ${email}
+Temporary Password: ${temporaryPassword}
+
+Please log in using these credentials and keep your password secure.
+
+Regards,
+ImuinX Vaccination Management System`,
+  });
+};
+
+
+module.exports = {
+  sendOTPEmail,
+  sendClinicAdminCredentials,
+};
