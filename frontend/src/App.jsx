@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -8,7 +8,35 @@ import CreateAdmin from "./pages/CreateAdmin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
 function App() {
+    const [showSplash, setShowSplash] = useState(true);
   const [page, setPage] = useState("register");
+    useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (showSplash) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <h1 className="text-6xl font-bold text-blue-600">
+            ImuinX
+          </h1>
+
+          <p className="text-xl text-slate-500 mt-3">
+            Vaccination Management System
+          </p>
+
+          <div className="mt-8 flex justify-center">
+            <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 py-10 px-4">
