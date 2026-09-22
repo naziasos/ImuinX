@@ -6,6 +6,8 @@ import Login from "./pages/Login";
 import CreateAdmin from "./pages/CreateAdmin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AddClinic from "./pages/admin/AddClinic";
+import ForgotPassword from "./pages/ForgotPassword";
+import ClinicAdminDashboard from "./pages/clinicAdmin/ClinicAdminDashboard";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -13,7 +15,11 @@ import Footer from "./components/Footer";
 function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [page, setPage] = useState("register");
-
+  const [authEmail, setAuthEmail] = useState("");
+  const [currentUser, setCurrentUser] = useState(() => {
+  const savedUser = localStorage.getItem("user");
+  return savedUser ? JSON.parse(savedUser) : null;
+  });
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
@@ -55,18 +61,39 @@ function App() {
         <div className="w-full">
 
           {/* Page Card */}
-          {page !== "dashboard" && (
+          {page !== "dashboard" && page !== "clinicDashboard" && (
             <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
 
-              {page === "register" && <Register />}
+              {page === "register" && (
+                <Register
+                  onRegisterSuccess={(email) => { setAuthEmail(email); setPage("verify"); }}
+                  onLoginClick={() => setPage("login")}
+                />
+              )}
 
-              {page === "verify" && <VerifyEmail />}
-
+              {page === "verify" && (
+                <VerifyEmail email={authEmail} />
+              )}
               {page === "login" && (
                 <Login
-                  onLoginSuccess={() => setPage("dashboard")}
+                  onLoginSuccess={(user) => {
+                    setCurrentUser(user);
+
+                    if (user.role === "clinicAdmin") {
+                      setPage("clinicDashboard");
+                    } else {
+                      setPage("dashboard");
+                    }
+                  }}
                   onBack={() => setPage("register")}
                   onSignUp={() => setPage("register")}
+                  onForgotPassword={() => setPage("forgotPassword")}
+                />
+              )}
+              {page === "forgotPassword" && (
+                <ForgotPassword
+                  onBack={() => setPage("login")}
+                  onSuccess={() => setPage("login")}
                 />
               )}
 
@@ -77,6 +104,16 @@ function App() {
 
           {/* Admin Dashboard */}
           {/* Admin Dashboard */}
+          {page === "clinicDashboard" && (
+            <ClinicAdminDashboard
+              onLogout={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                setCurrentUser(null);
+                setPage("login");
+              }}
+            />
+          )}
           {page === "dashboard" && (
             <AdminDashboard
               onAddClinic={() => setPage("addClinic")}
@@ -96,8 +133,9 @@ function App() {
       </main>
 
       {/* Footer */}
-      {page !== "dashboard" && <Footer />}
-
+     {page !== "dashboard" && page !== "clinicDashboard" && (
+        <Footer />
+      )}
     </div>
   );
 }

@@ -1,6 +1,3 @@
-// src/pages/Register.jsx
-// Dynamic 3D registration: the vial fills as each field becomes valid, and its liquid
-// shifts from amber (weak password) to mint (strong password).
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/AuthLayout';
@@ -12,7 +9,7 @@ import { analyze } from '../utils/password';
 const EMAIL_RX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export default function Register() {
+export default function Register({onRegisterSuccess, onLoginClick}) {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -77,7 +74,10 @@ export default function Register() {
       scene={{ level, status, tint: a.tint, follow: true }}
       footer={
         <>
-          Already have an account? <Link to="/login">Log in</Link>
+          Already have an account?{' '}
+          <button type="button" className="link-button" onClick={onLoginClick}>
+            Sign in
+          </button>
         </>
       }
     >

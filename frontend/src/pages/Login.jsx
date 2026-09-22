@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function Login({ onBack, onLoginSuccess, onSignUp }) {
+function Login({ onBack, onLoginSuccess, onSignUp,  onForgotPassword }) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -32,11 +32,11 @@ function Login({ onBack, onLoginSuccess, onSignUp }) {
 
       if (response.ok) {
         localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
 
         setMessage(`Login successful. Welcome ${data.user.name}!`);
 
-        // Go to Admin Dashboard after successful login
-        onLoginSuccess();
+        onLoginSuccess(data.user);
       } else {
         setMessage(data.message);
       }
@@ -87,11 +87,13 @@ function Login({ onBack, onLoginSuccess, onSignUp }) {
             required
           />
 
-          <div style={styles.forgotContainer}>
-            <span style={styles.forgotPassword}>
-              Forgot Password?
-            </span>
-          </div>
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            className="link-btn"
+          >
+            Forgot Password?
+          </button>
 
           <button
             type="submit"

@@ -159,5 +159,70 @@ router.post(
     }
   }
 );
+// Get workers of the logged-in Clinic Admin's clinic
+router.get(
+  "/my-clinic/workers",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      // Only Clinic Admin can access this route
+      if (req.user.role !== "clinicAdmin") {
+        return res.status(403).json({
+          message: "Clinic Admin access required",
+        });
+      }
 
+      // Get the logged-in user
+      const clinicAdmin = await User.findById(req.user.id);
+
+      if (!clinicAdmin) {
+        return res.status(404).json({
+          message: "Clinic Admin not found",
+        });
+      }
+
+      if (!clinicAdmin.clinicId) {
+        return res.status(404).json({
+          message: "No clinic is assigned to this Clinic Admin",
+        });
+      }
+
+      // Get clinic information
+      const clinic = await Clinic.findById(clinicAdmin.clinicId)
+        .populate("clinicAdmin", "name email");
+
+      if (!clinic) {
+        return res.status(404).json({
+          message: "Clinic not found",
+        });
+      }
+
+      // Get workers belonging ONLY to this clinic
+      const workers = await User.find({
+        clinicId: clinicAdmin.clinicId,
+        role: "worker",
+      }).select("-password");
+
+      res.json({
+        clinic: {
+          id: clinic._id,
+          name: clinic.name,
+          location: clinic.location,
+          contact: clinic.contact,
+          status: clinic.status,
+        },
+        workers,
+      });
+    } catch (error) {
+      console.error(
+        "Clinic Admin dashboard error:",
+        error.message
+      );
+
+      res.status(500).json({
+        message: "Server error while loading clinic dashboard",
+      });
+    }
+  }
+);
 module.exports = router;
