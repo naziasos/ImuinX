@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 
-function Login() {
+function Login({ onLoginSuccess }) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -32,7 +33,12 @@ function Login() {
 
       if (response.ok) {
         localStorage.setItem("token", data.token);
-        setMessage(`Login successful. Welcome ${data.user.name}!`);
+
+        if (data.user.role === "admin") {
+          onLoginSuccess();
+        } else {
+          setMessage(`Login successful. Welcome ${data.user.name}!`);
+        }
       } else {
         setMessage(data.message);
       }

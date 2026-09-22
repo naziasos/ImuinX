@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
 import Login from "./pages/Login";
 import CreateAdmin from "./pages/CreateAdmin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 function App() {
   const [page, setPage] = useState("register");
@@ -25,6 +27,7 @@ function App() {
 
         {/* Navigation */}
         <div className="flex flex-wrap justify-center gap-2 mb-6">
+
           <button
             onClick={() => setPage("register")}
             className={`px-5 py-2 rounded-lg font-medium ${
@@ -68,15 +71,28 @@ function App() {
           >
             Create Admin
           </button>
+
         </div>
 
         {/* Page Card */}
         <div className="bg-white rounded-2xl shadow-lg p-8">
+
           {page === "register" && <Register />}
+
           {page === "verify" && <VerifyEmail />}
-          {page === "login" && <Login />}
+
+          {page === "login" && (
+            <Login
+              onLoginSuccess={() => setPage("dashboard")}
+            />
+          )}
+
           {page === "admin" && <CreateAdmin />}
+
         </div>
+
+        {/* Admin Dashboard */}
+        {page === "dashboard" && <AdminDashboard />}
 
       </div>
     </div>
