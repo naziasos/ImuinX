@@ -9,8 +9,10 @@ const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 
 const { sendClinicAdminCredentials } = require("../utils/email");
+const { sendWorkerCredentials } = require("../utils/email");
 
 const router = express.Router();
+console.log("🔥 CLINIC ROUTES FILE LOADED");
 
 // Test route
 router.get(
@@ -159,6 +161,7 @@ router.post(
     }
   }
 );
+
 // Get workers of the logged-in Clinic Admin's clinic
 router.get(
   "/my-clinic/workers",
@@ -225,4 +228,116 @@ router.get(
     }
   }
 );
+
+
+// =====================================================
+//  CREATE WORKER
+// =====================================================
+
+router.get("/my-clinic/test", (req, res) => {
+  res.json({ message: "My clinic route works!" });
+});
+
+router.post(
+  "/my-clinic/workers",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { name, email } = req.body;
+
+      // Only Clinic Admin can create workers
+      if (req.user.role !== "clinicAdmin") {
+        return res.status(403).json({
+          message: "Clinic Admin access required",
+        });
+      }
+
+      // Check required fields
+      if (!name || !email) {
+        return res.status(400).json({
+          message: "Worker name and email are required",
+        });
+      }
+
+      // Get logged-in Clinic Admin
+      const clinicAdmin = await User.findById(req.user.id);
+
+      if (!clinicAdmin) {
+        return res.status(404).json({
+          message: "Clinic Admin not found",
+        });
+      }
+
+      // Check clinic assignment
+      if (!clinicAdmin.clinicId) {
+        return res.status(404).json({
+          message: "No clinic is assigned to this Clinic Admin",
+        });
+      }
+
+      // Check if email already exists
+      const existingUser = await User.findOne({
+        email: email.trim().toLowerCase(),
+      });
+
+      if (existingUser) {
+        return res.status(409).json({
+          message: "This email is already registered",
+        });
+      }
+
+      // Generate temporary password
+      const temporaryPassword = crypto
+        .randomBytes(6)
+        .toString("base64")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .slice(0, 10);
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(
+        temporaryPassword,
+        10
+      );
+
+      // Create Worker
+      const worker = await User.create({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password: hashedPassword,
+        role: "worker",
+        emailVerified: true,
+        clinicId: clinicAdmin.clinicId,
+      });
+
+      // Send temporary password to worker's email
+      await sendWorkerCredentials(
+        email.trim().toLowerCase(),
+        name.trim(),
+        email.trim().toLowerCase(),
+        temporaryPassword
+      );
+
+      res.status(201).json({
+        message: "Worker created successfully",
+        worker: {
+          id: worker._id,
+          name: worker.name,
+          email: worker.email,
+          role: worker.role,
+          clinicId: worker.clinicId,
+        },
+      });
+    } catch (error) {
+      console.error("Worker creation error:", error.message);
+
+      res.status(500).json({
+        message: "Server error while creating worker",
+      });
+    }
+  }
+);
+
+
+
+
 module.exports = router;

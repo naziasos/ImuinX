@@ -1,3 +1,5 @@
+import AddWorker from "./pages/AddWorker.jsx";
+
 import { useEffect, useState } from "react";
 
 import Register from "./pages/Register";
@@ -17,9 +19,10 @@ function App() {
   const [page, setPage] = useState("register");
   const [authEmail, setAuthEmail] = useState("");
   const [currentUser, setCurrentUser] = useState(() => {
-  const savedUser = localStorage.getItem("user");
-  return savedUser ? JSON.parse(savedUser) : null;
+    const savedUser = localStorage.getItem("user");
+    return savedUser ? JSON.parse(savedUser) : null;
   });
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
@@ -66,7 +69,10 @@ function App() {
 
               {page === "register" && (
                 <Register
-                  onRegisterSuccess={(email) => { setAuthEmail(email); setPage("verify"); }}
+                  onRegisterSuccess={(email) => {
+                    setAuthEmail(email);
+                    setPage("verify");
+                  }}
                   onLoginClick={() => setPage("login")}
                 />
               )}
@@ -74,6 +80,7 @@ function App() {
               {page === "verify" && (
                 <VerifyEmail email={authEmail} />
               )}
+
               {page === "login" && (
                 <Login
                   onLoginSuccess={(user) => {
@@ -90,6 +97,7 @@ function App() {
                   onForgotPassword={() => setPage("forgotPassword")}
                 />
               )}
+
               {page === "forgotPassword" && (
                 <ForgotPassword
                   onBack={() => setPage("login")}
@@ -102,10 +110,10 @@ function App() {
             </div>
           )}
 
-          {/* Admin Dashboard */}
-          {/* Admin Dashboard */}
+          {/* Clinic Admin Dashboard */}
           {page === "clinicDashboard" && (
             <ClinicAdminDashboard
+              onAddWorker={() => setPage("addWorker")}
               onLogout={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
@@ -114,6 +122,7 @@ function App() {
               }}
             />
           )}
+
           {page === "dashboard" && (
             <AdminDashboard
               onAddClinic={() => setPage("addClinic")}
@@ -128,12 +137,20 @@ function App() {
             />
           )}
 
+          {/* Add Worker - MY PART */}
+          {page === "addWorker" && (
+            <AddWorker
+              onBack={() => setPage("clinicDashboard")}
+              onWorkerCreated={() => setPage("clinicDashboard")}
+            />
+          )}
+
         </div>
 
       </main>
 
       {/* Footer */}
-     {page !== "dashboard" && page !== "clinicDashboard" && (
+      {page !== "dashboard" && page !== "clinicDashboard" && (
         <Footer />
       )}
     </div>

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import "./ClinicAdminDashboard.css";
-import { useNavigate } from 'react-router-dom';
-function ClinicAdminDashboard({ onLogout }) {
+
+function ClinicAdminDashboard({ onLogout, onAddWorker }) {
   const [clinic, setClinic] = useState(null);
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-   const navigate = useNavigate();
+
   const loadDashboard = async () => {
     try {
       setLoading(true);
@@ -156,7 +156,7 @@ function ClinicAdminDashboard({ onLogout }) {
             <h1>
               Clinic Admin Dashboard
             </h1>
-            
+
             <p className="clinic-description">
               Manage your clinic and view your assigned workers.
             </p>
@@ -266,21 +266,23 @@ function ClinicAdminDashboard({ onLogout }) {
                 Workers currently assigned to your clinic.
               </p>
             </div>
-             <div>
-                <button
-                onClick={() => navigate('/clinic-admin/add-worker')}
-                className="add-worker-btn"
-                >
-                + Add Worker
-                </button>
 
-                <div className="worker-count">
+            <div>
+              {/* YOUR ADDITION: Add Worker button */}
+              <button
+                onClick={onAddWorker}
+                className="add-worker-btn"
+              >
+                + Add Worker
+              </button>
+
+              <div className="worker-count">
                 {workers.length} Worker
                 {workers.length !== 1 ? "s" : ""}
-                </div>
+              </div>
             </div>
 
-            </div>
+          </div>
 
           {workers.length === 0 ? (
 

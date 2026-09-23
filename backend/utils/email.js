@@ -65,8 +65,36 @@ ImuinX Vaccination Management System`,
   });
 };
 
+const sendWorkerCredentials = async (
+  to,
+  name,
+  email,
+  temporaryPassword
+) => {
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to,
+    subject: "ImuinX - Worker Account Created",
+
+    text: `Hello ${name},
+
+Your Worker account has been created in the ImuinX Vaccination Management System.
+
+Login details:
+
+Email: ${email}
+Temporary Password: ${temporaryPassword}
+
+Please log in using these credentials and keep your password secure.
+
+Regards,
+ImuinX Vaccination Management System`,
+  });
+};
+
 
 module.exports = {
   sendOTPEmail,
   sendClinicAdminCredentials,
+  sendWorkerCredentials,
 };
