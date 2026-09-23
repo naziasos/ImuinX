@@ -9,6 +9,9 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
+const LOW_STOCK_THRESHOLD = 10;
+const NEAR_EXPIRY_DAYS = 30;
+
 // =====================================================
 // CREATE VACCINE INVENTORY
 // =====================================================
@@ -136,15 +139,38 @@ router.get("/my-clinic", authMiddleware, async (req, res) => {
 
     // Get inventory only for this user's clinic
     const inventory = await VaccineInventory.find({
-      clinicId: user.clinicId,
-    })
-      .populate("clinicId", "name location")
-      .sort({ expiryDate: 1 });
+  clinicId: user.clinicId,
+})
+  .populate("clinicId", "name location")
+  .sort({ expiryDate: 1 });
 
-    res.json({
-      clinicId: user.clinicId,
-      inventory,
-    });
+const today = new Date();
+
+const updatedInventory = inventory.map((item) => {
+  const expiryDate = new Date(item.expiryDate);
+
+  const daysUntilExpiry =
+    (expiryDate - today) /
+    (1000 * 60 * 60 * 24);
+
+  return {
+    ...item.toObject(),
+
+    lowStock:
+      item.quantity <= LOW_STOCK_THRESHOLD,
+
+    nearExpiry:
+      daysUntilExpiry >= 0 &&
+      daysUntilExpiry <= NEAR_EXPIRY_DAYS,
+
+    daysUntilExpiry: Math.ceil(daysUntilExpiry),
+  };
+});
+
+res.json({
+  clinicId: user.clinicId,
+  inventory: updatedInventory,
+});
   } catch (error) {
     console.error(
       "Vaccine inventory fetch error:",
@@ -208,15 +234,35 @@ router.put("/:id", authMiddleware, async (req, res) => {
       });
     }
 
-    inventory.quantity = quantity;
-    inventory.expiryDate = expiryDate;
+   inventory.quantity = quantity;
+inventory.expiryDate = expiryDate;
 
-    await inventory.save();
+await inventory.save();
 
-    res.json({
-      message: "Vaccine stock updated successfully",
-      inventory,
-    });
+const today = new Date();
+const expiry = new Date(inventory.expiryDate);
+
+const daysUntilExpiry =
+  (expiry - today) /
+  (1000 * 60 * 60 * 24);
+
+const lowStock =
+  inventory.quantity <= LOW_STOCK_THRESHOLD;
+
+const nearExpiry =
+  daysUntilExpiry >= 0 &&
+  daysUntilExpiry <= NEAR_EXPIRY_DAYS;
+
+res.json({
+  message: "Vaccine stock updated successfully",
+
+  inventory: {
+    ...inventory.toObject(),
+    lowStock,
+    nearExpiry,
+    daysUntilExpiry: Math.ceil(daysUntilExpiry),
+  },
+});
   } catch (error) {
     console.error(
       "Vaccine inventory update error:",

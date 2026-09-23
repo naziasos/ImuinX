@@ -149,7 +149,9 @@ function App() {
           )}
           {/* Vaccine Inventory */}
           {page === "inventory" && (
-             <VaccineInventory />
+             <VaccineInventory
+              onBack={() => setPage("clinicDashboard")} 
+               />
           )}
 
         </div>

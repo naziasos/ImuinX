@@ -1,11 +1,13 @@
 
 import { useEffect, useState } from "react";
 
+
 import Button from "../components/Button";
 import Card from "../components/Card";
 import { api, errorMessage } from "../services/api";
 
-function VaccineInventory() {
+function VaccineInventory({ onBack }) {
+
   const [inventory, setInventory] = useState([]);
 
   const [form, setForm] = useState({
@@ -247,6 +249,14 @@ function VaccineInventory() {
 
         {/* Header */}
         <div className="mb-8">
+          <button
+  type="button"
+  onClick={onBack}
+  className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+>
+  ← Back to Dashboard
+</button>
+       
 
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
