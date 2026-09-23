@@ -7,6 +7,8 @@ require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
 const clinicRoutes = require("./routes/clinicRoutes");
+const vaccineInventoryRoutes = require("./routes/vaccineInventoryRoutes");
+
 
 
 const app = express();
@@ -18,6 +20,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/clinics", clinicRoutes);
+app.use("/api/vaccine-inventory", vaccineInventoryRoutes);
 console.log("🔥 CLINIC ROUTER MOUNTED");
 
 const PORT = process.env.PORT || 5000;
