@@ -4,7 +4,7 @@ function Navbar({ page, setPage }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { label: "Home", value: "register" },
+    { label: "Home", value: "home" },
     { label: "About", value: "about" },
     { label: "Services", value: "services" },
   ];
@@ -19,18 +19,18 @@ function Navbar({ page, setPage }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
 
-          {/* ================= LOGO ================= */}
+          {}
           <button
-            onClick={() => handleNavigation("register")}
+            onClick={() => handleNavigation("home")}
             className="flex items-center gap-3 group"
           >
-            {/* Logo Icon */}
+            {}
             <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-200">
               <span className="text-white text-xl font-extrabold">
                 I
               </span>
 
-              {/* Small medical cross */}
+              {}
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full shadow-sm flex items-center justify-center">
                 <span className="text-blue-600 text-xs font-bold">
                   +
@@ -38,7 +38,7 @@ function Navbar({ page, setPage }) {
               </span>
             </div>
 
-            {/* Brand Name */}
+            {}
             <div className="text-left">
               <h1 className="text-xl font-extrabold tracking-tight text-slate-800">
                 Imuin<span className="text-blue-600">X</span>
@@ -50,7 +50,7 @@ function Navbar({ page, setPage }) {
             </div>
           </button>
 
-          {/* ================= DESKTOP NAVIGATION ================= */}
+          {}
           <div className="hidden md:flex items-center gap-1">
 
             {navItems.map((item) => (
@@ -71,10 +71,10 @@ function Navbar({ page, setPage }) {
               </button>
             ))}
 
-            {/* Divider */}
+            {}
             <div className="h-7 w-px bg-slate-200 mx-3" />
 
-            {/* Register */}
+            {}
             <button
               onClick={() => handleNavigation("register")}
               className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
@@ -87,7 +87,7 @@ function Navbar({ page, setPage }) {
             </button>
            
 
-            {/* Login */}
+            {}
             <button
               onClick={() => handleNavigation("login")}
               className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 hover:shadow-md transition-all duration-200"

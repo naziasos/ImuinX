@@ -3,6 +3,7 @@ import AddWorker from "./pages/AddWorker.jsx";
 
 import { useEffect, useState } from "react";
 
+import Home from "./pages/Home";
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
 import Login from "./pages/Login";
@@ -11,6 +12,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AddClinic from "./pages/admin/AddClinic";
 import ForgotPassword from "./pages/ForgotPassword";
 import ClinicAdminDashboard from "./pages/clinicAdmin/ClinicAdminDashboard";
+import CitizenDashboard from "./pages/citizen/CitizenDashboard";
+import WorkerDashboard from "./pages/worker/WorkerDashboard";
 import VaccineInventory from "./pages/VaccineInventory";
 
 import Navbar from "./components/Navbar";
@@ -18,7 +21,7 @@ import Footer from "./components/Footer";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const [page, setPage] = useState("register");
+  const [page, setPage] = useState("home");
   const [authEmail, setAuthEmail] = useState("");
   const [currentUser, setCurrentUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
@@ -65,8 +68,20 @@ function App() {
 
         <div className="w-full">
 
+          {/* Home Page */}
+          {page === "home" && (
+            <Home
+              onGetStarted={() => setPage("register")}
+              onLogin={() => setPage("login")}
+            />
+          )}
+
           {/* Page Card */}
-          {page !== "dashboard" && page !== "clinicDashboard" && (
+          {page !== "home" &&
+            page !== "dashboard" &&
+            page !== "clinicDashboard" &&
+            page !== "citizenDashboard" &&
+            page !== "workerDashboard" && (
             <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
 
               {page === "register" && (
@@ -80,7 +95,10 @@ function App() {
               )}
 
               {page === "verify" && (
-                <VerifyEmail email={authEmail} />
+                <VerifyEmail
+                  email={authEmail}
+                  onVerifySuccess={() => setPage("login")}
+                />
               )}
 
               {page === "login" && (
@@ -88,10 +106,15 @@ function App() {
                   onLoginSuccess={(user) => {
                     setCurrentUser(user);
 
-                    if (user.role === "clinicAdmin") {
-                      setPage("clinicDashboard");
-                    } else {
+                    // Route each role to its own dashboard
+                    if (user.role === "admin") {
                       setPage("dashboard");
+                    } else if (user.role === "clinicAdmin") {
+                      setPage("clinicDashboard");
+                    } else if (user.role === "worker") {
+                      setPage("workerDashboard");
+                    } else {
+                      setPage("citizenDashboard");
                     }
                   }}
                   onBack={() => setPage("register")}
@@ -132,6 +155,30 @@ function App() {
             />
           )}
 
+          {/* Citizen Dashboard */}
+          {page === "citizenDashboard" && (
+            <CitizenDashboard
+              onLogout={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                setCurrentUser(null);
+                setPage("login");
+              }}
+            />
+          )}
+
+          {/* Worker Dashboard */}
+          {page === "workerDashboard" && (
+            <WorkerDashboard
+              onLogout={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                setCurrentUser(null);
+                setPage("login");
+              }}
+            />
+          )}
+
           {/* Add Clinic */}
           {page === "addClinic" && (
             <AddClinic
@@ -149,9 +196,7 @@ function App() {
           )}
           {/* Vaccine Inventory */}
           {page === "inventory" && (
-             <VaccineInventory
-              onBack={() => setPage("clinicDashboard")} 
-               />
+             <VaccineInventory />
           )}
 
         </div>
@@ -159,7 +204,10 @@ function App() {
       </main>
 
       {/* Footer */}
-      {page !== "dashboard" && page !== "clinicDashboard" && (
+      {page !== "dashboard" &&
+        page !== "clinicDashboard" &&
+        page !== "citizenDashboard" &&
+        page !== "workerDashboard" && (
         <Footer />
       )}
     </div>
