@@ -1,4 +1,5 @@
 
+console.log("🔥 VACCINE INVENTORY ROUTES FILE LOADED");
 const express = require("express");
 
 const VaccineInventory = require("../models/VaccineInventory");
@@ -33,6 +34,17 @@ router.post("/", authMiddleware, async (req, res) => {
           "Vaccine type, batch number, quantity and expiry date are required",
       });
     }
+    // Validate expiry date
+const expiry = new Date(expiryDate);
+const today = new Date();
+
+today.setHours(0, 0, 0, 0);
+
+if (isNaN(expiry.getTime()) || expiry <= today) {
+  return res.status(400).json({
+    message: "Expiry date must be in the future",
+  });
+}
 
     // Get logged-in user
     const user = await User.findById(req.user.id);
@@ -60,6 +72,17 @@ router.post("/", authMiddleware, async (req, res) => {
           "Only Clinic Admin or Worker can manage vaccine inventory",
       });
     }
+    // Check duplicate batch number in the same clinic
+const existingBatch = await VaccineInventory.findOne({
+  clinicId: user.clinicId,
+  batchNumber: batchNumber.trim(),
+});
+
+if (existingBatch) {
+  return res.status(409).json({
+    message: "Batch number already exists in this clinic",
+  });
+}
 
     // Create inventory
     const inventory = await VaccineInventory.create({
@@ -72,6 +95,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
     res.status(201).json({
       message: "Vaccine inventory created successfully",
+        inventoryId: inventory._id,
       inventory,
     });
   } catch (error) {
@@ -93,6 +117,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
 router.get("/my-clinic", authMiddleware, async (req, res) => {
   try {
+ 
     // Get logged-in user
     const user = await User.findById(req.user.id);
 
@@ -170,6 +195,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
           "Only Clinic Admin or Worker can update vaccine inventory",
       });
     }
+   
 
     const inventory = await VaccineInventory.findOne({
       _id: req.params.id,

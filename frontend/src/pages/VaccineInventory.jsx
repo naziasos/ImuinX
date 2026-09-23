@@ -74,7 +74,7 @@ function VaccineInventory() {
 
     setEditingId(null);
     setError("");
-    setMessage("");
+    
   };
 
   // ==========================================

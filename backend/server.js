@@ -21,6 +21,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/clinics", clinicRoutes);
 app.use("/api/vaccine-inventory", vaccineInventoryRoutes);
+
 console.log("🔥 CLINIC ROUTER MOUNTED");
 
 const PORT = process.env.PORT || 5000;
