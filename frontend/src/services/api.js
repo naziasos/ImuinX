@@ -8,6 +8,16 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
 // Turns any axios/fetch-style error into a friendly, displayable string.
 export function errorMessage(err) {
   if (err?.response?.data?.message) return err.response.data.message;

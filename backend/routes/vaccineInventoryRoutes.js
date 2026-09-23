@@ -133,5 +133,78 @@ router.get("/my-clinic", authMiddleware, async (req, res) => {
   }
 });
 
+// =====================================================
+// UPDATE EXISTING VACCINE STOCK
+// =====================================================
+
+router.put("/:id", authMiddleware, async (req, res) => {
+  try {
+    const { quantity, expiryDate } = req.body;
+
+    if (quantity === undefined || !expiryDate) {
+      return res.status(400).json({
+        message: "Quantity and expiry date are required",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (!user.clinicId) {
+      return res.status(400).json({
+        message: "User is not assigned to any clinic",
+      });
+    }
+
+    if (
+      user.role !== "clinicAdmin" &&
+      user.role !== "worker"
+    ) {
+      return res.status(403).json({
+        message:
+          "Only Clinic Admin or Worker can update vaccine inventory",
+      });
+    }
+
+    const inventory = await VaccineInventory.findOne({
+      _id: req.params.id,
+      clinicId: user.clinicId,
+    });
+
+    if (!inventory) {
+      return res.status(404).json({
+        message: "Vaccine inventory not found",
+      });
+    }
+
+    inventory.quantity = quantity;
+    inventory.expiryDate = expiryDate;
+
+    await inventory.save();
+
+    res.json({
+      message: "Vaccine stock updated successfully",
+      inventory,
+    });
+  } catch (error) {
+    console.error(
+      "Vaccine inventory update error:",
+      error.message
+    );
+
+    res.status(500).json({
+      message:
+        "Server error while updating vaccine inventory",
+    });
+  }
+});
+
+
+
 module.exports = router;
 

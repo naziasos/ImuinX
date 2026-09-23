@@ -85,6 +85,7 @@ function Navbar({ page, setPage }) {
             >
               Register
             </button>
+           
 
             {/* Login */}
             <button
@@ -185,6 +186,7 @@ function Navbar({ page, setPage }) {
               >
                 Register
               </button>
+              
 
               <button
                 onClick={() => handleNavigation("login")}

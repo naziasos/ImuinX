@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./ClinicAdminDashboard.css";
 
-function ClinicAdminDashboard({ onLogout, onAddWorker }) {
+function ClinicAdminDashboard({ onLogout, onAddWorker, onOpenInventory }) {
   const [clinic, setClinic] = useState(null);
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -115,7 +115,10 @@ function ClinicAdminDashboard({ onLogout, onAddWorker }) {
               Vaccinations
             </button>
 
-            <button className="clinic-nav-item">
+            <button
+              className="clinic-nav-item"
+              onClick={onOpenInventory}
+            >
               <span>📦</span>
               Inventory
             </button>

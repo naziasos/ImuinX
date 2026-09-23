@@ -1,5 +1,6 @@
 import AddWorker from "./pages/AddWorker.jsx";
 
+
 import { useEffect, useState } from "react";
 
 import Register from "./pages/Register";
@@ -10,6 +11,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AddClinic from "./pages/admin/AddClinic";
 import ForgotPassword from "./pages/ForgotPassword";
 import ClinicAdminDashboard from "./pages/clinicAdmin/ClinicAdminDashboard";
+import VaccineInventory from "./pages/VaccineInventory";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -114,6 +116,7 @@ function App() {
           {page === "clinicDashboard" && (
             <ClinicAdminDashboard
               onAddWorker={() => setPage("addWorker")}
+              onOpenInventory={() => setPage("inventory")}
               onLogout={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
@@ -143,6 +146,10 @@ function App() {
               onBack={() => setPage("clinicDashboard")}
               onWorkerCreated={() => setPage("clinicDashboard")}
             />
+          )}
+          {/* Vaccine Inventory */}
+          {page === "inventory" && (
+             <VaccineInventory />
           )}
 
         </div>
