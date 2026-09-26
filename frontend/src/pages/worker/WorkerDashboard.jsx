@@ -1,7 +1,7 @@
 import React from "react";
 import "../clinicAdmin/ClinicAdminDashboard.css";
 
-function WorkerDashboard({ onLogout }) {
+function WorkerDashboard({ onLogout, onLogDose }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const handleLogout = () => {
@@ -49,16 +49,10 @@ function WorkerDashboard({ onLogout }) {
               Appointments
             </button>
 
-            <button className="clinic-nav-item">
+            <button className="clinic-nav-item" onClick={onLogDose}>
               <span>💉</span>
-              Administer Vaccine
+              Log Dose
             </button>
-
-            <button className="clinic-nav-item">
-              <span>📦</span>
-              Inventory
-            </button>
-
             <p className="clinic-nav-title system-title">
               SYSTEM
             </p>
@@ -102,14 +96,17 @@ function WorkerDashboard({ onLogout }) {
             </p>
           </div>
 
-          <div className="clinic-profile">
-            <div className="clinic-profile-avatar">
-              {user?.name?.charAt(0)?.toUpperCase() || "W"}
-            </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
 
-            <div>
-              <strong>{user?.name || "Worker"}</strong>
-              <span>Health Worker</span>
+            <div className="clinic-profile">
+              <div className="clinic-profile-avatar">
+                {user?.name?.charAt(0)?.toUpperCase() || "W"}
+              </div>
+
+              <div>
+                <strong>{user?.name || "Worker"}</strong>
+                <span>Health Worker</span>
+              </div>
             </div>
           </div>
 
