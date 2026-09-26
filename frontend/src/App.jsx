@@ -15,6 +15,7 @@ import ClinicAdminDashboard from "./pages/clinicAdmin/ClinicAdminDashboard";
 import CitizenDashboard from "./pages/citizen/CitizenDashboard";
 import WorkerDashboard from "./pages/worker/WorkerDashboard";
 import VaccineInventory from "./pages/VaccineInventory";
+import FamilyAccount from "./pages/citizen/FamilyAccount";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -81,7 +82,8 @@ function App() {
             page !== "dashboard" &&
             page !== "clinicDashboard" &&
             page !== "citizenDashboard" &&
-            page !== "workerDashboard" && (
+            page !== "workerDashboard" &&
+            page !== "familyAccount" && (
             <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
 
               {page === "register" && (
@@ -156,8 +158,23 @@ function App() {
           )}
 
           {/* Citizen Dashboard */}
-          {page === "citizenDashboard" && (
+          {page === "citizenDashboard" && ( 
             <CitizenDashboard
+              onFamilyAccount={() => setPage("familyAccount")}
+              onLogout={() => { 
+                localStorage.removeItem("token"); 
+                localStorage.removeItem("user"); 
+                setCurrentUser(null); 
+                setPage("login"); 
+              }} 
+            /> 
+          )}
+
+
+          {/* Family Account */}
+          {page === "familyAccount" && (
+            <FamilyAccount
+              onBack={() => setPage("citizenDashboard")}
               onLogout={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
@@ -166,6 +183,7 @@ function App() {
               }}
             />
           )}
+
 
           {/* Worker Dashboard */}
           {page === "workerDashboard" && (
