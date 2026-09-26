@@ -9,6 +9,7 @@ function FamilyAccount({ onBack, onLogout }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const [familyMembers, setFamilyMembers] = useState([]);
+  const [selectedMember, setSelectedMember] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -353,6 +354,7 @@ function FamilyAccount({ onBack, onLogout }) {
                 </div>
 
                 <div className="md:col-span-2 flex gap-3">
+
                   <Button
                     type="submit"
                     variant="primary"
@@ -367,6 +369,7 @@ function FamilyAccount({ onBack, onLogout }) {
                   >
                     Cancel
                   </Button>
+
                 </div>
 
               </form>
@@ -382,6 +385,7 @@ function FamilyAccount({ onBack, onLogout }) {
                   key={member._id}
                   className="h-full"
                 >
+
                   <div className="flex items-center gap-4 mb-5">
 
                     <div className="w-14 h-14 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-2xl">
@@ -389,6 +393,7 @@ function FamilyAccount({ onBack, onLogout }) {
                     </div>
 
                     <div>
+
                       <h3 className="text-lg font-bold text-slate-800">
                         {member.name}
                       </h3>
@@ -396,6 +401,7 @@ function FamilyAccount({ onBack, onLogout }) {
                       <p className="text-sm text-blue-600 font-medium">
                         {member.relationship}
                       </p>
+
                     </div>
 
                   </div>
@@ -403,6 +409,7 @@ function FamilyAccount({ onBack, onLogout }) {
                   <div className="space-y-3">
 
                     <div className="flex justify-between items-center">
+
                       <span className="text-sm text-slate-500">
                         Date of Birth
                       </span>
@@ -410,9 +417,11 @@ function FamilyAccount({ onBack, onLogout }) {
                       <span className="text-sm font-semibold text-slate-700">
                         {new Date(member.dateOfBirth).toLocaleDateString()}
                       </span>
+
                     </div>
 
                     <div className="flex justify-between items-center">
+
                       <span className="text-sm text-slate-500">
                         Gender
                       </span>
@@ -420,18 +429,22 @@ function FamilyAccount({ onBack, onLogout }) {
                       <span className="text-sm font-semibold text-slate-700">
                         {member.gender}
                       </span>
+
                     </div>
 
                   </div>
 
                   <div className="mt-5 pt-4 border-t border-slate-100">
+
                     <Button
                       variant="outline"
                       size="sm"
                       className="w-full"
+                      onClick={() => setSelectedMember(member)}
                     >
-                      View Vaccination Record
+                      View Profile
                     </Button>
+
                   </div>
 
                 </Card>
@@ -440,14 +453,127 @@ function FamilyAccount({ onBack, onLogout }) {
             </div>
           )}
 
+          {/* Selected Family Member Profile */}
+          {selectedMember && (
+            <Card className="mt-6">
+
+              <div className="flex items-center justify-between mb-6">
+
+                <div>
+
+                  <p className="section-label">
+                    SELECTED PROFILE
+                  </p>
+
+                  <h2 className="text-2xl font-bold text-slate-800">
+                    {selectedMember.name}
+                  </h2>
+
+                  <p className="text-sm text-slate-500">
+                    {selectedMember.relationship}
+                  </p>
+
+                </div>
+
+                <Button
+                  variant="secondary"
+                  onClick={() => setSelectedMember(null)}
+                >
+                  Back to Family
+                </Button>
+
+              </div>
+
+              {/* Member Information */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                <div className="p-4 bg-slate-50 rounded-xl">
+
+                  <p className="text-sm text-slate-500">
+                    Date of Birth
+                  </p>
+
+                  <p className="font-semibold text-slate-800 mt-1">
+                    {new Date(
+                      selectedMember.dateOfBirth
+                    ).toLocaleDateString()}
+                  </p>
+
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-xl">
+
+                  <p className="text-sm text-slate-500">
+                    Gender
+                  </p>
+
+                  <p className="font-semibold text-slate-800 mt-1">
+                    {selectedMember.gender}
+                  </p>
+
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-xl">
+
+                  <p className="text-sm text-slate-500">
+                    Relationship
+                  </p>
+
+                  <p className="font-semibold text-slate-800 mt-1">
+                    {selectedMember.relationship}
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* Appointments */}
+              <div className="mt-6">
+
+                <h3 className="text-lg font-bold text-slate-800">
+                  Appointments
+                </h3>
+
+                <div className="mt-3 p-5 bg-slate-50 rounded-xl">
+
+                  <p className="text-sm text-slate-500">
+                    No appointments available for this family member.
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* Vaccination Records */}
+              <div className="mt-6">
+
+                <h3 className="text-lg font-bold text-slate-800">
+                  Vaccination Records
+                </h3>
+
+                <div className="mt-3 p-5 bg-slate-50 rounded-xl">
+
+                  <p className="text-sm text-slate-500">
+                    No vaccination records available for this family member.
+                  </p>
+
+                </div>
+
+              </div>
+
+            </Card>
+          )}
+
           {/* Empty State */}
           {!showForm && familyMembers.length === 0 && (
             <Card className="text-center">
 
               <div className="flex justify-center mb-4">
+
                 <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-3xl">
                   👨‍👩‍👧
                 </div>
+
               </div>
 
               <h3 className="text-lg font-bold text-slate-800">
@@ -460,12 +586,14 @@ function FamilyAccount({ onBack, onLogout }) {
               </p>
 
               <div className="mt-5 flex justify-center">
+
                 <Button
                   variant="primary"
                   onClick={() => setShowForm(true)}
                 >
                   + Add Family Member
                 </Button>
+
               </div>
 
             </Card>
