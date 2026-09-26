@@ -22,6 +22,14 @@ app.use("/api/auth", authRoutes);
 app.use("/api/clinics", clinicRoutes);
 app.use("/api/vaccine-inventory", vaccineInventoryRoutes);
 
+
+
+const familyRoutes = require("./routes/familyRoutes");
+app.use("/api/family", familyRoutes);
+
+
+
+
 console.log("🔥 CLINIC ROUTER MOUNTED");
 
 const PORT = process.env.PORT || 5000;
