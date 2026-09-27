@@ -14,6 +14,24 @@ const { sendWorkerCredentials } = require("../utils/email");
 
 const router = express.Router();
 console.log("🔥 CLINIC ROUTES FILE LOADED");
+// Get all clinics
+router.get("/", async (req, res) => {
+  try {
+    const clinics = await Clinic.find({
+      status: "Active",
+    }).select("name location contact status");
+
+    res.json({
+      clinics,
+    });
+  } catch (error) {
+    console.error("Error fetching clinics:", error.message);
+
+    res.status(500).json({
+      message: "Failed to fetch clinics",
+    });
+  }
+});
 
 // Test route
 router.get(

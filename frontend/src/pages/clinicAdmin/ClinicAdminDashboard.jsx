@@ -6,6 +6,8 @@ function ClinicAdminDashboard({ onLogout, onAddWorker, onOpenInventory, onAssign
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [appointments, setAppointments] = useState([]);
+const [appointmentLoading, setAppointmentLoading] = useState(false);
 
   const loadDashboard = async () => {
     try {
@@ -38,7 +40,28 @@ function ClinicAdminDashboard({ onLogout, onAddWorker, onOpenInventory, onAssign
       }
 
       setClinic(data.clinic);
-      setWorkers(data.workers || []);
+setWorkers(data.workers || []);
+
+const clinicId = data.clinic?._id || data.clinic?.id;
+
+if (!clinicId) {
+  throw new Error("Clinic ID not found");
+}
+
+// Load pending appointments for this clinic
+const appointmentResponse = await fetch(
+  `http://localhost:5000/api/appointments/clinic/${clinicId}`
+);
+
+      const appointmentData = await appointmentResponse.json();
+
+      if (!appointmentResponse.ok) {
+        throw new Error(
+          appointmentData.message || "Failed to load appointments"
+        );
+      }
+
+      setAppointments(appointmentData.appointments || []);
     } catch (error) {
       console.error(error);
       setError(error.message);
@@ -50,7 +73,35 @@ function ClinicAdminDashboard({ onLogout, onAddWorker, onOpenInventory, onAssign
   useEffect(() => {
     loadDashboard();
   }, []);
+const handleAppointmentAction = async (appointmentId, action) => {
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/appointments/${appointmentId}/${action}`,
+      {
+        method: "PATCH",
+      }
+    );
 
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.message || "Failed to update appointment.");
+      return;
+    }
+
+    alert(data.message);
+
+    // Remove the appointment from Pending list
+    setAppointments((prevAppointments) =>
+      prevAppointments.filter(
+        (appointment) => appointment._id !== appointmentId
+      )
+    );
+  } catch (error) {
+    console.error("Appointment action error:", error);
+    alert("Something went wrong.");
+  }
+};
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -263,7 +314,129 @@ function ClinicAdminDashboard({ onLogout, onAddWorker, onOpenInventory, onAssign
           </div>
 
         </section>
+{/* Pending Appointments */}
+<section className="workers-section">
 
+  <div className="workers-header">
+
+    <div>
+      <p className="section-label">
+        APPOINTMENTS
+      </p>
+
+      <h2>
+        Pending Appointments
+      </h2>
+
+      <p>
+        Appointments waiting for clinic approval.
+      </p>
+    </div>
+
+    <div className="worker-count">
+      {appointments.length} Appointment
+      {appointments.length !== 1 ? "s" : ""}
+    </div>
+
+  </div>
+
+  {appointmentLoading ? (
+
+    <div className="empty-workers">
+      <p>Loading appointments...</p>
+    </div>
+
+  ) : appointments.length === 0 ? (
+
+    <div className="empty-workers">
+
+      <div className="empty-icon">
+        📅
+      </div>
+
+      <h3>
+        No pending appointments
+      </h3>
+
+      <p>
+        New appointment requests will appear here.
+      </p>
+
+    </div>
+
+  ) : (
+
+    <div className="workers-grid">
+
+      {appointments.map((appointment) => (
+
+        <div
+          className="worker-card"
+          key={appointment._id}
+        >
+
+          <div className="worker-avatar">
+            {appointment.citizenId?.name
+              ?.charAt(0)
+              ?.toUpperCase()}
+          </div>
+
+          <div className="worker-info">
+
+            <h3>
+              {appointment.citizenId?.name || "Unknown Citizen"}
+            </h3>
+
+            <p>
+              {appointment.citizenId?.email || "No email"}
+            </p>
+
+            <span className="worker-role">
+              {new Date(appointment.dateTime).toLocaleDateString()}
+              {" • "}
+              {new Date(appointment.dateTime).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+
+
+          </div>
+
+          <span className="worker-role">
+            Pending
+          </span>
+          <div className="appointment-actions">
+  <button
+    type="button"
+    className="approve-btn"
+    onClick={() =>
+      handleAppointmentAction(appointment._id, "approve")
+    }
+  >
+    Approve
+  </button>
+
+  <button
+    type="button"
+    className="reject-btn"
+    onClick={() =>
+      handleAppointmentAction(appointment._id, "reject")
+    }
+  >
+    Reject
+  </button>
+</div>
+
+        </div>
+
+      ))}
+
+    </div>
+
+  )}
+
+</section>
         {/* Workers */}
         <section className="workers-section">
 

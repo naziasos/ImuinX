@@ -942,3 +942,28 @@ tbody tr:hover {
     gap: 10px;
   }
 }
+/* ================= APPOINTMENT STATUS ================= */
+
+.status-confirmed {
+  background: #dcfce7;
+  color: #15803d;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 700;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #b45309;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 700;
+}
+
+.status-cancelled {
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 700;
+}

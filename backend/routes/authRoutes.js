@@ -421,6 +421,29 @@ router.post("/create-admin", async (req, res) => {
 
 
 
+router.get("/citizen-test", async (req, res) => {
+  try {
+    const citizen = await User.findOne({
+      role: "citizen",
+      emailVerified: true,
+    }).select("_id name email role");
 
+    if (!citizen) {
+      return res.status(404).json({
+        message: "No verified citizen found",
+      });
+    }
+
+    res.json({
+      citizen,
+    });
+  } catch (error) {
+    console.error("Citizen test error:", error.message);
+
+    res.status(500).json({
+      message: "Failed to find citizen",
+    });
+  }
+});
 module.exports = router;
 

@@ -508,7 +508,26 @@
   }
 }
 
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 1000px) {
+
+  .clinic-sidebar {
+    width: 220px;
+  }
+
+  .clinic-main {
+    padding: 30px;
+  }
+
+  .workers-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
 @media (max-width: 750px) {
+
   .clinic-dashboard {
     display: block;
   }
@@ -543,4 +562,50 @@
   .clinic-main {
     padding: 25px 18px;
   }
+
+  .appointment-actions {
+    margin-left: 0;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+}
+
+
+/* ================= APPOINTMENT ACTIONS ================= */
+
+.appointment-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.approve-btn,
+.reject-btn {
+  border: none;
+  padding: 8px 13px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.approve-btn {
+  background: #16a34a;
+  color: white;
+}
+
+.approve-btn:hover {
+  background: #15803d;
+}
+
+.reject-btn {
+  background: #dc2626;
+  color: white;
+}
+
+.reject-btn:hover {
+  background: #b91c1c;
 }

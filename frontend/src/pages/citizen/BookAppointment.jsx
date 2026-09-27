@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../clinicAdmin/ClinicAdminDashboard.css";
 
 function BookAppointment({ onBack, onLogout }) {
@@ -8,36 +8,67 @@ function BookAppointment({ onBack, onLogout }) {
   const [date, setDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
 
-  // Temporary clinic data
-  const clinics = [
-    {
-      id: "1",
-      name: "City Vaccination Center",
-      location: "Dhaka",
-    },
-    {
-      id: "2",
-      name: "Central Health Clinic",
-      location: "Dhanmondi",
-    },
-    {
-      id: "3",
-      name: "UAP Medical Center",
-      location: "Dhaka",
-    },
-  ];
+  const [clinics, setClinics] = useState([]);
+  const [myAppointments, setMyAppointments] = useState([]);
+const [appointmentLoading, setAppointmentLoading] = useState(true);
+  useEffect(() => {
+  fetch("http://localhost:5000/api/clinics")
+    .then((response) => response.json())
+    .then((data) => {
+      setClinics(data.clinics || []);
+    })
+    .catch((error) => {
+      console.error("Error fetching clinics:", error);
+    });
+}, []);
+useEffect(() => {
+  const citizenId = user?.id || user?._id;
 
-  // Temporary time-slot data
-  const timeSlots = [
-    { id: 1, time: "09:00 AM", available: true },
-    { id: 2, time: "09:30 AM", available: false },
-    { id: 3, time: "10:00 AM", available: true },
-    { id: 4, time: "10:30 AM", available: true },
-    { id: 5, time: "11:00 AM", available: false },
-    { id: 6, time: "11:30 AM", available: true },
-    { id: 7, time: "12:00 PM", available: true },
-    { id: 8, time: "12:30 PM", available: false },
-  ];
+  if (!citizenId) {
+    setAppointmentLoading(false);
+    return;
+  }
+
+  fetch(
+    `http://localhost:5000/api/appointments/citizen/${citizenId}`
+  )
+    .then((response) => response.json())
+    .then((data) => {
+      setMyAppointments(data.appointments || []);
+      setAppointmentLoading(false);
+    })
+    .catch((error) => {
+      console.error("Error fetching appointments:", error);
+      setAppointmentLoading(false);
+    });
+}, [user?.id, user?._id]);
+
+ const [timeSlots, setTimeSlots] = useState([]);
+ useEffect(() => {
+  if (!clinic || !date) {
+    return;
+  }
+
+  fetch(
+    `http://localhost:5000/api/appointments/slots?clinicId=${clinic}&date=${date}`
+  )
+    .then((response) => response.json())
+    .then((data) => {
+      const formattedSlots = (data.availableSlots || []).map(
+        (time, index) => ({
+          id: index + 1,
+          time: time,
+          available: true,
+        })
+      );
+
+      setTimeSlots(formattedSlots);
+    })
+    .catch((error) => {
+      console.error("Error fetching available slots:", error);
+      setTimeSlots([]);
+    });
+}, [clinic, date]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -48,21 +79,61 @@ function BookAppointment({ onBack, onLogout }) {
     }
   };
 
-  const handleConfirm = () => {
-    if (!clinic || !date || !selectedSlot) {
-      alert("Please select clinic, date and time slot.");
+  const handleConfirm = async () => {
+  if (!clinic || !date || !selectedSlot) {
+    alert("Please select clinic, date and time slot.");
+    return;
+  }
+
+  const citizenId = user?.id || user?._id;
+
+  if (!citizenId) {
+    alert("User information not found. Please login again.");
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      "http://localhost:5000/api/appointments",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          citizenId: citizenId,
+          clinicId: clinic,
+          date: date,
+          time: selectedSlot,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.message || "Failed to book appointment.");
       return;
     }
 
     const selectedClinic = clinics.find(
-      (item) => item.id === clinic
+      (item) => item._id === clinic
     );
 
     alert(
-      `Appointment selected!\n\nClinic: ${selectedClinic.name}\nDate: ${date}\nTime: ${selectedSlot}`
+      `Appointment Booked Successfully!\n\n` +
+      `Clinic: ${selectedClinic?.name || "Selected Clinic"}\n` +
+      `Date: ${date}\n` +
+      `Time: ${selectedSlot}\n\n` +
+      `Appointment ID: ${data.appointmentId}\n` +
+      `Status: ${data.status}`
     );
-  };
 
+  } catch (error) {
+    console.error("Booking error:", error);
+    alert("Something went wrong while booking the appointment.");
+  }
+};
   return (
     <div className="clinic-dashboard">
 
@@ -202,8 +273,9 @@ function BookAppointment({ onBack, onLogout }) {
               <select
                 value={clinic}
                 onChange={(e) => {
-                  setClinic(e.target.value);
-                  setSelectedSlot("");
+                setClinic(e.target.value);
+                setSelectedSlot("");
+                setTimeSlots([]);
                 }}
                 className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -212,7 +284,7 @@ function BookAppointment({ onBack, onLogout }) {
                 </option>
 
                 {clinics.map((item) => (
-                  <option key={item.id} value={item.id}>
+                  <option key={item._id} value={item._id}>
                     {item.name} - {item.location}
                   </option>
                 ))}
@@ -233,9 +305,10 @@ function BookAppointment({ onBack, onLogout }) {
                 value={date}
                 min={new Date().toISOString().split("T")[0]}
                 onChange={(e) => {
-                  setDate(e.target.value);
-                  setSelectedSlot("");
-                }}
+  setDate(e.target.value);
+  setSelectedSlot("");
+  setTimeSlots([]);
+}}
                 className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
 
@@ -307,7 +380,7 @@ function BookAppointment({ onBack, onLogout }) {
                     <strong>Clinic:</strong>{" "}
                     {
                       clinics.find(
-                        (item) => item.id === clinic
+                        (item) => item._id === clinic
                       )?.name
                     }
                   </p>
@@ -357,6 +430,117 @@ function BookAppointment({ onBack, onLogout }) {
             </div>
 
           </div>
+
+        </section>
+                {/* My Appointments */}
+        <section className="workers-section">
+
+          <div className="workers-header">
+
+            <div>
+              <p className="section-label">
+                MY APPOINTMENTS
+              </p>
+
+              <h2>
+                Appointment Status
+              </h2>
+
+              <p>
+                Check the status of your vaccination appointments.
+              </p>
+            </div>
+
+            <div className="worker-count">
+              {myAppointments.length} Appointment
+              {myAppointments.length !== 1 ? "s" : ""}
+            </div>
+
+          </div>
+
+          {appointmentLoading ? (
+
+            <div className="empty-workers">
+              <p>Loading appointments...</p>
+            </div>
+
+          ) : myAppointments.length === 0 ? (
+
+            <div className="empty-workers">
+
+              <div className="empty-icon">
+                📅
+              </div>
+
+              <h3>
+                No appointments yet
+              </h3>
+
+              <p>
+                Your booked appointments will appear here.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="workers-grid">
+
+              {myAppointments.map((appointment) => (
+
+                <div
+                  className="worker-card"
+                  key={appointment._id}
+                >
+
+                  <div className="worker-avatar">
+                    📅
+                  </div>
+
+                  <div className="worker-info">
+
+                    <h3>
+                      {appointment.clinicId?.name || "Unknown Clinic"}
+                    </h3>
+
+                    <p>
+                      {appointment.clinicId?.location || "Location unavailable"}
+                    </p>
+
+                    <span className="worker-role">
+                      {new Date(
+                        appointment.dateTime
+                      ).toLocaleDateString()}
+                      {" • "}
+                      {new Date(
+                        appointment.dateTime
+                      ).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+
+                  </div>
+
+                  <span
+                    className={`worker-role ${
+                      appointment.status === "Confirmed"
+                        ? "status-confirmed"
+                        : appointment.status === "Cancelled"
+                        ? "status-cancelled"
+                        : "status-pending"
+                    }`}
+                  >
+                    {appointment.status}
+                  </span>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
 
         </section>
 
