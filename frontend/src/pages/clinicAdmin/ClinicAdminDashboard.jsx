@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./ClinicAdminDashboard.css";
 
-function ClinicAdminDashboard({ onLogout, onAddWorker, onOpenInventory }) {
+function ClinicAdminDashboard({ onLogout, onAddWorker, onOpenInventory, onAssignDuty}) {
   const [clinic, setClinic] = useState(null);
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -109,6 +109,19 @@ function ClinicAdminDashboard({ onLogout, onAddWorker, onOpenInventory }) {
               <span>📅</span>
               Appointments
             </button>
+
+
+
+            <button
+              className="clinic-nav-item"
+              onClick={onAssignDuty}
+            >
+              <span>📝</span>
+              Daily Duties
+            </button>
+
+
+
 
             <button className="clinic-nav-item">
               <span>💉</span>

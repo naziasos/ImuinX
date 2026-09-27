@@ -12,6 +12,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AddClinic from "./pages/admin/AddClinic";
 import ForgotPassword from "./pages/ForgotPassword";
 import ClinicAdminDashboard from "./pages/clinicAdmin/ClinicAdminDashboard";
+import AssignDuty from "./pages/clinicAdmin/AssignDuty";
 import CitizenDashboard from "./pages/citizen/CitizenDashboard";
 import WorkerDashboard from "./pages/worker/WorkerDashboard";
 import LogDose from "./pages/worker/LogDose";
@@ -143,6 +144,7 @@ function App() {
           {page === "clinicDashboard" && (
             <ClinicAdminDashboard
               onAddWorker={() => setPage("addWorker")}
+              onAssignDuty={() => setPage("assignDuty")}
               onOpenInventory={() => setPage("inventory")}
               onLogout={() => {
                 localStorage.removeItem("token");
@@ -227,10 +229,18 @@ function App() {
               onBack={() => setPage("clinicDashboard")}
               onWorkerCreated={() => setPage("clinicDashboard")}
             />
+
+            
           )}
           {/* Vaccine Inventory */}
           {page === "inventory" && (
              <VaccineInventory />
+          )}
+
+
+          {/* Assign Daily Duty */}
+          {page === "assignDuty" && (
+            <AssignDuty />
           )}
 
         </div>
