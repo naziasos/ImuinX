@@ -4,6 +4,7 @@ const crypto = require("crypto");
 
 const User = require("../models/User");
 const Clinic = require("../models/Clinic");
+const DutyAssignment = require("../models/DutyAssignment");
 
 const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
@@ -336,6 +337,95 @@ router.post(
     }
   }
 );
+
+
+
+
+
+
+// =====================================================
+//  CREATE DUTY ASSIGNMENT
+// =====================================================
+
+router.post(
+  "/my-clinic/duties",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const { workerId, dutyDate, dutyType } = req.body;
+
+      // Only Clinic Admin can create duty assignments
+      if (req.user.role !== "clinicAdmin") {
+        return res.status(403).json({
+          message: "Clinic Admin access required",
+        });
+      }
+
+      // Validate required fields
+      if (!workerId || !dutyDate || !dutyType) {
+        return res.status(400).json({
+          message: "Worker, duty date and duty type are required",
+        });
+      }
+
+      // Get logged-in Clinic Admin
+      const clinicAdmin = await User.findById(req.user.id);
+
+      if (!clinicAdmin) {
+        return res.status(404).json({
+          message: "Clinic Admin not found",
+        });
+      }
+
+      // Check clinic assignment
+      if (!clinicAdmin.clinicId) {
+        return res.status(404).json({
+          message: "No clinic is assigned to this Clinic Admin",
+        });
+      }
+
+      // Check that the worker belongs to this clinic
+      const worker = await User.findOne({
+        _id: workerId,
+        clinicId: clinicAdmin.clinicId,
+        role: "worker",
+      });
+
+      if (!worker) {
+        return res.status(404).json({
+          message: "Worker not found in this clinic",
+        });
+      }
+
+      // Create duty assignment
+      const dutyAssignment = await DutyAssignment.create({
+        workerId: worker._id,
+        clinicId: clinicAdmin.clinicId,
+        dutyDate,
+        dutyType: dutyType.trim(),
+      });
+
+      res.status(201).json({
+        message: "Duty assigned successfully",
+        dutyAssignment,
+      });
+    } catch (error) {
+      console.error("Duty assignment error:", error.message);
+
+      res.status(500).json({
+        message: "Server error while creating duty assignment",
+      });
+    }
+  }
+);
+
+
+
+
+
+
+
+
 
 
 
