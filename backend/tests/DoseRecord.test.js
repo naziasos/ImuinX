@@ -5,6 +5,7 @@ describe("DoseRecord Schema", () => {
   test("should create a valid dose record", () => {
     const record = new DoseRecord({
       citizenId: new mongoose.Types.ObjectId(),
+      citizenType: "FamilyProfile",
       vaccineType: "MMR",
       batchNumber: "BATCH-2025-001",
       dateAdministered: new Date("2025-09-01"),
@@ -20,6 +21,7 @@ describe("DoseRecord Schema", () => {
   test("should default dateAdministered to now when not provided", () => {
     const record = new DoseRecord({
       citizenId: new mongoose.Types.ObjectId(),
+      citizenType: "FamilyProfile",
       vaccineType: "MMR",
       batchNumber: "BATCH-2025-001",
       healthWorkerId: new mongoose.Types.ObjectId(),
@@ -39,6 +41,7 @@ describe("DoseRecord Schema", () => {
 
     expect(error).toBeDefined();
     expect(error.errors.citizenId).toBeDefined();
+    expect(error.errors.citizenType).toBeDefined();
     expect(error.errors.vaccineType).toBeDefined();
     expect(error.errors.batchNumber).toBeDefined();
     expect(error.errors.healthWorkerId).toBeDefined();
@@ -51,6 +54,7 @@ describe("DoseRecord Schema", () => {
 
     const record = new DoseRecord({
       citizenId: new mongoose.Types.ObjectId(),
+      citizenType: "FamilyProfile",
       vaccineType: "MMR",
       batchNumber: "BATCH-2025-001",
       dateAdministered: futureDate,
@@ -64,9 +68,41 @@ describe("DoseRecord Schema", () => {
     expect(error.errors.dateAdministered).toBeDefined();
   });
 
+  test("should reject a citizenType outside the allowed enum", () => {
+    const record = new DoseRecord({
+      citizenId: new mongoose.Types.ObjectId(),
+      citizenType: "SomeOtherModel",
+      vaccineType: "MMR",
+      batchNumber: "BATCH-2025-001",
+      healthWorkerId: new mongoose.Types.ObjectId(),
+      clinicId: new mongoose.Types.ObjectId(),
+    });
+
+    const error = record.validateSync();
+
+    expect(error).toBeDefined();
+    expect(error.errors.citizenType).toBeDefined();
+  });
+
+  test("should accept 'User' as a citizenType for registered citizens", () => {
+    const record = new DoseRecord({
+      citizenId: new mongoose.Types.ObjectId(),
+      citizenType: "User",
+      vaccineType: "MMR",
+      batchNumber: "BATCH-2025-001",
+      healthWorkerId: new mongoose.Types.ObjectId(),
+      clinicId: new mongoose.Types.ObjectId(),
+    });
+
+    const error = record.validateSync();
+
+    expect(error).toBeUndefined();
+  });
+
   test("should trim whitespace on vaccineType and batchNumber", () => {
     const record = new DoseRecord({
       citizenId: new mongoose.Types.ObjectId(),
+      citizenType: "FamilyProfile",
       vaccineType: "  MMR  ",
       batchNumber: "  BATCH-2025-001  ",
       healthWorkerId: new mongoose.Types.ObjectId(),

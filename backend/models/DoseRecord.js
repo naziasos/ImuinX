@@ -3,8 +3,18 @@ const doseRecordSchema = new mongoose.Schema(
   {
     citizenId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "FamilyProfile",
+      // Dynamic reference: which collection citizenId points into is
+      // decided per-document by citizenType below, so the same field
+      // can hold either a registered citizen (User) or a family
+      // member (FamilyProfile) _id.
+      refPath: "citizenType",
       required: true,
+    },
+
+    citizenType: {
+      type: String,
+      required: true,
+      enum: ["User", "FamilyProfile"],
     },
 
     vaccineType: {
@@ -49,6 +59,6 @@ const doseRecordSchema = new mongoose.Schema(
 );
 
 
-doseRecordSchema.index({ citizenId: 1, dateAdministered: 1 });
+doseRecordSchema.index({ citizenId: 1, citizenType: 1, dateAdministered: 1 });
 doseRecordSchema.index({ batchNumber: 1, vaccineType: 1 });
 module.exports = mongoose.model("DoseRecord", doseRecordSchema);

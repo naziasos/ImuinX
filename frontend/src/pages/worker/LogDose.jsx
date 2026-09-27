@@ -110,7 +110,9 @@ function LogDose({ onBack, onLogout }) {
     setErrors((prev) => ({ ...prev, citizen: undefined }));
 
     try {
-      const res = await api.get(`/doses/citizen/${citizen._id}`);
+      const res = await api.get(`/doses/citizen/${citizen._id}`, {
+        params: { citizenType: citizen.type },
+      });
       setDoseHistory(res.data.doses || []);
     } catch (err) {
       setDoseHistory([]);
@@ -208,6 +210,7 @@ function LogDose({ onBack, onLogout }) {
 
       const res = await api.post("/doses", {
         citizenId: selectedCitizen._id,
+        citizenType: selectedCitizen.type,
         vaccineType,
         batchNumber,
         dateAdministered,
@@ -412,7 +415,9 @@ function LogDose({ onBack, onLogout }) {
                               <span className="logdose-dropdown-text">
                                 <strong>{c.name}</strong>
                                 <span>
-                                  {c.relationship} · {calcAge(c.dateOfBirth)}
+                                  {c.type === "user"
+                                    ? "Registered citizen"
+                                    : `${c.relationship} · ${calcAge(c.dateOfBirth) || "—"}`}
                                   {c.guardianId?.name
                                     ? ` · Guardian: ${c.guardianId.name}`
                                     : ""}
@@ -432,9 +437,15 @@ function LogDose({ onBack, onLogout }) {
                     <div className="logdose-citizen-info">
                       <strong>{selectedCitizen.name}</strong>
                       <span>
-                        {selectedCitizen.relationship} ·{" "}
-                        {calcAge(selectedCitizen.dateOfBirth)} old ·{" "}
-                        {selectedCitizen.gender}
+                        {selectedCitizen.type === "user" ? (
+                          "Registered citizen"
+                        ) : (
+                          <>
+                            {selectedCitizen.relationship} ·{" "}
+                            {calcAge(selectedCitizen.dateOfBirth)} old ·{" "}
+                            {selectedCitizen.gender}
+                          </>
+                        )}
                       </span>
                       {selectedCitizen.guardianId?.name && (
                         <span className="logdose-citizen-guardian">
@@ -484,7 +495,7 @@ function LogDose({ onBack, onLogout }) {
               </div>
             </div>
 
-            {/* PANEL 2 — Vaccine & Batch */}
+            {}
             <div className={`logdose-panel ${!step1Done ? "is-locked" : ""}`}>
               <div className="logdose-panel-inner">
                 <div className="logdose-panel-head">

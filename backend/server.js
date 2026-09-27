@@ -8,6 +8,7 @@ require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const clinicRoutes = require("./routes/clinicRoutes");
 const vaccineInventoryRoutes = require("./routes/vaccineInventoryRoutes");
+const doseRoutes = require("./routes/doseRoutes");
 
 
 
@@ -21,6 +22,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/clinics", clinicRoutes);
 app.use("/api/vaccine-inventory", vaccineInventoryRoutes);
+app.use("/api/doses", doseRoutes);
 
 
 
