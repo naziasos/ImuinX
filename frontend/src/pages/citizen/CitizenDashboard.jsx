@@ -1,7 +1,7 @@
 import React from "react";
 import "../clinicAdmin/ClinicAdminDashboard.css";
 
-function CitizenDashboard({ onFamilyAccount, onLogout }) {
+function CitizenDashboard({onFamilyAccount,onAppointments,onLogout}) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const handleLogout = () => {
@@ -49,11 +49,13 @@ function CitizenDashboard({ onFamilyAccount, onLogout }) {
               My Vaccinations
             </button>
 
-            <button className="clinic-nav-item">
-              <span>📅</span>
-              Appointments
-            </button>
-
+            <button
+  className="clinic-nav-item"
+  onClick={onAppointments}
+>
+  <span>📅</span>
+  Appointments
+</button>
             <button className="clinic-nav-item">
               <span>🪪</span>
               Vaccine Certificate

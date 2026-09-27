@@ -1,4 +1,5 @@
 import AddWorker from "./pages/AddWorker.jsx";
+import BookAppointment from "./pages/citizen/BookAppointment";
 
 
 import { useEffect, useState } from "react";
@@ -86,7 +87,8 @@ function App() {
             page !== "citizenDashboard" &&
             page !== "workerDashboard" &&
             page !== "logDose" &&
-            page !== "familyAccount" && (
+            page !== "familyAccount" &&
+            page !== "bookAppointment" &&  (
             <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
 
               {page === "register" && (
@@ -165,6 +167,7 @@ function App() {
           {page === "citizenDashboard" && ( 
             <CitizenDashboard
               onFamilyAccount={() => setPage("familyAccount")}
+              onAppointments={() => setPage("bookAppointment")}
               onLogout={() => { 
                 localStorage.removeItem("token"); 
                 localStorage.removeItem("user"); 
@@ -187,6 +190,19 @@ function App() {
               }}
             />
           )}
+
+          {/* Book Appointment */}
+{page === "bookAppointment" && (
+  <BookAppointment
+    onBack={() => setPage("citizenDashboard")}
+    onLogout={() => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setCurrentUser(null);
+      setPage("login");
+    }}
+  />
+)}
 
 
           {/* Worker Dashboard */}
@@ -252,7 +268,8 @@ function App() {
         page !== "clinicDashboard" &&
         page !== "citizenDashboard" &&
         page !== "workerDashboard" &&
-        page !== "logDose" && (
+        page !== "logDose" &&
+        page !== "bookAppointment" && (
         <Footer />
       )}
     </div>
