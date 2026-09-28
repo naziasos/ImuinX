@@ -1,27 +1,4 @@
 const jwt = require("jsonwebtoken");
-
-/**
- * Signed, verifiable tokens for vaccination-certificate QR codes.
- *
- * Design notes
- * ------------
- * - The token is an HS256 JWT signed with a dedicated secret
- *   (QR_SIGNING_SECRET), NOT the auth secret. It is pinned to its own
- *   `aud`/`iss` so a login token can never be replayed as a QR token
- *   (or vice versa), and `algorithms` is pinned on verify so the
- *   "alg: none" / algorithm-confusion class of attacks is closed.
- * - The QR is scannable by anyone, so the payload carries NO health data
- *   or personal information: only a version, the certificate's random
- *   lookup id (`tid`, i.e. Certificate.qrToken) and the issue time.
- *   Details are resolved server-side, after the signature checks out.
- * - No `exp`: vaccination certificates are long-lived. Invalidation is a
- *   server-side concern (the certificate row must still exist).
- * - Key rotation: every token carries a `kid`. QR_SIGNING_SECRET is the
- *   active key (id from QR_SIGNING_KEY_ID, default "1"). Older keys stay
- *   valid for verification via
- *   QR_SIGNING_SECRET_PREVIOUS="kid:secret,kid2:secret2".
- */
-
 const AUDIENCE = "imunix:vaccination-certificate";
 const ISSUER = "imunix";
 const TOKEN_VERSION = 1;
@@ -82,16 +59,10 @@ function loadKeyring() {
   return { activeKid, activeSecret, keys };
 }
 
-/** Throws QrConfigError if signing isn't configured. Call before writing data. */
 function assertConfigured() {
   loadKeyring();
 }
 
-/**
- * @param {string} tid       Certificate.qrToken (64-char hex lookup id)
- * @param {Date}   issuedAt  Certificate.issuedDate
- * @returns {string} compact signed token, ready to be encoded in a QR code
- */
 function signToken(tid, issuedAt) {
   if (!TID_PATTERN.test(tid || "")) {
     throw new TypeError("tid must be a 64-character lowercase hex string");
@@ -115,16 +86,6 @@ function signToken(tid, issuedAt) {
   );
 }
 
-/**
- * Cryptographic check only (signature, audience, issuer, version).
- * Whether the certificate still exists is the caller's job.
- *
- * Never throws for bad input; throws QrConfigError only for server
- * misconfiguration (which should surface as a 500, not "invalid").
- *
- * @returns {{valid: true, payload: {v:number, tid:string, iat:number}}
- *         | {valid: false, reason: string}}
- */
 function verifyToken(token) {
   const { keys } = loadKeyring();
 

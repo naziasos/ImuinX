@@ -3,10 +3,6 @@ const doseRecordSchema = new mongoose.Schema(
   {
     citizenId: {
       type: mongoose.Schema.Types.ObjectId,
-      // Dynamic reference: which collection citizenId points into is
-      // decided per-document by citizenType below, so the same field
-      // can hold either a registered citizen (User) or a family
-      // member (FamilyProfile) _id.
       refPath: "citizenType",
       required: true,
     },

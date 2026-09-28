@@ -42,7 +42,6 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Splash Screen
   if (showSplash) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -217,7 +216,7 @@ function App() {
           )}
 
 
-          {/* Worker Dashboard */}
+          {}
           {page === "workerDashboard" && (
             <WorkerDashboard
               onLogDose={() => setPage("logDose")}
@@ -233,12 +232,12 @@ function App() {
 
 
 
-          {/* Show Work */}
+          {}
           {page === "showWork" && (
             <ShowWork />
           )}
 
-          {/* Log Dose */}
+          {}
           {page === "logDose" && (
             <LogDose
               onBack={() => setPage("workerDashboard")}
@@ -251,7 +250,7 @@ function App() {
             />
           )}
 
-          {/* Add Clinic */}
+          {}
           {page === "addClinic" && (
             <AddClinic
               onBack={() => setPage("dashboard")}
@@ -259,7 +258,7 @@ function App() {
             />
           )}
 
-          {/* Add Worker - MY PART */}
+          {}
           {page === "addWorker" && (
             <AddWorker
               onBack={() => setPage("clinicDashboard")}
@@ -268,13 +267,13 @@ function App() {
 
             
           )}
-          {/* Vaccine Inventory */}
+          {}
           {page === "inventory" && (
              <VaccineInventory />
           )}
 
 
-          {/* Assign Daily Duty */}
+          {}
           {page === "assignDuty" && (
             <AssignDuty />
           )}

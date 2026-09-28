@@ -16,11 +16,11 @@ function CitizenDashboard({onFamilyAccount,onAppointments,onCertificate,onLogout
   return (
     <div className="clinic-dashboard">
 
-      {/* Sidebar */}
+      {}
       <aside className="clinic-sidebar">
 
         <div>
-          {/* Logo */}
+          {}
           <div className="clinic-logo">
             <div className="clinic-logo-icon">
               +
@@ -32,7 +32,7 @@ function CitizenDashboard({onFamilyAccount,onAppointments,onCertificate,onLogout
             </div>
           </div>
 
-          {/* Navigation */}
+          {}
           <nav className="clinic-nav">
 
             <p className="clinic-nav-title">
@@ -50,12 +50,12 @@ function CitizenDashboard({onFamilyAccount,onAppointments,onCertificate,onLogout
             </button>
 
             <button
-  className="clinic-nav-item"
-  onClick={onAppointments}
->
-  <span>📅</span>
-  Appointments
-</button>
+              className="clinic-nav-item"
+              onClick={onAppointments}
+            >
+              <span>📅</span>
+              Appointments
+            </button>
             <button
               className="clinic-nav-item"
               onClick={onCertificate}
@@ -101,10 +101,10 @@ function CitizenDashboard({onFamilyAccount,onAppointments,onCertificate,onLogout
 
       </aside>
 
-      {/* Main */}
+      {}
       <main className="clinic-main">
 
-        {/* Header */}
+        {}
         <header className="clinic-header">
 
           <div>
@@ -134,7 +134,7 @@ function CitizenDashboard({onFamilyAccount,onAppointments,onCertificate,onLogout
 
         </header>
 
-        {/* Statistics */}
+        {}
         <section className="clinic-stats">
 
           <div className="clinic-stat-card">
@@ -167,7 +167,7 @@ function CitizenDashboard({onFamilyAccount,onAppointments,onCertificate,onLogout
 
         </section>
 
-        {/* Vaccination Records */}
+        {}
         <section className="workers-section">
 
           <div className="workers-header">

@@ -14,7 +14,6 @@ jest.mock("../models/FamilyProfile");
 jest.mock("../models/Certificate");
 jest.mock("../services/certificateService");
 
-// The acting user is swapped per test via this variable.
 let mockActingUser = { id: "u1", role: "worker" };
 jest.mock("../middleware/authMiddleware", () => (req, res, next) => {
   req.user = mockActingUser;

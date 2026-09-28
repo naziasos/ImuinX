@@ -234,7 +234,6 @@ function LogDose({ onBack, onLogout }) {
         message: res.data.message,
       });
 
-      // refresh inventory so the batch quantity reflects the dose taken
       const inv = await api.get("/vaccine-inventory/my-clinic");
       setInventory(inv.data.inventory || []);
     } catch (err) {
@@ -253,7 +252,6 @@ function LogDose({ onBack, onLogout }) {
     }
   };
 
-  // subtle pointer-driven 3D tilt on the hero banner
   const handleHeroMove = (e) => {
     const el = heroRef.current;
     if (!el) return;
@@ -279,7 +277,7 @@ function LogDose({ onBack, onLogout }) {
 
   return (
     <div className="clinic-dashboard">
-      {/* Sidebar (consistent with the rest of the worker area) */}
+      {}
       <aside className="clinic-sidebar">
         <div>
           <div className="clinic-logo">
@@ -350,7 +348,7 @@ function LogDose({ onBack, onLogout }) {
           </div>
         </div>
 
-        {/* Step rail */}
+        {}
         <div className="logdose-rail">
           <div className={`logdose-rail-step ${step1Done ? "done" : "pending"}`}>
             <span className="logdose-rail-dot">{step1Done ? "✓" : "1"}</span>
@@ -374,7 +372,7 @@ function LogDose({ onBack, onLogout }) {
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="logdose-grid">
-            {/* PANEL 1 — Citizen */}
+            {}
             <div className="logdose-panel">
               <div className="logdose-panel-inner">
                 <div className="logdose-panel-head">
@@ -579,7 +577,7 @@ function LogDose({ onBack, onLogout }) {
               </div>
             </div>
 
-            {/* PANEL 3 — Date & confirm */}
+            {}
             <div
               className={`logdose-panel ${
                 !(step1Done && step2Done) ? "is-locked" : ""

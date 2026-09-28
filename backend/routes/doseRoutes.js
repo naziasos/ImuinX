@@ -11,9 +11,6 @@ const certificateService = require("../services/certificateService");
 
 const router = express.Router();
 
-// Frontend-friendly type labels <-> the model names DoseRecord's
-// refPath actually needs ("citizenType" must match a real Mongoose
-// model name so populate() can resolve it dynamically).
 const CITIZEN_TYPE_MAP = {
   user: "User",
   family: "FamilyProfile",
@@ -25,10 +22,7 @@ function resolveCitizenModel(citizenType) {
   return modelName === "User" ? User : FamilyProfile;
 }
 
-// =====================================================
-// CREATE DOSE RECORD (validates the citizen, validates the
-// batch against inventory, decrements stock on success)
-// =====================================================
+
 
 router.post("/", authMiddleware, async (req, res) => {
   let reserved = null;
@@ -36,13 +30,12 @@ router.post("/", authMiddleware, async (req, res) => {
   try {
     const {
       citizenId,
-      citizenType, // "user" | "family"
+      citizenType, 
       vaccineType,
       batchNumber,
       dateAdministered,
     } = req.body;
 
-    // ---- Required fields ----
     if (!citizenId || !citizenType || !vaccineType || !batchNumber) {
       return res.status(400).json({
         message:
@@ -64,7 +57,6 @@ router.post("/", authMiddleware, async (req, res) => {
       });
     }
 
-    // ---- Logged-in health worker ----
     const user = await User.findById(req.user.id);
 
     if (!user) {
@@ -85,7 +77,7 @@ router.post("/", authMiddleware, async (req, res) => {
       });
     }
 
-    // ---- Citizen must exist in whichever collection was named ----
+   
     const citizen = await CitizenModel.findById(citizenId);
 
     if (!citizen) {
@@ -98,10 +90,6 @@ router.post("/", authMiddleware, async (req, res) => {
     const trimmedBatchNumber = batchNumber.trim();
     const now = new Date();
 
-    // ---- Atomically validate + decrement inventory in one step ----
-    // Only succeeds if the batch exists for this clinic/vaccine,
-    // isn't expired, and has stock available. This avoids a race
-    // between two workers logging a dose off the same last unit.
     reserved = await VaccineInventory.findOneAndUpdate(
       {
         clinicId: user.clinicId,
@@ -115,7 +103,7 @@ router.post("/", authMiddleware, async (req, res) => {
     );
 
     if (!reserved) {
-      // Figure out *why* it failed so we can give a useful message.
+      
       const existingBatch = await VaccineInventory.findOne({
         clinicId: user.clinicId,
         vaccineType: trimmedVaccineType,
@@ -140,7 +128,7 @@ router.post("/", authMiddleware, async (req, res) => {
       });
     }
 
-    // ---- Create the dose record ----
+    
     let record;
 
     try {
@@ -154,12 +142,12 @@ router.post("/", authMiddleware, async (req, res) => {
         clinicId: user.clinicId,
       });
     } catch (createError) {
-      // Roll back the inventory decrement since no record was saved.
+      
       await VaccineInventory.updateOne(
         { _id: reserved._id },
         { $inc: { quantity: 1 } }
       );
-      reserved = null; // already rolled back — don't repeat it below
+      reserved = null; 
 
       if (createError.name === "ValidationError") {
         return res.status(400).json({
@@ -170,12 +158,6 @@ router.post("/", authMiddleware, async (req, res) => {
       throw createError;
     }
 
-    // ---- Issue the signed QR certificate for the completed dose ----
-    // Best-effort by design: the dose is already administered and the
-    // stock already consumed, so a certificate problem must never turn
-    // this into a failed request (which would invite a duplicate dose
-    // entry). On failure `certificate` is null and staff can call
-    // POST /api/certificates/dose/:doseRecordId/issue to retry.
     let certificate = null;
 
     try {
@@ -198,8 +180,6 @@ router.post("/", authMiddleware, async (req, res) => {
       certificate,
     });
   } catch (error) {
-    // Best-effort rollback if something unexpected happened after we
-    // already decremented the inventory.
     if (reserved) {
       try {
         await VaccineInventory.updateOne(
@@ -222,10 +202,7 @@ router.post("/", authMiddleware, async (req, res) => {
   }
 });
 
-// =====================================================
-// GET DOSE HISTORY FOR A PERSON (either citizen type)
-// GET /api/doses/citizen/:citizenId?citizenType=user|family
-// =====================================================
+
 
 router.get("/citizen/:citizenId", authMiddleware, async (req, res) => {
   try {
@@ -240,10 +217,6 @@ router.get("/citizen/:citizenId", authMiddleware, async (req, res) => {
 
     const filter = { citizenId };
 
-    // citizenType is optional on this read path for backwards
-    // compatibility, but when provided it must be valid and it keeps
-    // the lookup precise (the same ObjectId could theoretically exist
-    // in both the User and FamilyProfile collections).
     if (citizenType) {
       const modelName = CITIZEN_TYPE_MAP[citizenType];
 

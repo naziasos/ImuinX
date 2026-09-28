@@ -14,7 +14,6 @@ jest.mock("../models/VaccineInventory");
 jest.mock("../models/DoseRecord");
 jest.mock("../services/certificateService");
 
-// Mock authentication middleware
 jest.mock("../middleware/authMiddleware", () => {
   return (req, res, next) => {
     req.user = {

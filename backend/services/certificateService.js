@@ -8,17 +8,7 @@ const FamilyProfile = require("../models/FamilyProfile");
 const qrToken = require("../utils/qrToken");
 
 const MONGO_DUPLICATE_KEY = 11000;
-
-/**
- * Issue the certificate for a completed dose. Idempotent: a dose has at
- * most one certificate (unique index on doseRecordId), so calling this
- * twice, or from two racing requests, returns the same certificate.
- *
- * Signing config is checked BEFORE anything is written, so a missing
- * QR_SIGNING_SECRET never leaves half-created rows behind.
- *
- * @returns {Promise<{certificate: object, created: boolean}>}
- */
+ 
 async function issueForDose(doseRecord) {
   qrToken.assertConfigured();
 
@@ -37,7 +27,6 @@ async function issueForDose(doseRecord) {
 
     return { certificate, created: true };
   } catch (error) {
-    // Lost a race with a concurrent issuer: use the winner's row.
     if (error && error.code === MONGO_DUPLICATE_KEY) {
       const winner = await Certificate.findOne({
         doseRecordId: doseRecord._id,
@@ -52,13 +41,7 @@ async function issueForDose(doseRecord) {
   }
 }
 
-/**
- * Build the signed token and QR image for a certificate.
- *
- * Nothing extra is stored: the token is derived deterministically from
- * the certificate's immutable fields, so it can be re-rendered at any
- * time and is always identical.
- */
+
 async function buildQrPayload(certificate) {
   const token = qrToken.signToken(certificate.qrToken, certificate.issuedDate);
 
@@ -73,14 +56,10 @@ async function buildQrPayload(certificate) {
     doseRecordId: certificate.doseRecordId,
     issuedDate: certificate.issuedDate,
     token,
-    qrCode, // PNG data URL, drop straight into <img src="...">
+    qrCode, 
   };
 }
 
-/**
- * Verify a scanned token: signature first, then the server-side record.
- * Only limited, non-sensitive details are returned to the verifier.
- */
 async function verifyScannedToken(token) {
   const check = qrToken.verifyToken(token);
 
@@ -96,7 +75,6 @@ async function verifyScannedToken(token) {
     return { valid: false, reason: "certificate_not_found" };
   }
 
-  // The token must match this exact issuance, not merely the same lookup id.
   if (Math.floor(certificate.issuedDate.getTime() / 1000) !== iat) {
     return { valid: false, reason: "token_mismatch" };
   }

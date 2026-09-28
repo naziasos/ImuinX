@@ -30,7 +30,6 @@ const makeCert = (overrides = {}) => ({
   ...overrides,
 });
 
-// findById(...).populate(...)  and  findById(...).select(...)
 const chain = (method, value) => ({ [method]: jest.fn().mockResolvedValue(value) });
 
 beforeEach(() => {

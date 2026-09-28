@@ -15,7 +15,6 @@ function isStaff(user) {
   return user && (user.role === "worker" || user.role === "clinicAdmin");
 }
 
-// Public QR verification
 router.post("/verify", async (req, res) => {
   const { token } = req.body;
 
@@ -34,7 +33,6 @@ router.post("/verify", async (req, res) => {
   }
 });
 
-// Get the certificate + QR for a completed dose
 router.get("/dose/:doseRecordId", authMiddleware, async (req, res) => {
   try {
     const { doseRecordId } = req.params;
@@ -57,12 +55,10 @@ router.get("/dose/:doseRecordId", authMiddleware, async (req, res) => {
 
     let allowed = false;
 
-    // Admins may inspect certificates across clinics.
     if (user.role === "admin") {
       allowed = true;
     }
 
-    // Worker / clinic admin can access certificates issued by their clinic.
     if (isStaff(user)) {
       allowed =
         user.clinicId &&
@@ -70,12 +66,10 @@ router.get("/dose/:doseRecordId", authMiddleware, async (req, res) => {
         String(user.clinicId) === String(dose.clinicId);
     }
 
-    // Citizen can access their own certificate.
     if (user.role === "citizen" && dose.citizenType === "User") {
       allowed = String(dose.citizenId) === String(user._id);
     }
 
-    // Parent/guardian can access a family member's certificate.
     if (user.role === "citizen" && dose.citizenType === "FamilyProfile") {
       const familyMember = await FamilyProfile.findOne({
         _id: dose.citizenId,
@@ -109,8 +103,6 @@ router.get("/dose/:doseRecordId", authMiddleware, async (req, res) => {
   }
 });
 
-// Manually/retry issue for a completed dose.
-// Normally T11.2 is triggered automatically by dose creation.
 router.post("/dose/:doseRecordId/issue", authMiddleware, async (req, res) => {
   try {
     const { doseRecordId } = req.params;

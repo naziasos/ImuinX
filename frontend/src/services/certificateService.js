@@ -1,9 +1,5 @@
 const Certificate = require("../models/Certificate");
 const { signToken, verifyToken } = require("../utils/certificateToken");
-
-// =====================================================
-// ISSUE (idempotent: one certificate per dose record)
-// =====================================================
 async function issueCertificateForDose(doseRecord) {
   const existing = await Certificate.findOne({ doseRecordId: doseRecord._id });
 
@@ -16,8 +12,6 @@ async function issueCertificateForDose(doseRecord) {
       doseRecordId: doseRecord._id,
     });
   } catch (error) {
-    // Two requests raced past the findOne above; the unique index on
-    // doseRecordId let only one win. Return the winner.
     if (error.code === 11000) {
       const winner = await Certificate.findOne({
         doseRecordId: doseRecord._id,
@@ -30,11 +24,6 @@ async function issueCertificateForDose(doseRecord) {
   }
 }
 
-// =====================================================
-// QR CODE
-// What gets encoded: the signed token, or a verify URL that contains it
-// when CERT_VERIFY_BASE_URL is set (so a phone camera opens the page).
-// =====================================================
 function buildQrPayload(signedToken) {
   const baseUrl = (process.env.CERT_VERIFY_BASE_URL || "").replace(/\/+$/, "");
 
@@ -42,8 +31,7 @@ function buildQrPayload(signedToken) {
 }
 
 async function getCertificateQr(certificate) {
-  // Required lazily so the signing/verification code works (and can be
-  // tested) without the qrcode package loaded.
+
   const QRCode = require("qrcode");
 
   const token = signToken(certificate.qrToken);
@@ -57,11 +45,6 @@ async function getCertificateQr(certificate) {
   return { token, qrDataUrl };
 }
 
-// =====================================================
-// VERIFY
-// Step 1: check the signature (no DB hit for forgeries)
-// Step 2: confirm the certificate exists and return public details
-// =====================================================
 async function verifyCertificate(token) {
   const parsed = verifyToken(token);
 
@@ -90,7 +73,6 @@ async function verifyCertificate(token) {
     };
   }
 
-  // Only what a verifier needs; no email, DOB or internal ids.
   return {
     valid: true,
     status: 200,
