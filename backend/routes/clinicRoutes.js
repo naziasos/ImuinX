@@ -361,6 +361,7 @@ router.post(
 
 
 
+
 // =====================================================
 //  CREATE DUTY ASSIGNMENT
 // =====================================================
@@ -383,6 +384,19 @@ router.post(
       if (!workerId || !dutyDate || !dutyType) {
         return res.status(400).json({
           message: "Worker, duty date and duty type are required",
+        });
+      }
+
+      // Only these two duty types are allowed
+      const allowedDutyTypes = [
+        "Vaccination",
+        "In-House Visit",
+      ];
+
+      if (!allowedDutyTypes.includes(dutyType.trim())) {
+        return res.status(400).json({
+          message:
+            "Invalid duty type. Only Vaccination and In-House Visit are allowed",
         });
       }
 
@@ -428,7 +442,10 @@ router.post(
         dutyAssignment,
       });
     } catch (error) {
-      console.error("Duty assignment error:", error.message);
+      console.error(
+        "Duty assignment error:",
+        error.message
+      );
 
       res.status(500).json({
         message: "Server error while creating duty assignment",
@@ -436,6 +453,8 @@ router.post(
     }
   }
 );
+
+
 
 
 

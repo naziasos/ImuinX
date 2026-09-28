@@ -80,5 +80,23 @@ describe("Duty Assignment Routes", () => {
       dutyType: "Vaccination",
     });
   });
+
+  test("POST /api/clinics/my-clinic/duties should reject invalid duty type", async () => {
+    const response = await request(app)
+      .post("/api/clinics/my-clinic/duties")
+      .send({
+        workerId: "worker-123",
+        dutyDate: "2026-09-28",
+        dutyType: "Registration Desk",
+      });
+
+    expect(response.statusCode).toBe(400);
+
+    expect(response.body.message).toBe(
+      "Invalid duty type. Only Vaccination and In-House Visit are allowed"
+    );
+
+    expect(DutyAssignment.create).not.toHaveBeenCalled();
+  });
 });
 
