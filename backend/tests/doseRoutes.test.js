@@ -5,12 +5,14 @@ const User = require("../models/User");
 const FamilyProfile = require("../models/FamilyProfile");
 const VaccineInventory = require("../models/VaccineInventory");
 const DoseRecord = require("../models/DoseRecord");
+const certificateService = require("../services/certificateService");
 const doseRoutes = require("../routes/doseRoutes");
 
 jest.mock("../models/User");
 jest.mock("../models/FamilyProfile");
 jest.mock("../models/VaccineInventory");
 jest.mock("../models/DoseRecord");
+jest.mock("../services/certificateService");
 
 // Mock authentication middleware
 jest.mock("../middleware/authMiddleware", () => {
@@ -50,7 +52,18 @@ const registeredCitizenBody = {
 
 describe("Dose Routes", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
+
+    // Default: certificate issuance succeeds.
+    certificateService.issueForDose.mockResolvedValue({
+      certificate: { _id: "cert-1" },
+      created: true,
+    });
+    certificateService.buildQrPayload.mockResolvedValue({
+      id: "cert-1",
+      token: "signed.token.value",
+      qrCode: "data:image/png;base64,AAAA",
+    });
   });
 
   test("POST /api/doses logs a dose for a FamilyProfile member and decrements inventory", async () => {
@@ -238,6 +251,69 @@ describe("Dose Routes", () => {
 
     expect(response.status).toBe(404);
     expect(VaccineInventory.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+
+  test("POST /api/doses issues a signed QR certificate on completion", async () => {
+    User.findById.mockResolvedValue(workerUser);
+    FamilyProfile.findById.mockResolvedValue({ _id: "citizen-1" });
+    VaccineInventory.findOneAndUpdate.mockResolvedValue({
+      _id: "inventory-1",
+      quantity: 4,
+    });
+
+    const record = { _id: "dose-record-9", citizenType: "FamilyProfile" };
+    DoseRecord.create.mockResolvedValue(record);
+
+    const response = await request(app)
+      .post("/api/doses")
+      .send(familyMemberBody);
+
+    expect(response.status).toBe(201);
+    expect(certificateService.issueForDose).toHaveBeenCalledWith(record);
+    expect(response.body.certificate).toEqual({
+      id: "cert-1",
+      token: "signed.token.value",
+      qrCode: "data:image/png;base64,AAAA",
+    });
+  });
+
+  test("POST /api/doses still succeeds (certificate null) if issuance fails", async () => {
+    User.findById.mockResolvedValue(workerUser);
+    FamilyProfile.findById.mockResolvedValue({ _id: "citizen-1" });
+    VaccineInventory.findOneAndUpdate.mockResolvedValue({
+      _id: "inventory-1",
+      quantity: 4,
+    });
+    DoseRecord.create.mockResolvedValue({ _id: "dose-record-10" });
+
+    certificateService.issueForDose.mockRejectedValue(new Error("boom"));
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await request(app)
+      .post("/api/doses")
+      .send(familyMemberBody);
+
+    expect(response.status).toBe(201);
+    expect(response.body.doseRecordId).toBe("dose-record-10");
+    expect(response.body.certificate).toBeNull();
+    // The dose was administered: stock must NOT be rolled back.
+    expect(VaccineInventory.updateOne).not.toHaveBeenCalled();
+
+    errorSpy.mockRestore();
+  });
+
+  test("POST /api/doses does not issue a certificate when the dose is rejected", async () => {
+    User.findById.mockResolvedValue(workerUser);
+    FamilyProfile.findById.mockResolvedValue({ _id: "citizen-1" });
+    VaccineInventory.findOneAndUpdate.mockResolvedValue(null);
+    VaccineInventory.findOne.mockResolvedValue(null);
+
+    const response = await request(app)
+      .post("/api/doses")
+      .send(familyMemberBody);
+
+    expect(response.status).toBe(400);
+    expect(certificateService.issueForDose).not.toHaveBeenCalled();
   });
 
   test("GET /api/doses/citizen/:citizenId?citizenType=family filters by citizenType", async () => {

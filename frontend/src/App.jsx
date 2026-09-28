@@ -20,6 +20,7 @@ import LogDose from "./pages/worker/LogDose";
 import ShowWork from "./pages/worker/ShowWork";
 import VaccineInventory from "./pages/VaccineInventory";
 import FamilyAccount from "./pages/citizen/FamilyAccount";
+import MyCertificate from "./pages/citizen/MyCertificate";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -89,7 +90,8 @@ function App() {
             page !== "workerDashboard" &&
             page !== "logDose" &&
             page !== "familyAccount" &&
-            page !== "bookAppointment" && 
+            page !== "bookAppointment" &&
+            page !== "myCertificate" &&
             page !== "showWork" && (
             <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
 
@@ -170,6 +172,7 @@ function App() {
             <CitizenDashboard
               onFamilyAccount={() => setPage("familyAccount")}
               onAppointments={() => setPage("bookAppointment")}
+              onCertificate={() => setPage("myCertificate")}
               onLogout={() => { 
                 localStorage.removeItem("token"); 
                 localStorage.removeItem("user"); 
@@ -190,6 +193,13 @@ function App() {
                 setCurrentUser(null);
                 setPage("login");
               }}
+            />
+          )}
+
+          {/* My Certificate */}
+          {page === "myCertificate" && (
+            <MyCertificate
+              onBack={() => setPage("citizenDashboard")}
             />
           )}
 
@@ -280,6 +290,7 @@ function App() {
         page !== "workerDashboard" &&
         page !== "logDose" &&
         page !== "bookAppointment" &&
+        page !== "myCertificate" &&
         page !== "showWork" && (
         <Footer />
       )}

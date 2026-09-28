@@ -216,6 +216,16 @@ function LogDose({ onBack, onLogout }) {
         dateAdministered,
       });
 
+      const historyRes = await api.get(
+        `/doses/citizen/${selectedCitizen._id}`,
+        {
+          params: {
+            citizenType: selectedCitizen.type,
+          },
+        }
+      );
+
+      setDoseHistory(historyRes.data.doses || []);
       setSuccess({
         citizenName: selectedCitizen.name,
         vaccineType,

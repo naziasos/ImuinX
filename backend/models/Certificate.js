@@ -33,6 +33,19 @@ const certificateSchema = new mongoose.Schema(
       immutable: true,
       default: Date.now,
     },
+
+    // Set when a certificate is invalidated (e.g. issued in error).
+    // Verification rejects any certificate with revokedAt set.
+    revokedAt: {
+      type: Date,
+      default: null,
+    },
+
+    revokedReason: {
+      type: String,
+      trim: true,
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -7,6 +7,7 @@ const FamilyProfile = require("../models/FamilyProfile");
 const User = require("../models/User");
 
 const authMiddleware = require("../middleware/authMiddleware");
+const certificateService = require("../services/certificateService");
 
 const router = express.Router();
 
@@ -169,11 +170,32 @@ router.post("/", authMiddleware, async (req, res) => {
       throw createError;
     }
 
+    // ---- Issue the signed QR certificate for the completed dose ----
+    // Best-effort by design: the dose is already administered and the
+    // stock already consumed, so a certificate problem must never turn
+    // this into a failed request (which would invite a duplicate dose
+    // entry). On failure `certificate` is null and staff can call
+    // POST /api/certificates/dose/:doseRecordId/issue to retry.
+    let certificate = null;
+
+    try {
+      const issued = await certificateService.issueForDose(record);
+      certificate = await certificateService.buildQrPayload(
+        issued.certificate
+      );
+    } catch (certificateError) {
+      console.error(
+        `Certificate issuance failed for dose ${record._id}:`,
+        certificateError.message
+      );
+    }
+
     res.status(201).json({
       message: "Dose record created successfully",
       doseRecordId: record._id,
       record,
       remainingStock: reserved.quantity,
+      certificate,
     });
   } catch (error) {
     // Best-effort rollback if something unexpected happened after we
