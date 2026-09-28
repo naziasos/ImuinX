@@ -459,7 +459,42 @@ router.post(
 
 
 
+// =====================================================
+//  GET WORKER'S DUTIES
+// =====================================================
 
+router.get(
+  "/my-duty",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      // Only Worker can access this route
+      if (req.user.role !== "worker") {
+        return res.status(403).json({
+          message: "Worker access required",
+        });
+      }
+
+      // Get duties assigned to the logged-in worker
+      const duties = await DutyAssignment.find({
+        workerId: req.user.id,
+      }).sort({ dutyDate: 1 });
+
+      res.json({
+        duties,
+      });
+    } catch (error) {
+      console.error(
+        "Worker duty fetch error:",
+        error.message
+      );
+
+      res.status(500).json({
+        message: "Server error while loading worker duties",
+      });
+    }
+  }
+);
 
 
 

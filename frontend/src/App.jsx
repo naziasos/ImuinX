@@ -17,6 +17,7 @@ import AssignDuty from "./pages/clinicAdmin/AssignDuty";
 import CitizenDashboard from "./pages/citizen/CitizenDashboard";
 import WorkerDashboard from "./pages/worker/WorkerDashboard";
 import LogDose from "./pages/worker/LogDose";
+import ShowWork from "./pages/worker/ShowWork";
 import VaccineInventory from "./pages/VaccineInventory";
 import FamilyAccount from "./pages/citizen/FamilyAccount";
 
@@ -88,7 +89,8 @@ function App() {
             page !== "workerDashboard" &&
             page !== "logDose" &&
             page !== "familyAccount" &&
-            page !== "bookAppointment" &&  (
+            page !== "bookAppointment" && 
+            page !== "showWork" && (
             <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
 
               {page === "register" && (
@@ -192,23 +194,9 @@ function App() {
           )}
 
           {/* Book Appointment */}
-{page === "bookAppointment" && (
-  <BookAppointment
-    onBack={() => setPage("citizenDashboard")}
-    onLogout={() => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      setCurrentUser(null);
-      setPage("login");
-    }}
-  />
-)}
-
-
-          {/* Worker Dashboard */}
-          {page === "workerDashboard" && (
-            <WorkerDashboard
-              onLogDose={() => setPage("logDose")}
+          {page === "bookAppointment" && (
+            <BookAppointment
+              onBack={() => setPage("citizenDashboard")}
               onLogout={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
@@ -216,6 +204,28 @@ function App() {
                 setPage("login");
               }}
             />
+          )}
+
+
+          {/* Worker Dashboard */}
+          {page === "workerDashboard" && (
+            <WorkerDashboard
+              onLogDose={() => setPage("logDose")}
+              onShowWork={() => setPage("showWork")}
+              onLogout={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                setCurrentUser(null);
+                setPage("login");
+              }}
+            />
+          )}
+
+
+
+          {/* Show Work */}
+          {page === "showWork" && (
+            <ShowWork />
           )}
 
           {/* Log Dose */}
@@ -269,7 +279,8 @@ function App() {
         page !== "citizenDashboard" &&
         page !== "workerDashboard" &&
         page !== "logDose" &&
-        page !== "bookAppointment" && (
+        page !== "bookAppointment" &&
+        page !== "showWork" && (
         <Footer />
       )}
     </div>
