@@ -200,7 +200,36 @@ router.patch("/:appointmentId/approve", async (req, res) => {
     });
   }
 });
+// Cancel an appointment by citizen
+router.patch("/:appointmentId/cancel", async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
 
+    const appointment = await Appointment.findByIdAndUpdate(
+      appointmentId,
+      { status: "Cancelled" },
+      { new: true }
+    );
+
+    if (!appointment) {
+      return res.status(404).json({
+        message: "Appointment not found",
+      });
+    }
+
+    res.json({
+      message: "Appointment cancelled successfully",
+      appointmentId: appointment._id,
+      status: appointment.status,
+    });
+  } catch (error) {
+    console.error("Error cancelling appointment:", error);
+
+    res.status(500).json({
+      message: "Failed to cancel appointment",
+    });
+  }
+});
 // Reject an appointment
 router.patch("/:appointmentId/reject", async (req, res) => {
   try {
