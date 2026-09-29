@@ -8,6 +8,9 @@ const FamilyProfile = require("../models/FamilyProfile");
 const qrToken = require("../utils/qrToken");
 
 const MONGO_DUPLICATE_KEY = 11000;
+const CERTIFICATE_VALIDITY_DAYS = Number(
+  process.env.CERTIFICATE_VALIDITY_DAYS || 365
+);
  
 async function issueForDose(doseRecord) {
   qrToken.assertConfigured();
@@ -17,12 +20,17 @@ async function issueForDose(doseRecord) {
   if (existing) {
     return { certificate: existing, created: false };
   }
+  const expiryDate = new Date(doseRecord.dateAdministered);
+expiryDate.setDate(
+  expiryDate.getDate() + CERTIFICATE_VALIDITY_DAYS
+);
 
   try {
     const certificate = await Certificate.create({
       citizenId: doseRecord.citizenId,
       citizenType: doseRecord.citizenType,
       doseRecordId: doseRecord._id,
+        expiryDate,
     });
 
     return { certificate, created: true };
@@ -39,11 +47,12 @@ async function issueForDose(doseRecord) {
 
     throw error;
   }
+ 
 }
 
 
 async function buildQrPayload(certificate) {
-  const token = qrToken.signToken(certificate.qrToken, certificate.issuedDate);
+  const token = qrToken.signToken(certificate.qrToken, certificate.issuedDate, certificate.expiryDate);
 
   const qrCode = await QRCode.toDataURL(token, {
     errorCorrectionLevel: "M",
@@ -97,22 +106,7 @@ async function verifyScannedToken(token) {
 
   return {
     valid: true,
-    certificate: {
-      id: certificate._id,
-      issuedDate: certificate.issuedDate,
-    },
-    holder: {
-      name: citizen ? citizen.name : null,
-      type: certificate.citizenType === "User" ? "user" : "family",
-    },
-    dose: {
-      vaccineType: dose.vaccineType,
-      batchNumber: dose.batchNumber,
-      dateAdministered: dose.dateAdministered,
-    },
-    clinic: dose.clinicId
-      ? { name: dose.clinicId.name, location: dose.clinicId.location }
-      : null,
+    
   };
 }
 

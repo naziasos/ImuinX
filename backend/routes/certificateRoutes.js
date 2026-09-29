@@ -23,8 +23,11 @@ router.post("/verify", async (req, res) => {
   }
 
   try {
-    const result = await certificateService.verifyScannedToken(token.trim());
-    return res.status(200).json(result);
+   const result = await certificateService.verifyScannedToken(token.trim());
+
+return res.status(200).json({
+  valid: result.valid === true,
+});
   } catch (error) {
     console.error("Certificate verification error:", error.message);
     return res.status(500).json({

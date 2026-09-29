@@ -63,7 +63,7 @@ function assertConfigured() {
   loadKeyring();
 }
 
-function signToken(tid, issuedAt) {
+function signToken(tid, issuedAt,expiryDate) {
   if (!TID_PATTERN.test(tid || "")) {
     throw new TypeError("tid must be a 64-character lowercase hex string");
   }
@@ -75,6 +75,7 @@ function signToken(tid, issuedAt) {
       v: TOKEN_VERSION,
       tid,
       iat: Math.floor(new Date(issuedAt).getTime() / 1000),
+       exp: Math.floor(new Date(expiryDate).getTime() / 1000),
     },
     activeSecret,
     {
@@ -82,6 +83,7 @@ function signToken(tid, issuedAt) {
       keyid: activeKid,
       audience: AUDIENCE,
       issuer: ISSUER,
+      
     }
   );
 }

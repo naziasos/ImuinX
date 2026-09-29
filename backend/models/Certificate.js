@@ -33,6 +33,11 @@ const certificateSchema = new mongoose.Schema(
       immutable: true,
       default: Date.now,
     },
+    expiryDate: {
+  type: Date,
+  required: true,
+  immutable: true,
+},
     revokedAt: {
       type: Date,
       default: null,
