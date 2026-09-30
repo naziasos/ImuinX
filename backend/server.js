@@ -10,6 +10,7 @@ const clinicRoutes = require("./routes/clinicRoutes");
 const vaccineInventoryRoutes = require("./routes/vaccineInventoryRoutes");
 const doseRoutes = require("./routes/doseRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
+const workerAppointmentRoutes = require("./routes/workerAppointmentRoutes");
 const certificateRoutes = require("./routes/certificateRoutes");
 
 
@@ -26,6 +27,10 @@ app.use("/api/clinics", clinicRoutes);
 app.use("/api/vaccine-inventory", vaccineInventoryRoutes);
 app.use("/api/doses", doseRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use(
+  "/api/worker-appointments",
+  workerAppointmentRoutes
+);
 app.use("/api/certificates", certificateRoutes);
 
 
