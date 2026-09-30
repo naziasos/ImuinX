@@ -18,7 +18,10 @@ const dose = {
   _id: new mongoose.Types.ObjectId(),
   citizenId: new mongoose.Types.ObjectId(),
   citizenType: "FamilyProfile",
+  dateAdministered: new Date("2026-01-31T00:00:00.000Z"),
 };
+
+const DAY = 24 * 60 * 60 * 1000;
 
 const makeCert = (overrides = {}) => ({
   _id: new mongoose.Types.ObjectId(),
@@ -26,11 +29,11 @@ const makeCert = (overrides = {}) => ({
   citizenType: "FamilyProfile",
   doseRecordId: dose._id,
   qrToken: crypto.randomBytes(32).toString("hex"),
-  issuedDate: new Date("2026-02-01T08:30:00.000Z"),
+  issuedDate: new Date(Date.now() - 2 * DAY),
+  expiryDate: new Date(Date.now() + 30 * DAY),
+  revokedAt: null,
   ...overrides,
 });
-
-const chain = (method, value) => ({ [method]: jest.fn().mockResolvedValue(value) });
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -51,6 +54,7 @@ describe("issueForDose", () => {
       citizenId: dose.citizenId,
       citizenType: "FamilyProfile",
       doseRecordId: dose._id,
+      expiryDate: expect.any(Date),
     });
   });
 
@@ -122,47 +126,28 @@ describe("buildQrPayload", () => {
 describe("verifyScannedToken", () => {
   const setupHappyPath = (cert) => {
     Certificate.findOne.mockResolvedValue(cert);
-    DoseRecord.findById.mockReturnValue(
-      chain("populate", {
-        vaccineType: "MMR",
-        batchNumber: "B-1",
-        dateAdministered: new Date("2026-01-31"),
-        clinicId: { name: "City Clinic", location: "Dhaka" },
-      })
-    );
-    FamilyProfile.findById.mockReturnValue(chain("select", { name: "Alfi Jr." }));
+    DoseRecord.findById.mockResolvedValue({ _id: dose._id });
   };
 
-  test("accepts a genuine token and returns limited details", async () => {
+  test("accepts a genuine token and returns only { valid: true }", async () => {
     const cert = makeCert();
     setupHappyPath(cert);
     const { token } = await certificateService.buildQrPayload(cert);
 
     const result = await certificateService.verifyScannedToken(token);
 
-    expect(result).toEqual({
-      valid: true,
-      certificate: { id: cert._id, issuedDate: cert.issuedDate },
-      holder: { name: "Alfi Jr.", type: "family" },
-      dose: {
-        vaccineType: "MMR",
-        batchNumber: "B-1",
-        dateAdministered: new Date("2026-01-31"),
-      },
-      clinic: { name: "City Clinic", location: "Dhaka" },
-    });
+    expect(result).toEqual({ valid: true });
     expect(Certificate.findOne).toHaveBeenCalledWith({ qrToken: cert.qrToken });
   });
 
-  test("looks the holder up in User for User certificates", async () => {
-    const cert = makeCert({ citizenType: "User" });
+  test("never reads personal data while verifying", async () => {
+    const cert = makeCert();
     setupHappyPath(cert);
-    User.findById.mockReturnValue(chain("select", { name: "Alfi" }));
     const { token } = await certificateService.buildQrPayload(cert);
 
-    const result = await certificateService.verifyScannedToken(token);
+    await certificateService.verifyScannedToken(token);
 
-    expect(result.holder).toEqual({ name: "Alfi", type: "user" });
+    expect(User.findById).not.toHaveBeenCalled();
     expect(FamilyProfile.findById).not.toHaveBeenCalled();
   });
 
@@ -170,6 +155,35 @@ describe("verifyScannedToken", () => {
     const result = await certificateService.verifyScannedToken("aaa.bbb.ccc");
 
     expect(result.valid).toBe(false);
+    expect(Certificate.findOne).not.toHaveBeenCalled();
+  });
+
+  test("rejects a tampered token without touching the database", async () => {
+    const cert = makeCert();
+    const { token } = await certificateService.buildQrPayload(cert);
+    const [h, p, s] = token.split(".");
+    const payload = JSON.parse(Buffer.from(p, "base64url").toString());
+    payload.exp += 365 * 24 * 60 * 60;
+    const forged = `${h}.${Buffer.from(JSON.stringify(payload)).toString("base64url")}.${s}`;
+
+    expect(await certificateService.verifyScannedToken(forged)).toEqual({
+      valid: false,
+      reason: "invalid_signature",
+    });
+    expect(Certificate.findOne).not.toHaveBeenCalled();
+  });
+
+  test("rejects an expired token without touching the database", async () => {
+    const cert = makeCert({
+      issuedDate: new Date(Date.now() - 20 * DAY),
+      expiryDate: new Date(Date.now() - 1 * DAY),
+    });
+    const { token } = await certificateService.buildQrPayload(cert);
+
+    expect(await certificateService.verifyScannedToken(token)).toEqual({
+      valid: false,
+      reason: "expired",
+    });
     expect(Certificate.findOne).not.toHaveBeenCalled();
   });
 
@@ -189,7 +203,7 @@ describe("verifyScannedToken", () => {
     const { token } = await certificateService.buildQrPayload(cert);
     Certificate.findOne.mockResolvedValue({
       ...cert,
-      issuedDate: new Date("2026-03-01T00:00:00Z"),
+      issuedDate: new Date(Date.now() - 1 * DAY),
     });
 
     expect(await certificateService.verifyScannedToken(token)).toEqual({
@@ -198,11 +212,36 @@ describe("verifyScannedToken", () => {
     });
   });
 
+  test("rejects a token whose expiry differs from the stored expiry", async () => {
+    const cert = makeCert();
+    const { token } = await certificateService.buildQrPayload(cert);
+    Certificate.findOne.mockResolvedValue({
+      ...cert,
+      expiryDate: new Date(Date.now() + 90 * DAY),
+    });
+
+    expect(await certificateService.verifyScannedToken(token)).toEqual({
+      valid: false,
+      reason: "token_mismatch",
+    });
+  });
+
+  test("rejects a revoked certificate even though the signature is good", async () => {
+    const cert = makeCert({ revokedAt: new Date() });
+    const { token } = await certificateService.buildQrPayload(cert);
+    Certificate.findOne.mockResolvedValue(cert);
+
+    expect(await certificateService.verifyScannedToken(token)).toEqual({
+      valid: false,
+      reason: "revoked",
+    });
+  });
+
   test("rejects when the underlying dose record is gone", async () => {
     const cert = makeCert();
     const { token } = await certificateService.buildQrPayload(cert);
     Certificate.findOne.mockResolvedValue(cert);
-    DoseRecord.findById.mockReturnValue(chain("populate", null));
+    DoseRecord.findById.mockResolvedValue(null);
 
     expect(await certificateService.verifyScannedToken(token)).toEqual({
       valid: false,

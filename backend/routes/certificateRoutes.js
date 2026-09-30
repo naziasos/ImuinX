@@ -15,19 +15,43 @@ function isStaff(user) {
   return user && (user.role === "worker" || user.role === "clinicAdmin");
 }
 
-router.post("/verify", async (req, res) => {
-  const { token } = req.body;
+const VERIFY_WINDOW_MS = 60 * 1000;
+const VERIFY_MAX_PER_WINDOW = 30;
+const verifyHits = new Map();
+
+function verifyRateLimit(req, res, next) {
+  const now = Date.now();
+  const key = req.ip || "unknown";
+  const entry = verifyHits.get(key);
+
+  if (!entry || now - entry.start >= VERIFY_WINDOW_MS) {
+    verifyHits.set(key, { start: now, count: 1 });
+  } else if (++entry.count > VERIFY_MAX_PER_WINDOW) {
+    return res
+      .status(429)
+      .json({ message: "Too many verification attempts. Try again shortly." });
+  }
+
+  if (verifyHits.size > 5000) {
+    for (const [k, v] of verifyHits) {
+      if (now - v.start >= VERIFY_WINDOW_MS) verifyHits.delete(k);
+    }
+  }
+
+  next();
+}
+
+router.post("/verify", verifyRateLimit, async (req, res) => {
+  const token = req.body && req.body.token;
 
   if (typeof token !== "string" || !token.trim()) {
     return res.status(400).json({ message: "A QR token is required" });
   }
 
   try {
-   const result = await certificateService.verifyScannedToken(token.trim());
+    const result = await certificateService.verifyScannedToken(token.trim());
 
-return res.status(200).json({
-  valid: result.valid === true,
-});
+    return res.status(200).json({ valid: result.valid === true });
   } catch (error) {
     console.error("Certificate verification error:", error.message);
     return res.status(500).json({
@@ -95,7 +119,10 @@ router.get("/dose/:doseRecordId", authMiddleware, async (req, res) => {
       });
     }
 
-    const payload = await certificateService.buildQrPayload(certificate);
+    const payload = await certificateService.buildQrPayload(
+      certificate,
+      dose.dateAdministered
+    );
 
     return res.status(200).json({ certificate: payload });
   } catch (error) {
@@ -140,7 +167,8 @@ router.post("/dose/:doseRecordId/issue", authMiddleware, async (req, res) => {
 
     const issued = await certificateService.issueForDose(dose);
     const payload = await certificateService.buildQrPayload(
-      issued.certificate
+      issued.certificate,
+      dose.dateAdministered
     );
 
     return res.status(issued.created ? 201 : 200).json({

@@ -56,7 +56,7 @@ describe("POST /api/certificates/verify (public)", () => {
     expect(certificateService.verifyScannedToken).toHaveBeenCalledWith("abc");
   });
 
-  test("an invalid token is a 200 with valid:false, not an error", async () => {
+  test("an invalid token is a 200 with only valid:false (no reason leaked)", async () => {
     certificateService.verifyScannedToken.mockResolvedValue({
       valid: false,
       reason: "invalid_signature",
@@ -67,7 +67,31 @@ describe("POST /api/certificates/verify (public)", () => {
       .send({ token: "forged" });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ valid: false, reason: "invalid_signature" });
+    expect(res.body).toEqual({ valid: false });
+  });
+
+  test("never returns more than the valid flag, even if the service does", async () => {
+    certificateService.verifyScannedToken.mockResolvedValue({
+      valid: true,
+      holder: { name: "Someone" },
+      dose: { vaccineType: "MMR" },
+    });
+
+    const res = await request(app)
+      .post("/api/certificates/verify")
+      .send({ token: "abc" });
+
+    expect(res.body).toEqual({ valid: true });
+  });
+
+  test("trims whitespace around a manually typed code", async () => {
+    certificateService.verifyScannedToken.mockResolvedValue({ valid: true });
+
+    await request(app)
+      .post("/api/certificates/verify")
+      .send({ token: "  abc  " });
+
+    expect(certificateService.verifyScannedToken).toHaveBeenCalledWith("abc");
   });
 
   test.each([{}, { token: "" }, { token: "   " }, { token: 123 }, { token: {} }])(
@@ -93,6 +117,20 @@ describe("POST /api/certificates/verify (public)", () => {
     expect(res.status).toBe(500);
     expect(res.body.message).not.toMatch(/QR_SIGNING_SECRET/); // no config leakage
     spy.mockRestore();
+  });
+
+  test("rate-limits repeated verification attempts from one client", async () => {
+    certificateService.verifyScannedToken.mockResolvedValue({ valid: false });
+
+    const statuses = [];
+    for (let i = 0; i < 40; i++) {
+      const res = await request(app)
+        .post("/api/certificates/verify")
+        .send({ token: "guess" });
+      statuses.push(res.status);
+    }
+
+    expect(statuses).toContain(429);
   });
 });
 

@@ -4,7 +4,7 @@ const ISSUER = "imunix";
 const TOKEN_VERSION = 1;
 const ALGORITHM = "HS256";
 const MIN_SECRET_LENGTH = 32;
-const MAX_TOKEN_LENGTH = 2048; // reject absurd input before parsing
+const MAX_TOKEN_LENGTH = 2048; 
 const TID_PATTERN = /^[a-f0-9]{64}$/;
 
 class QrConfigError extends Error {
@@ -63,9 +63,24 @@ function assertConfigured() {
   loadKeyring();
 }
 
-function signToken(tid, issuedAt,expiryDate) {
+function toEpochSeconds(value, name) {
+  const ms = new Date(value).getTime();
+  if (value === undefined || value === null || Number.isNaN(ms)) {
+    throw new TypeError(`${name} must be a valid date`);
+  }
+  return Math.floor(ms / 1000);
+}
+
+function signToken(tid, issuedAt, expiryDate) {
   if (!TID_PATTERN.test(tid || "")) {
     throw new TypeError("tid must be a 64-character lowercase hex string");
+  }
+
+  const iat = toEpochSeconds(issuedAt, "issuedAt");
+  const exp = toEpochSeconds(expiryDate, "expiryDate");
+
+  if (exp <= iat) {
+    throw new TypeError("expiryDate must be after issuedAt");
   }
 
   const { activeKid, activeSecret } = loadKeyring();
@@ -74,8 +89,8 @@ function signToken(tid, issuedAt,expiryDate) {
     {
       v: TOKEN_VERSION,
       tid,
-      iat: Math.floor(new Date(issuedAt).getTime() / 1000),
-       exp: Math.floor(new Date(expiryDate).getTime() / 1000),
+      iat,
+      exp,
     },
     activeSecret,
     {
@@ -83,7 +98,6 @@ function signToken(tid, issuedAt,expiryDate) {
       keyid: activeKid,
       audience: AUDIENCE,
       issuer: ISSUER,
-      
     }
   );
 }
@@ -102,8 +116,6 @@ function verifyToken(token) {
   let decoded;
 
   try {
-    // decode() throws (rather than returning null) when a segment isn't
-    // valid base64url JSON, e.g. a bit-flipped or hand-edited token.
     decoded = jwt.decode(token.trim(), { complete: true });
   } catch (error) {
     return { valid: false, reason: "malformed_token" };
@@ -128,6 +140,9 @@ function verifyToken(token) {
       issuer: ISSUER,
     });
   } catch (error) {
+    if (error && error.name === "TokenExpiredError") {
+      return { valid: false, reason: "expired" };
+    }
     return { valid: false, reason: "invalid_signature" };
   }
 
@@ -135,7 +150,11 @@ function verifyToken(token) {
     return { valid: false, reason: "unsupported_version" };
   }
 
-  if (!TID_PATTERN.test(payload.tid || "") || !Number.isInteger(payload.iat)) {
+  if (
+    !TID_PATTERN.test(payload.tid || "") ||
+    !Number.isInteger(payload.iat) ||
+    !Number.isInteger(payload.exp)
+  ) {
     return { valid: false, reason: "malformed_token" };
   }
 
