@@ -21,6 +21,7 @@ import ShowWork from "./pages/worker/ShowWork";
 import VaccineInventory from "./pages/VaccineInventory";
 import FamilyAccount from "./pages/citizen/FamilyAccount";
 import MyCertificate from "./pages/citizen/MyCertificate";
+import VerifierScan from "./pages/VerifierScan";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -78,6 +79,7 @@ function App() {
             <Home
               onGetStarted={() => setPage("register")}
               onLogin={() => setPage("login")}
+              onVerifyCertificate={() => setPage("verifierScan")}
             />
           )}
 
@@ -91,7 +93,8 @@ function App() {
             page !== "familyAccount" &&
             page !== "bookAppointment" &&
             page !== "myCertificate" &&
-            page !== "showWork" && (
+            page !== "showWork" &&
+            page !== "verifierScan" && (
             <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
 
               {page === "register" && (
@@ -201,6 +204,9 @@ function App() {
               onBack={() => setPage("citizenDashboard")}
             />
           )}
+          {page === "verifierScan" && (
+  <VerifierScan />
+)}
 
           {/* Book Appointment */}
           {page === "bookAppointment" && (
