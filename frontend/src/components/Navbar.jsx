@@ -7,6 +7,7 @@ function Navbar({ page, setPage }) {
     { label: "Home", value: "home" },
     { label: "About", value: "about" },
     { label: "Services", value: "services" },
+    { label: "Verify", value: "verifyCertificate" },
   ];
 
   const handleNavigation = (value) => {
@@ -115,7 +116,7 @@ function Navbar({ page, setPage }) {
                 />
               </svg>
 
-              {/* Notification dot */}
+              {}
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
             </button>
           </div>

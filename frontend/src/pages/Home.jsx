@@ -128,12 +128,7 @@ export default function Home({ onGetStarted, onLogin,onVerifyCertificate  }) {
               >
                 Sign In
               </button>
-              <button
-  onClick={onVerifyCertificate}
-  className="rounded-xl border border-cyan-400/40 bg-cyan-400/10 px-6 py-3 text-sm font-bold text-cyan-200 transition-all duration-150 hover:bg-cyan-400/20 hover:scale-105"
->
-  Verify Certificate
-</button>
+             
             </div>
 
             <div className="mt-12 grid grid-cols-3 gap-6 border-t border-white/10 pt-6">

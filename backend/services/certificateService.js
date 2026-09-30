@@ -2,8 +2,6 @@ const QRCode = require("qrcode");
 
 const Certificate = require("../models/Certificate");
 const DoseRecord = require("../models/DoseRecord");
-const User = require("../models/User");
-const FamilyProfile = require("../models/FamilyProfile");
 
 const qrToken = require("../utils/qrToken");
 
@@ -11,7 +9,7 @@ const MONGO_DUPLICATE_KEY = 11000;
 const CERTIFICATE_VALIDITY_DAYS = Number(
   process.env.CERTIFICATE_VALIDITY_DAYS || 365
 );
- 
+
 async function issueForDose(doseRecord) {
   qrToken.assertConfigured();
 
@@ -20,17 +18,16 @@ async function issueForDose(doseRecord) {
   if (existing) {
     return { certificate: existing, created: false };
   }
+
   const expiryDate = new Date(doseRecord.dateAdministered);
-expiryDate.setDate(
-  expiryDate.getDate() + CERTIFICATE_VALIDITY_DAYS
-);
+  expiryDate.setDate(expiryDate.getDate() + CERTIFICATE_VALIDITY_DAYS);
 
   try {
     const certificate = await Certificate.create({
       citizenId: doseRecord.citizenId,
       citizenType: doseRecord.citizenType,
       doseRecordId: doseRecord._id,
-        expiryDate,
+      expiryDate,
     });
 
     return { certificate, created: true };
@@ -47,12 +44,38 @@ expiryDate.setDate(
 
     throw error;
   }
- 
 }
 
+async function buildQrPayload(certificate, fallbackDate = null) {
 
-async function buildQrPayload(certificate) {
-  const token = qrToken.signToken(certificate.qrToken, certificate.issuedDate, certificate.expiryDate);
+  let expiryDate = certificate.expiryDate;
+  const existingExpiryMs = expiryDate ? new Date(expiryDate).getTime() : NaN;
+
+  if (Number.isNaN(existingExpiryMs)) {
+    const baseDate = fallbackDate || certificate.issuedDate;
+    const baseMs = new Date(baseDate).getTime();
+
+    if (Number.isNaN(baseMs)) {
+      throw new TypeError("issuedDate must be a valid date");
+    }
+
+    expiryDate = new Date(baseMs);
+    expiryDate.setDate(expiryDate.getDate() + CERTIFICATE_VALIDITY_DAYS);
+
+    await Certificate.collection.updateOne(
+      {
+        _id: certificate._id,
+        $or: [{ expiryDate: { $exists: false } }, { expiryDate: null }],
+      },
+      { $set: { expiryDate } }
+    );
+  }
+
+  const token = qrToken.signToken(
+    certificate.qrToken,
+    certificate.issuedDate,
+    expiryDate
+  );
 
   const qrCode = await QRCode.toDataURL(token, {
     errorCorrectionLevel: "M",
@@ -64,8 +87,9 @@ async function buildQrPayload(certificate) {
     id: certificate._id,
     doseRecordId: certificate.doseRecordId,
     issuedDate: certificate.issuedDate,
+    expiryDate,
     token,
-    qrCode, 
+    qrCode,
   };
 }
 
@@ -76,7 +100,7 @@ async function verifyScannedToken(token) {
     return { valid: false, reason: check.reason };
   }
 
-  const { tid, iat } = check.payload;
+  const { tid, iat, exp } = check.payload;
 
   const certificate = await Certificate.findOne({ qrToken: tid });
 
@@ -84,30 +108,29 @@ async function verifyScannedToken(token) {
     return { valid: false, reason: "certificate_not_found" };
   }
 
-  if (Math.floor(certificate.issuedDate.getTime() / 1000) !== iat) {
+  if (
+    Math.floor(new Date(certificate.issuedDate).getTime() / 1000) !== iat ||
+    Math.floor(new Date(certificate.expiryDate).getTime() / 1000) !== exp
+  ) {
     return { valid: false, reason: "token_mismatch" };
   }
 
-  const dose = await DoseRecord.findById(certificate.doseRecordId).populate(
-    "clinicId",
-    "name location"
-  );
+  if (certificate.revokedAt) {
+    return { valid: false, reason: "revoked" };
+  }
+
+  if (new Date(certificate.expiryDate).getTime() <= Date.now()) {
+    return { valid: false, reason: "expired" };
+  }
+
+
+  const dose = await DoseRecord.findById(certificate.doseRecordId);
 
   if (!dose) {
     return { valid: false, reason: "dose_record_not_found" };
   }
 
-  const CitizenModel =
-    certificate.citizenType === "User" ? User : FamilyProfile;
-
-  const citizen = await CitizenModel.findById(certificate.citizenId).select(
-    "name"
-  );
-
-  return {
-    valid: true,
-    
-  };
+  return { valid: true };
 }
 
 module.exports = { issueForDose, buildQrPayload, verifyScannedToken };

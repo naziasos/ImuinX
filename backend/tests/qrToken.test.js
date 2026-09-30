@@ -4,7 +4,10 @@ const qrToken = require("../utils/qrToken");
 
 const SECRET = "a".repeat(48);
 const TID = crypto.randomBytes(32).toString("hex");
-const ISSUED = new Date("2026-01-15T10:00:00.000Z");
+const DAY = 24 * 60 * 60 * 1000;
+const ISSUED = new Date(Date.now() - 1 * DAY);
+const EXPIRY = new Date(Date.now() + 30 * DAY);
+const iatOf = (d) => Math.floor(d.getTime() / 1000);
 
 const ENV_KEYS = [
   "QR_SIGNING_SECRET",
@@ -29,39 +32,41 @@ afterEach(() => {
 
 describe("qrToken", () => {
   test("signs a token that verifies and round-trips the payload", () => {
-    const token = qrToken.signToken(TID, ISSUED);
+    const token = qrToken.signToken(TID, ISSUED, EXPIRY);
     const result = qrToken.verifyToken(token);
 
     expect(result.valid).toBe(true);
     expect(result.payload).toMatchObject({
       v: 1,
       tid: TID,
-      iat: Math.floor(ISSUED.getTime() / 1000),
+      iat: iatOf(ISSUED),
+      exp: iatOf(EXPIRY),
     });
   });
 
   test("is deterministic, so a QR can be re-rendered identically", () => {
-    expect(qrToken.signToken(TID, ISSUED)).toBe(qrToken.signToken(TID, ISSUED));
+    expect(qrToken.signToken(TID, ISSUED, EXPIRY)).toBe(qrToken.signToken(TID, ISSUED, EXPIRY));
   });
 
-  test("carries no personal or health data, and no expiry", () => {
-    const { payload } = jwt.decode(qrToken.signToken(TID, ISSUED), {
+  test("carries no personal or health data, only an expiry", () => {
+    const { payload } = jwt.decode(qrToken.signToken(TID, ISSUED, EXPIRY), {
       complete: true,
     });
 
     expect(Object.keys(payload).sort()).toEqual(
-      ["aud", "iat", "iss", "tid", "v"].sort()
+      ["aud", "exp", "iat", "iss", "tid", "v"].sort()
     );
   });
 
   test("rejects a token whose payload was tampered with", () => {
-    const [h, , s] = qrToken.signToken(TID, ISSUED).split(".");
+    const [h, , s] = qrToken.signToken(TID, ISSUED, EXPIRY).split(".");
     const otherTid = crypto.randomBytes(32).toString("hex");
     const forgedPayload = Buffer.from(
       JSON.stringify({
         v: 1,
         tid: otherTid,
         iat: 1,
+        exp: iatOf(EXPIRY),
         aud: qrToken.AUDIENCE,
         iss: qrToken.ISSUER,
       })
@@ -75,7 +80,7 @@ describe("qrToken", () => {
 
   test("rejects a token signed with a different secret", () => {
     const forged = jwt.sign(
-      { v: 1, tid: TID },
+      { v: 1, tid: TID, iat: iatOf(ISSUED), exp: iatOf(EXPIRY) },
       "z".repeat(48),
       {
         algorithm: "HS256",
@@ -94,6 +99,7 @@ describe("qrToken", () => {
       v: 1,
       tid: TID,
       iat: 1,
+      exp: iatOf(EXPIRY),
       aud: qrToken.AUDIENCE,
       iss: qrToken.ISSUER,
     })}.`;
@@ -122,7 +128,7 @@ describe("qrToken", () => {
   );
 
   test("a corrupted (non-JSON) segment is reported as malformed, not thrown", () => {
-    const [h, p, s] = qrToken.signToken(TID, ISSUED).split(".");
+    const [h, p, s] = qrToken.signToken(TID, ISSUED, EXPIRY).split(".");
     const corruptedPayload = p.slice(0, -2) + "AA";
     const garbageHeader = Buffer.from("{not json").toString("base64url");
 
@@ -134,14 +140,58 @@ describe("qrToken", () => {
   });
 
   test("refuses to sign with a non-hex tid", () => {
-    expect(() => qrToken.signToken("nope", ISSUED)).toThrow(TypeError);
+    expect(() => qrToken.signToken("nope", ISSUED, EXPIRY)).toThrow(TypeError);
+  });
+
+  test("refuses to sign without a usable expiry", () => {
+    expect(() => qrToken.signToken(TID, ISSUED)).toThrow(TypeError);
+    expect(() => qrToken.signToken(TID, ISSUED, "garbage")).toThrow(TypeError);
+    expect(() => qrToken.signToken(TID, ISSUED, ISSUED)).toThrow(TypeError);
+  });
+
+  describe("expiry", () => {
+    test("rejects an expired token with reason 'expired'", () => {
+      const token = qrToken.signToken(
+        TID,
+        new Date(Date.now() - 10 * DAY),
+        new Date(Date.now() - 1 * DAY)
+      );
+
+      expect(qrToken.verifyToken(token)).toEqual({
+        valid: false,
+        reason: "expired",
+      });
+    });
+
+    test("rejects a correctly signed token that has no exp claim", () => {
+      const noExp = jwt.sign({ v: 1, tid: TID, iat: iatOf(ISSUED) }, SECRET, {
+        algorithm: "HS256",
+        keyid: "1",
+        audience: qrToken.AUDIENCE,
+        issuer: qrToken.ISSUER,
+      });
+
+      expect(qrToken.verifyToken(noExp).valid).toBe(false);
+    });
+
+    test("editing exp to extend validity breaks the signature", () => {
+      const [h, p, s] = qrToken.signToken(TID, ISSUED, EXPIRY).split(".");
+      const payload = JSON.parse(Buffer.from(p, "base64url").toString());
+      payload.exp += 365 * 24 * 60 * 60;
+      const forged = Buffer.from(JSON.stringify(payload)).toString("base64url");
+
+      expect(qrToken.verifyToken(`${h}.${forged}.${s}`)).toEqual({
+        valid: false,
+        reason: "invalid_signature",
+      });
+    });
   });
 
   describe("configuration", () => {
     test("throws QrConfigError when the secret is missing", () => {
       delete process.env.QR_SIGNING_SECRET;
 
-      expect(() => qrToken.signToken(TID, ISSUED)).toThrow(qrToken.QrConfigError);
+      expect(() => qrToken.signToken(TID, ISSUED, EXPIRY)).toThrow(qrToken.QrConfigError);
       expect(() => qrToken.assertConfigured()).toThrow(qrToken.QrConfigError);
     });
 
@@ -160,7 +210,7 @@ describe("qrToken", () => {
 
   describe("key rotation", () => {
     test("tokens from a previous key still verify; new tokens use the new key", () => {
-      const oldToken = qrToken.signToken(TID, ISSUED); // kid "1"
+      const oldToken = qrToken.signToken(TID, ISSUED, EXPIRY); // kid "1"
 
       process.env.QR_SIGNING_KEY_ID = "2";
       process.env.QR_SIGNING_SECRET = "b".repeat(48);
@@ -168,13 +218,13 @@ describe("qrToken", () => {
 
       expect(qrToken.verifyToken(oldToken).valid).toBe(true);
 
-      const newToken = qrToken.signToken(TID, ISSUED);
+      const newToken = qrToken.signToken(TID, ISSUED, EXPIRY);
       expect(jwt.decode(newToken, { complete: true }).header.kid).toBe("2");
       expect(qrToken.verifyToken(newToken).valid).toBe(true);
     });
 
     test("a retired key is rejected once removed from the keyring", () => {
-      const oldToken = qrToken.signToken(TID, ISSUED); // kid "1"
+      const oldToken = qrToken.signToken(TID, ISSUED, EXPIRY); // kid "1"
 
       process.env.QR_SIGNING_KEY_ID = "2";
       process.env.QR_SIGNING_SECRET = "b".repeat(48);
