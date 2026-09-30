@@ -34,7 +34,7 @@ function calcAge(dob) {
   return `${years} yr`;
 }
 
-function LogDose({ onBack, onLogout }) {
+function LogDose({ onBack, onAppointments,onLogout, }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   // ----- Citizen search -----
@@ -296,10 +296,13 @@ function LogDose({ onBack, onLogout }) {
               Dashboard
             </button>
 
-            <button className="clinic-nav-item">
-              <span>📅</span>
-              Appointments
-            </button>
+            <button
+  className="clinic-nav-item"
+  onClick={onAppointments}
+>
+  <span>📅</span>
+  Appointments
+</button>
 
             <button className="clinic-nav-item active">
               <span>💉</span>

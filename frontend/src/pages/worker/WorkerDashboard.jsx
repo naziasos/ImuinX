@@ -1,7 +1,7 @@
 import React from "react";
 import "../clinicAdmin/ClinicAdminDashboard.css";
 
-function WorkerDashboard({ onLogout, onLogDose, onShowWork }) {
+function WorkerDashboard({ onLogout, onLogDose, onShowWork,onAppointments, }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const handleLogout = () => {
@@ -44,7 +44,7 @@ function WorkerDashboard({ onLogout, onLogDose, onShowWork }) {
               Dashboard
             </button>
 
-            <button className="clinic-nav-item">
+            <button className="clinic-nav-item" onClick={onAppointments}>
               <span>📅</span>
               Appointments
             </button>
@@ -55,10 +55,13 @@ function WorkerDashboard({ onLogout, onLogDose, onShowWork }) {
             </button>
 
 
-            <button className="clinic-nav-item" onClick={onShowWork}>
-              <span>📋</span>
-              Show Work
-            </button>
+            <button
+  className="clinic-nav-item"
+  onClick={onShowWork}
+>
+  <span>📋</span>
+  Show Work
+</button>
 
 
 

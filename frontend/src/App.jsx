@@ -18,6 +18,7 @@ import CitizenDashboard from "./pages/citizen/CitizenDashboard";
 import WorkerDashboard from "./pages/worker/WorkerDashboard";
 import LogDose from "./pages/worker/LogDose";
 import ShowWork from "./pages/worker/ShowWork";
+import WorkerAppointments from "./pages/worker/WorkerAppointments";
 import VaccineInventory from "./pages/VaccineInventory";
 import FamilyAccount from "./pages/citizen/FamilyAccount";
 import MyCertificate from "./pages/citizen/MyCertificate";
@@ -226,6 +227,7 @@ function App() {
             <WorkerDashboard
               onLogDose={() => setPage("logDose")}
               onShowWork={() => setPage("showWork")}
+              onAppointments={() => setPage("workerAppointments")}
               onLogout={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
@@ -235,17 +237,42 @@ function App() {
             />
           )}
 
+          {page === "workerAppointments" && (
+  <WorkerAppointments
+    onBack={() => setPage("workerDashboard")}
+    onLogDose={() => setPage("logDose")}
+    onShowWork={() => setPage("showWork")}
+    onLogout={() => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setCurrentUser(null);
+      setPage("login");
+    }}
+  />
+)}
+
 
 
           {}
           {page === "showWork" && (
-            <ShowWork />
-          )}
+  <ShowWork
+    onBack={() => setPage("workerDashboard")}
+    onLogDose={() => setPage("logDose")}
+    onAppointments={() => setPage("workerAppointments")}
+    onLogout={() => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setCurrentUser(null);
+      setPage("login");
+    }}
+  />
+)}
 
           {}
           {page === "logDose" && (
             <LogDose
               onBack={() => setPage("workerDashboard")}
+               onAppointments={() => setPage("workerAppointments")}
               onLogout={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
