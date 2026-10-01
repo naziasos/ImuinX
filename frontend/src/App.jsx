@@ -39,7 +39,7 @@ function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 5000);
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -305,9 +305,10 @@ function App() {
           )}
 
 
-          {}
           {page === "assignDuty" && (
-            <AssignDuty />
+            <AssignDuty
+              onBack={() => setPage("clinicDashboard")}
+            />
           )}
 
         </div>

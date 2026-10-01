@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState } from "react";
-import Card from "../../components/Card";
 import Button from "../../components/Button";
+import "./AssignDuty.css";
 
-const AssignDuty = () => {
+const AssignDuty = ({ onBack }) => {
   const [selectedWorkers, setSelectedWorkers] = useState([]);
   const [workers, setWorkers] = useState([]);
   const [selectedTask, setSelectedTask] = useState("");
@@ -32,7 +31,7 @@ const AssignDuty = () => {
           throw new Error(data.message || "Failed to fetch workers");
         }
 
-        setWorkers(data.workers);
+        setWorkers(data.workers || []);
       } catch (error) {
         console.error("Error fetching workers:", error);
       } finally {
@@ -105,46 +104,86 @@ const AssignDuty = () => {
   };
 
   return (
-    <div style={{ padding: "30px" }}>
-      <h2>Assign Daily Clinic Duty</h2>
-      <p>Select a task and assign one or more workers.</p>
+    <main className="assign-duty-main">
 
-      <Card>
-        <div style={{ padding: "20px" }}>
-          <div style={{ marginBottom: "20px" }}>
-            <label>
-              <strong>Date</strong>
+      {/* Header */}
+      <header className="assign-duty-header">
+        <div>
+          <p className="assign-duty-breadcrumb">
+            Clinic Admin / Daily Duties
+          </p>
+
+          <h1>Assign Daily Clinic Duty</h1>
+
+          <p className="assign-duty-description">
+            Assign clinic duties to one or more workers.
+          </p>
+        </div>
+
+        <div className="assign-duty-profile">
+          <div className="assign-duty-profile-avatar">
+            C
+          </div>
+
+          <div>
+            <strong>Clinic Admin</strong>
+            <span>Administrator</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Back Button */}
+      <button
+        type="button"
+        className="assign-duty-back"
+        onClick={onBack}
+      >
+        ← Back to Dashboard
+      </button>
+
+      {/* Duty Details */}
+      <section className="assign-duty-card">
+        <div className="assign-duty-section-header">
+          <div>
+            <p className="assign-duty-section-label">
+              DUTY DETAILS
+            </p>
+
+            <h2>Choose duty information</h2>
+
+            <p>
+              Select the date and type of duty you want to assign.
+            </p>
+          </div>
+        </div>
+
+        <div className="assign-duty-form-grid">
+          <div className="assign-duty-field">
+            <label htmlFor="duty-date">
+              Duty Date
             </label>
-            <br />
 
             <input
+              id="duty-date"
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              style={{
-                marginTop: "8px",
-                padding: "10px",
-                width: "100%",
-              }}
             />
           </div>
 
-          <div style={{ marginBottom: "20px" }}>
-            <label>
-              <strong>Select Task</strong>
+          <div className="assign-duty-field">
+            <label htmlFor="duty-type">
+              Duty Type
             </label>
-            <br />
 
             <select
+              id="duty-type"
               value={selectedTask}
               onChange={(e) => setSelectedTask(e.target.value)}
-              style={{
-                marginTop: "8px",
-                padding: "10px",
-                width: "100%",
-              }}
             >
-              <option value="">Choose a task</option>
+              <option value="">
+                Choose a duty
+              </option>
 
               {tasks.map((task) => (
                 <option key={task} value={task}>
@@ -153,49 +192,137 @@ const AssignDuty = () => {
               ))}
             </select>
           </div>
+        </div>
+      </section>
 
+      {/* Worker Selection */}
+      <section className="assign-duty-card">
+        <div className="assign-duty-section-header worker-selection-header">
           <div>
-            <strong>Select Workers</strong>
+            <p className="assign-duty-section-label">
+              CLINIC TEAM
+            </p>
 
-            <div style={{ marginTop: "10px" }}>
-              {loading ? (
-                <p>Loading workers...</p>
-              ) : workers.length === 0 ? (
-                <p>No workers found for this clinic.</p>
-              ) : (
-                workers.map((worker) => (
-                  <label
-                    key={worker._id}
-                    style={{
-                      display: "block",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedWorkers.includes(worker._id)}
-                      onChange={() => handleWorkerChange(worker._id)}
-                    />
+            <h2>Select Workers</h2>
 
-                    <span style={{ marginLeft: "8px" }}>
-                      {worker.name}
-                    </span>
-                  </label>
-                ))
-              )}
-            </div>
+            <p>
+              Choose the workers who will perform this duty.
+            </p>
           </div>
 
-          <div style={{ marginTop: "20px" }}>
-            <Button onClick={handleAssign}>
-              Assign Workers
-            </Button>
+          <div className="assign-duty-selected-count">
+            {selectedWorkers.length} Selected
           </div>
         </div>
-      </Card>
-    </div>
+
+        {loading ? (
+          <div className="assign-duty-empty">
+            <div className="assign-duty-loading-spinner"></div>
+            <p>Loading workers...</p>
+          </div>
+        ) : workers.length === 0 ? (
+          <div className="assign-duty-empty">
+            <div className="assign-duty-empty-icon">
+              👥
+            </div>
+
+            <h3>No workers found</h3>
+
+            <p>
+              Workers assigned to your clinic will appear here.
+            </p>
+          </div>
+        ) : (
+          <div className="assign-duty-workers-grid">
+            {workers.map((worker) => {
+              const isSelected = selectedWorkers.includes(worker._id);
+
+              return (
+                <label
+                  key={worker._id}
+                  className={`assign-duty-worker ${
+                    isSelected ? "selected" : ""
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() =>
+                      handleWorkerChange(worker._id)
+                    }
+                  />
+
+                  <div className="assign-duty-worker-avatar">
+                    {worker.name?.charAt(0)?.toUpperCase()}
+                  </div>
+
+                  <div className="assign-duty-worker-info">
+                    <h3>{worker.name}</h3>
+
+                    <p>{worker.email}</p>
+
+                    <span>Health Worker</span>
+                  </div>
+
+                  <div className="assign-duty-check">
+                    {isSelected ? "✓" : ""}
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Assignment Summary */}
+      <section className="assign-duty-summary">
+        <div>
+          <p className="assign-duty-section-label">
+            ASSIGNMENT SUMMARY
+          </p>
+
+          <h2>Ready to assign?</h2>
+
+          <p>
+            Review the selected duty information before assigning
+            workers.
+          </p>
+        </div>
+
+        <div className="assign-duty-summary-details">
+          <div>
+            <span>Date</span>
+
+            <strong>
+              {selectedDate || "Not selected"}
+            </strong>
+          </div>
+
+          <div>
+            <span>Duty</span>
+
+            <strong>
+              {selectedTask || "Not selected"}
+            </strong>
+          </div>
+
+          <div>
+            <span>Workers</span>
+
+            <strong>
+              {selectedWorkers.length}
+            </strong>
+          </div>
+        </div>
+
+        <div className="assign-duty-action">
+          <Button onClick={handleAssign}>
+            Assign Workers
+          </Button>
+        </div>
+      </section>
+    </main>
   );
 };
 
 export default AssignDuty;
-
