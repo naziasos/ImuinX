@@ -30,4 +30,13 @@ const dutyAssignmentSchema = new mongoose.Schema(
   }
 );
 
+
+//one worker one clinic and date is unique.
+dutyAssignmentSchema.index(
+  { workerId: 1, clinicId: 1, dutyDate: 1 },
+  { unique: true }
+);
+
+
+
 module.exports = mongoose.model("DutyAssignment", dutyAssignmentSchema);
