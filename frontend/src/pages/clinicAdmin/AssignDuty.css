@@ -1,313 +1,269 @@
 .assign-duty-main {
   min-height: 100vh;
-  box-sizing: border-box;
-  padding: 35px 45px;
-  background: #f5f7fb;
-  color: #172554;
+  padding: 32px 40px;
+  background: #f7f8fa;
 }
 
-/* Header */
+/* =====================================================
+   HEADER
+   ===================================================== */
 
 .assign-duty-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 30px;
+  align-items: flex-start;
+  gap: 24px;
   margin-bottom: 20px;
 }
 
 .assign-duty-breadcrumb {
-  color: #64748b;
-  font-size: 13px;
-  margin: 0 0 8px;
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #777;
 }
 
 .assign-duty-header h1 {
   margin: 0;
-  font-size: 28px;
-  color: #172554;
+  font-size: 30px;
+  color: #222;
 }
 
 .assign-duty-description {
   margin: 8px 0 0;
-  color: #64748b;
-  font-size: 14px;
+  color: #666;
+  font-size: 15px;
 }
 
 .assign-duty-profile {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 10px;
 }
 
 .assign-duty-profile-avatar {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: #dbeafe;
-  color: #2563eb;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #e8eefc;
+  color: #3156a3;
   font-weight: 700;
 }
 
 .assign-duty-profile strong {
   display: block;
   font-size: 14px;
-  color: #172554;
+  color: #222;
 }
 
 .assign-duty-profile span {
   display: block;
+  margin-top: 2px;
   font-size: 12px;
-  color: #64748b;
-  margin-top: 3px;
+  color: #777;
 }
 
-/* Back Button */
+/* =====================================================
+   BACK BUTTON
+   ===================================================== */
 
 .assign-duty-back {
   border: none;
   background: transparent;
-  color: #2563eb;
-  font-size: 14px;
-  font-weight: 600;
   padding: 0;
-  margin-bottom: 22px;
+  margin: 0 0 20px;
+  color: #3156a3;
+  font-size: 14px;
   cursor: pointer;
 }
 
 .assign-duty-back:hover {
-  color: #1d4ed8;
+  text-decoration: underline;
 }
 
-/* Cards */
+/* =====================================================
+   CARDS
+   ===================================================== */
 
 .assign-duty-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 25px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  background: #fff;
+  border: 1px solid #e3e5e8;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
 }
 
+/* =====================================================
+   SECTION HEADER
+   ===================================================== */
+
 .assign-duty-section-header {
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 
 .assign-duty-section-label {
-  margin: 0 0 7px;
-  font-size: 11px;
+  margin: 0 0 6px;
+  font-size: 12px;
   font-weight: 700;
-  color: #2563eb;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.8px;
+  color: #3156a3;
 }
 
 .assign-duty-section-header h2 {
   margin: 0;
-  font-size: 19px;
-  color: #172554;
+  font-size: 21px;
+  color: #222;
 }
 
 .assign-duty-section-header p {
-  margin: 7px 0 0;
-  color: #64748b;
-  font-size: 13px;
+  margin: 6px 0 0;
+  color: #777;
+  font-size: 14px;
 }
 
-/* Form */
+/* =====================================================
+   SEARCH
+   ===================================================== */
+
+.assign-duty-search {
+  margin-bottom: 18px;
+}
+
+.assign-duty-search input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #d6d9de;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.assign-duty-search input:focus {
+  border-color: #3156a3;
+}
+
+/* =====================================================
+   ASSIGNMENT TABLE
+   ===================================================== */
+
+.assign-duty-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.assign-duty-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.assign-duty-table th {
+  text-align: left;
+  padding: 12px 14px;
+  background: #f5f6f8;
+  border-bottom: 1px solid #ddd;
+  color: #555;
+  font-weight: 600;
+}
+
+.assign-duty-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+
+.assign-duty-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.assign-duty-table tbody tr:hover {
+  background: #fafafa;
+}
+
+/* =====================================================
+   FORM
+   ===================================================== */
 
 .assign-duty-form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
 }
 
 .assign-duty-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
 .assign-duty-field label {
   font-size: 13px;
   font-weight: 600;
-  color: #334155;
+  color: #444;
 }
 
 .assign-duty-field input,
 .assign-duty-field select {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid #cbd5e1;
-  border-radius: 9px;
-  padding: 12px 13px;
-  background: #ffffff;
-  color: #172554;
+  padding: 11px 12px;
+  border: 1px solid #d6d9de;
+  border-radius: 8px;
+  background: #fff;
+  color: #333;
   font-size: 14px;
   outline: none;
 }
 
 .assign-duty-field input:focus,
 .assign-duty-field select:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: #3156a3;
 }
 
-/* Worker Selection */
+.assign-duty-field select:disabled,
+.assign-duty-field input:disabled {
+  background: #f2f3f5;
+  color: #999;
+  cursor: not-allowed;
+}
 
-.worker-selection-header {
+/* =====================================================
+   ASSIGN BUTTON
+   ===================================================== */
+
+.assign-duty-action {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
+  justify-content: flex-end;
+  margin-top: 22px;
 }
 
-.assign-duty-selected-count {
-  background: #eff6ff;
-  color: #2563eb;
-  padding: 8px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.assign-duty-workers-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.assign-duty-worker {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #ffffff;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.assign-duty-worker:hover {
-  border-color: #93c5fd;
-  background: #f8fbff;
-}
-
-.assign-duty-worker.selected {
-  border-color: #2563eb;
-  background: #eff6ff;
-}
-
-.assign-duty-worker input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.assign-duty-worker-avatar {
-  width: 43px;
-  height: 43px;
-  border-radius: 50%;
-  background: #dbeafe;
-  color: #2563eb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.assign-duty-worker-info {
-  min-width: 0;
-  flex: 1;
-}
-
-.assign-duty-worker-info h3 {
-  margin: 0;
-  font-size: 14px;
-  color: #172554;
-}
-
-.assign-duty-worker-info p {
-  margin: 4px 0;
-  font-size: 12px;
-  color: #64748b;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.assign-duty-worker-info span {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 600;
-  color: #0891b2;
-  background: #ecfeff;
-  padding: 4px 7px;
-  border-radius: 5px;
-}
-
-.assign-duty-check {
-  width: 22px;
-  height: 22px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.assign-duty-worker.selected .assign-duty-check {
-  background: #2563eb;
-  border-color: #2563eb;
-}
-
-/* Loading / Empty */
+/* =====================================================
+   EMPTY / LOADING
+   ===================================================== */
 
 .assign-duty-empty {
-  min-height: 180px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  padding: 30px 20px;
   text-align: center;
-  color: #64748b;
-}
-
-.assign-duty-empty-icon {
-  font-size: 35px;
-  margin-bottom: 8px;
-}
-
-.assign-duty-empty h3 {
-  margin: 5px 0;
-  color: #334155;
-  font-size: 16px;
+  color: #777;
 }
 
 .assign-duty-empty p {
-  margin: 5px 0;
-  font-size: 13px;
+  margin: 0;
+  font-size: 14px;
 }
 
 .assign-duty-loading-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid #dbeafe;
-  border-top-color: #2563eb;
+  width: 24px;
+  height: 24px;
+  margin: 0 auto 10px;
+  border: 3px solid #ddd;
+  border-top-color: #3156a3;
   border-radius: 50%;
   animation: assign-duty-spin 0.8s linear infinite;
-  margin-bottom: 10px;
 }
 
 @keyframes assign-duty-spin {
@@ -316,92 +272,42 @@
   }
 }
 
-/* Summary */
-
-.assign-duty-summary {
-  background: #ffffff;
-  border: 1px solid #dbeafe;
-  border-radius: 14px;
-  padding: 25px;
-  margin-bottom: 20px;
-}
-
-.assign-duty-summary h2 {
-  margin: 0;
-  font-size: 19px;
-  color: #172554;
-}
-
-.assign-duty-summary > div:first-child > p:last-child {
-  margin: 7px 0 0;
-  color: #64748b;
-  font-size: 13px;
-}
-
-.assign-duty-summary-details {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  margin: 22px 0;
-}
-
-.assign-duty-summary-details > div {
-  background: #f8fafc;
-  border-radius: 10px;
-  padding: 13px 15px;
-}
-
-.assign-duty-summary-details span {
-  display: block;
-  font-size: 11px;
-  color: #64748b;
-  margin-bottom: 5px;
-}
-
-.assign-duty-summary-details strong {
-  font-size: 14px;
-  color: #172554;
-}
-
-.assign-duty-action {
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* Responsive */
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
 
 @media (max-width: 900px) {
   .assign-duty-main {
-    padding: 30px;
-  }
-
-  .assign-duty-workers-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 650px) {
-  .assign-duty-main {
-    padding: 22px 18px;
+    padding: 24px;
   }
 
   .assign-duty-header {
-    align-items: flex-start;
-  }
-
-  .assign-duty-profile {
-    display: none;
+    flex-direction: column;
   }
 
   .assign-duty-form-grid {
     grid-template-columns: 1fr;
   }
 
-  .assign-duty-summary-details {
-    grid-template-columns: 1fr;
+  .assign-duty-action {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .assign-duty-main {
+    padding: 18px;
   }
 
-  .worker-selection-header {
-    flex-direction: column;
+  .assign-duty-card {
+    padding: 18px;
+  }
+
+  .assign-duty-header h1 {
+    font-size: 24px;
+  }
+
+  .assign-duty-table {
+    min-width: 550px;
   }
 }

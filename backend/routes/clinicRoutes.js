@@ -430,6 +430,41 @@ router.post(
       }
 
       // Create duty assignment
+
+
+
+
+
+    const startOfDay = new Date(`${dutyDate}T00:00:00.000Z`);
+    const endOfDay = new Date(`${dutyDate}T23:59:59.999Z`);
+
+    const existingDuty = await DutyAssignment.findOne({
+      workerId: worker._id,
+      clinicId: clinicAdmin.clinicId,
+      dutyDate: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+    });
+
+    if (existingDuty) {
+      return res.status(409).json({
+        message: `${worker.name} is already assigned to a duty on this date.`,
+      });
+    }
+
+
+
+    
+
+
+
+
+
+
+
+
+
       const dutyAssignment = await DutyAssignment.create({
         workerId: worker._id,
         clinicId: clinicAdmin.clinicId,
@@ -491,6 +526,96 @@ router.get(
 
       res.status(500).json({
         message: "Server error while loading worker duties",
+      });
+    }
+  }
+);
+
+
+
+
+// =====================================================
+//  GET CLINIC DUTIES
+// =====================================================
+
+router.get(
+  "/my-clinic/duties",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      // Only Clinic Admin can access this route
+      if (req.user.role !== "clinicAdmin") {
+        return res.status(403).json({
+          message: "Clinic Admin access required",
+        });
+      }
+
+      // Get logged-in Clinic Admin
+      const clinicAdmin = await User.findById(req.user.id);
+
+      if (!clinicAdmin) {
+        return res.status(404).json({
+          message: "Clinic Admin not found",
+        });
+      }
+
+      if (!clinicAdmin.clinicId) {
+        return res.status(404).json({
+          message: "No clinic is assigned to this Clinic Admin",
+        });
+      }
+
+      const { date } = req.query;
+
+      // If a date is provided, return duties for that date only.
+      // Otherwise, return all duties for this clinic.
+      let query = {
+        clinicId: clinicAdmin.clinicId,
+      };
+
+      if (date) {
+        // Validate YYYY-MM-DD date format
+        const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+        if (!datePattern.test(date)) {
+          return res.status(400).json({
+            message: "Invalid date format",
+          });
+        }
+
+        const startOfDay = new Date(
+          `${date}T00:00:00.000Z`
+        );
+
+        const endOfDay = new Date(
+          `${date}T23:59:59.999Z`
+        );
+
+        query.dutyDate = {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        };
+      }
+
+      const duties = await DutyAssignment.find(query)
+        .populate("workerId", "name email")
+        .sort({
+          dutyDate: 1,
+          dutyType: 1,
+        });
+
+      res.json({
+        duties,
+      });
+    } catch (error) {
+      console.error(
+        "Clinic duty fetch error:",
+        error.message
+      );
+
+      res.status(500).json({
+        message:
+          "Server error while loading clinic duties",
       });
     }
   }

@@ -1,54 +1,146 @@
+
 import React, { useEffect, useState } from "react";
 import Button from "../../components/Button";
 import "./AssignDuty.css";
 
 const AssignDuty = ({ onBack }) => {
-  const [selectedWorkers, setSelectedWorkers] = useState([]);
   const [workers, setWorkers] = useState([]);
-  const [selectedTask, setSelectedTask] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [assignedDuties, setAssignedDuties] = useState([]);
 
-  const tasks = ["Vaccination", "In-House Visit"];
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDuty, setSelectedDuty] = useState("");
+  const [selectedWorker, setSelectedWorker] = useState("");
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [dutiesLoading, setDutiesLoading] = useState(true);
+  const [assigning, setAssigning] = useState(false);
+
+  const dutyTypes = ["Vaccination", "In-House Visit"];
+
+  // =====================================================
+  // FETCH WORKERS
+  // =====================================================
+
+  const fetchWorkers = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        "http://localhost:5000/api/clinics/my-clinic/workers",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch workers");
+      }
+
+      setWorkers(data.workers || []);
+    } catch (error) {
+      console.error("Error fetching workers:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =====================================================
+  // FETCH ALL ASSIGNED DUTIES
+  // =====================================================
+
+  const fetchAssignedDuties = async () => {
+    try {
+      setDutiesLoading(true);
+
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        "http://localhost:5000/api/clinics/my-clinic/duties",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to fetch assigned duties"
+        );
+      }
+
+      setAssignedDuties(data.duties || []);
+    } catch (error) {
+      console.error("Error fetching assigned duties:", error);
+      setAssignedDuties([]);
+    } finally {
+      setDutiesLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchWorkers = async () => {
-      try {
-        const token = localStorage.getItem("token");
-
-        const response = await fetch(
-          "http://localhost:5000/api/clinics/my-clinic/workers",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to fetch workers");
-        }
-
-        setWorkers(data.workers || []);
-      } catch (error) {
-        console.error("Error fetching workers:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchWorkers();
+    fetchAssignedDuties();
   }, []);
 
-  const handleWorkerChange = (workerId) => {
-    setSelectedWorkers((prev) =>
-      prev.includes(workerId)
-        ? prev.filter((id) => id !== workerId)
-        : [...prev, workerId]
+  // =====================================================
+  // CHECK EXISTING ASSIGNMENTS FOR SELECTED DATE
+  // =====================================================
+
+  const selectedDateDuties = assignedDuties.filter((duty) => {
+    if (!selectedDate || !duty.dutyDate) {
+      return false;
+    }
+
+    return (
+      new Date(duty.dutyDate).toISOString().slice(0, 10) ===
+      selectedDate
+    );
+  });
+
+  
+
+  const isWorkerAlreadyAssigned = (workerId) => {
+    return selectedDateDuties.some(
+      (duty) => duty.workerId?._id === workerId
     );
   };
+
+  // =====================================================
+  // SEARCH DAILY ASSIGNMENTS
+  // =====================================================
+
+  const filteredDuties = assignedDuties.filter((duty) => {
+    const workerName = duty.workerId?.name || "";
+    const dutyType = duty.dutyType || "";
+
+    const date = duty.dutyDate
+      ? new Date(duty.dutyDate).toLocaleDateString("en-GB")
+      : "";
+
+    const search = searchTerm.toLowerCase().trim();
+
+    if (!search) {
+      return true;
+    }
+
+    return (
+      workerName.toLowerCase().includes(search) ||
+      dutyType.toLowerCase().includes(search) ||
+      date.toLowerCase().includes(search)
+    );
+  });
+
+  // =====================================================
+  // ASSIGN DUTY
+  // =====================================================
 
   const handleAssign = async () => {
     if (!selectedDate) {
@@ -56,57 +148,81 @@ const AssignDuty = ({ onBack }) => {
       return;
     }
 
-    if (!selectedTask) {
-      alert("Please select a duty type.");
+    if (!selectedDuty) {
+      alert("Please select a duty.");
       return;
     }
 
-    if (selectedWorkers.length === 0) {
-      alert("Please select at least one worker.");
+    if (!selectedWorker) {
+      alert("Please select a worker.");
+      return;
+    }
+
+    
+
+    if (isWorkerAlreadyAssigned(selectedWorker)) {
+      const worker = workers.find(
+        (item) => item._id === selectedWorker
+      );
+
+      alert(
+        `${worker?.name || "This worker"} is already assigned to a duty on this date.`
+      );
       return;
     }
 
     try {
+      setAssigning(true);
+
       const token = localStorage.getItem("token");
 
-      for (const workerId of selectedWorkers) {
-        const response = await fetch(
-          "http://localhost:5000/api/clinics/my-clinic/duties",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              workerId,
-              dutyDate: selectedDate,
-              dutyType: selectedTask,
-            }),
-          }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to assign duty");
+      const response = await fetch(
+        "http://localhost:5000/api/clinics/my-clinic/duties",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            workerId: selectedWorker,
+            dutyDate: selectedDate,
+            dutyType: selectedDuty,
+          }),
         }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to assign duty"
+        );
       }
 
       alert("Duty assigned successfully!");
 
-      setSelectedWorkers([]);
-      setSelectedTask("");
+      // Clear the form
+      setSelectedDate("");
+      setSelectedDuty("");
+      setSelectedWorker("");
+
+      // Refresh the Daily Assignments table
+      await fetchAssignedDuties();
     } catch (error) {
       console.error("Error assigning duty:", error);
       alert(error.message);
+    } finally {
+      setAssigning(false);
     }
   };
 
   return (
     <main className="assign-duty-main">
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
 
-      {/* Header */}
       <header className="assign-duty-header">
         <div>
           <p className="assign-duty-breadcrumb">
@@ -116,14 +232,12 @@ const AssignDuty = ({ onBack }) => {
           <h1>Assign Daily Clinic Duty</h1>
 
           <p className="assign-duty-description">
-            Assign clinic duties to one or more workers.
+            View existing assignments and assign duties to clinic workers.
           </p>
         </div>
 
         <div className="assign-duty-profile">
-          <div className="assign-duty-profile-avatar">
-            C
-          </div>
+          <div className="assign-duty-profile-avatar">C</div>
 
           <div>
             <strong>Clinic Admin</strong>
@@ -132,7 +246,10 @@ const AssignDuty = ({ onBack }) => {
         </div>
       </header>
 
-      {/* Back Button */}
+      {/* =====================================================
+          BACK BUTTON
+      ===================================================== */}
+
       <button
         type="button"
         className="assign-duty-back"
@@ -141,183 +258,194 @@ const AssignDuty = ({ onBack }) => {
         ← Back to Dashboard
       </button>
 
-      {/* Duty Details */}
+      {/* =====================================================
+          DAILY ASSIGNMENTS
+      ===================================================== */}
+
       <section className="assign-duty-card">
         <div className="assign-duty-section-header">
           <div>
             <p className="assign-duty-section-label">
-              DUTY DETAILS
+              DAILY ASSIGNMENTS
             </p>
 
-            <h2>Choose duty information</h2>
+            <h2>Assigned Duties</h2>
 
             <p>
-              Select the date and type of duty you want to assign.
+              View duties that have already been assigned to workers.
+            </p>
+          </div>
+        </div>
+
+        {/* SEARCH */}
+
+        <div className="assign-duty-search">
+          <input
+            type="text"
+            placeholder="Search by date, duty or worker name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        {/* ASSIGNMENT LIST */}
+
+        {dutiesLoading ? (
+          <div className="assign-duty-empty">
+            <div className="assign-duty-loading-spinner"></div>
+            <p>Loading assignments...</p>
+          </div>
+        ) : filteredDuties.length === 0 ? (
+          <div className="assign-duty-empty">
+            <p>
+              {searchTerm
+                ? "No matching assignments found."
+                : "No duties have been assigned yet."}
+            </p>
+          </div>
+        ) : (
+          <div className="assign-duty-table-wrapper">
+            <table className="assign-duty-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Duty</th>
+                  <th>Worker</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {filteredDuties.map((duty) => (
+                  <tr key={duty._id}>
+                    <td>
+                      {new Date(
+                        duty.dutyDate
+                      ).toLocaleDateString("en-GB")}
+                    </td>
+
+                    <td>{duty.dutyType}</td>
+
+                    <td>
+                      {duty.workerId?.name || "Worker not found"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* =====================================================
+          ASSIGN DUTY FORM
+      ===================================================== */}
+
+      <section className="assign-duty-card">
+        <div className="assign-duty-section-header">
+          <div>
+            <p className="assign-duty-section-label">
+              ASSIGN DUTY
+            </p>
+
+            <h2>Assign a New Duty</h2>
+
+            <p>
+              Select a date, duty and worker.
             </p>
           </div>
         </div>
 
         <div className="assign-duty-form-grid">
+          {/* DATE */}
+
           <div className="assign-duty-field">
             <label htmlFor="duty-date">
-              Duty Date
+              Date
             </label>
 
             <input
               id="duty-date"
               type="date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => {
+                setSelectedDate(e.target.value);
+                setSelectedDuty("");
+                setSelectedWorker("");
+              }}
             />
           </div>
 
+          {/* DUTY */}
+
           <div className="assign-duty-field">
             <label htmlFor="duty-type">
-              Duty Type
+              Duty
             </label>
 
             <select
               id="duty-type"
-              value={selectedTask}
-              onChange={(e) => setSelectedTask(e.target.value)}
+              value={selectedDuty}
+              onChange={(e) => setSelectedDuty(e.target.value)}
+              disabled={!selectedDate}
             >
               <option value="">
-                Choose a duty
+                Select duty
               </option>
 
-              {tasks.map((task) => (
-                <option key={task} value={task}>
-                  {task}
+              {dutyTypes.map((dutyType) => (
+                <option key={dutyType} value={dutyType}>
+                  {dutyType}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* WORKER */}
+
+          <div className="assign-duty-field">
+            <label htmlFor="duty-worker">
+              Worker Name
+            </label>
+
+            <select
+              id="duty-worker"
+              value={selectedWorker}
+              onChange={(e) => setSelectedWorker(e.target.value)}
+              disabled={!selectedDate || loading}
+            >
+              <option value="">
+                Select worker
+              </option>
+
+              {workers.map((worker) => (
+                <option
+                  key={worker._id}
+                  value={worker._id}
+                  disabled={isWorkerAlreadyAssigned(worker._id)}
+                >
+                  {worker.name}
+                  {isWorkerAlreadyAssigned(worker._id)
+                    ? " (Already Assigned)"
+                    : ""}
                 </option>
               ))}
             </select>
           </div>
         </div>
-      </section>
 
-      {/* Worker Selection */}
-      <section className="assign-duty-card">
-        <div className="assign-duty-section-header worker-selection-header">
-          <div>
-            <p className="assign-duty-section-label">
-              CLINIC TEAM
-            </p>
-
-            <h2>Select Workers</h2>
-
-            <p>
-              Choose the workers who will perform this duty.
-            </p>
-          </div>
-
-          <div className="assign-duty-selected-count">
-            {selectedWorkers.length} Selected
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="assign-duty-empty">
-            <div className="assign-duty-loading-spinner"></div>
-            <p>Loading workers...</p>
-          </div>
-        ) : workers.length === 0 ? (
-          <div className="assign-duty-empty">
-            <div className="assign-duty-empty-icon">
-              👥
-            </div>
-
-            <h3>No workers found</h3>
-
-            <p>
-              Workers assigned to your clinic will appear here.
-            </p>
-          </div>
-        ) : (
-          <div className="assign-duty-workers-grid">
-            {workers.map((worker) => {
-              const isSelected = selectedWorkers.includes(worker._id);
-
-              return (
-                <label
-                  key={worker._id}
-                  className={`assign-duty-worker ${
-                    isSelected ? "selected" : ""
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() =>
-                      handleWorkerChange(worker._id)
-                    }
-                  />
-
-                  <div className="assign-duty-worker-avatar">
-                    {worker.name?.charAt(0)?.toUpperCase()}
-                  </div>
-
-                  <div className="assign-duty-worker-info">
-                    <h3>{worker.name}</h3>
-
-                    <p>{worker.email}</p>
-
-                    <span>Health Worker</span>
-                  </div>
-
-                  <div className="assign-duty-check">
-                    {isSelected ? "✓" : ""}
-                  </div>
-                </label>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* Assignment Summary */}
-      <section className="assign-duty-summary">
-        <div>
-          <p className="assign-duty-section-label">
-            ASSIGNMENT SUMMARY
-          </p>
-
-          <h2>Ready to assign?</h2>
-
-          <p>
-            Review the selected duty information before assigning
-            workers.
-          </p>
-        </div>
-
-        <div className="assign-duty-summary-details">
-          <div>
-            <span>Date</span>
-
-            <strong>
-              {selectedDate || "Not selected"}
-            </strong>
-          </div>
-
-          <div>
-            <span>Duty</span>
-
-            <strong>
-              {selectedTask || "Not selected"}
-            </strong>
-          </div>
-
-          <div>
-            <span>Workers</span>
-
-            <strong>
-              {selectedWorkers.length}
-            </strong>
-          </div>
-        </div>
+        {/* ASSIGN BUTTON */}
 
         <div className="assign-duty-action">
-          <Button onClick={handleAssign}>
-            Assign Workers
+          <Button
+            onClick={handleAssign}
+            disabled={
+              assigning ||
+              !selectedDate ||
+              !selectedDuty ||
+              !selectedWorker
+            }
+          >
+            {assigning ? "Assigning..." : "Assign Worker"}
           </Button>
         </div>
       </section>
