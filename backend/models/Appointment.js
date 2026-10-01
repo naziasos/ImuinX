@@ -8,6 +8,18 @@ const appointmentSchema = new mongoose.Schema(
       required: true,
     },
 
+
+
+    familyProfileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FamilyProfile",
+      default: null,
+    },
+
+
+
+
+
     clinicId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Clinic",

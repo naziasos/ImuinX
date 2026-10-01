@@ -2,18 +2,36 @@ const express = require("express");
 const router = express.Router();
 
 const Appointment = require("../models/Appointment");
+const FamilyProfile = require("../models/FamilyProfile");
 
-// Temporary available time slots
-const ALL_TIME_SLOTS = [
-  "09:00 AM",
-  "09:30 AM",
-  "10:00 AM",
-  "10:30 AM",
-  "11:00 AM",
-  "11:30 AM",
-  "12:00 PM",
-  "12:30 PM",
-];
+// Generate 20 time slots starting from 09:00 AM with 5-minute intervals
+const generateTimeSlots = () => {
+  const slots = [];
+  let startHour = 9;
+  let startMinute = 0;
+  const interval = 5;
+  const totalSlots = 20;
+
+  for (let i = 0; i < totalSlots; i++) {
+    let hour = startHour;
+    let minute = startMinute + (i * interval);
+    
+    hour += Math.floor(minute / 60);
+    minute = minute % 60;
+
+    const period = hour >= 12 ? "PM" : "AM";
+    let displayHour = hour % 12;
+    displayHour = displayHour ? displayHour : 12;
+
+    const formattedHour = String(displayHour).padStart(2, "0");
+    const formattedMinute = String(minute).padStart(2, "0");
+
+    slots.push(`${formattedHour}:${formattedMinute} ${period}`);
+  }
+  return slots;
+};
+
+const ALL_TIME_SLOTS = generateTimeSlots();
 
 // Get available slots for a clinic and date
 router.get("/slots", async (req, res) => {
@@ -31,7 +49,7 @@ router.get("/slots", async (req, res) => {
       clinicId,
       dateTime: {
         $gte: new Date(`${date}T00:00:00`),
-        $lt: new Date(`${date}T23:59:59`),
+        $lte: new Date(`${date}T23:59:59`),
       },
       status: {
         $ne: "Cancelled",
@@ -40,17 +58,36 @@ router.get("/slots", async (req, res) => {
 
     // Convert booked dateTime into time strings
     const bookedSlots = appointments.map((appointment) => {
-      return appointment.dateTime.toLocaleTimeString("en-US", {
+      return appointment.toLocaleTimeString ? appointment.dateTime.toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
         hour12: true,
-      });
+      }) : "";
     });
 
-    // Return only slots that are not booked
-    const availableSlots = ALL_TIME_SLOTS.filter(
-      (slot) => !bookedSlots.includes(slot)
-    );
+    const now = new Date();
+    // Format current date as YYYY-MM-DD local time string for comparison
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const todayStr = `${year}-${month}-${day}`;
+
+    // Filter slots: remove booked slots AND past time slots if date is today
+    const availableSlots = ALL_TIME_SLOTS.filter((slot) => {
+      if (bookedSlots.includes(slot)) {
+        return false;
+      }
+
+      if (date === todayStr) {
+        // Parse slot string into a Date object for today to compare against current time
+        const slotDateTime = new Date(`${date} ${slot}`);
+        if (slotDateTime <= now) {
+          return false; // Time has already passed today
+        }
+      }
+
+      return true;
+    });
 
     res.json({
       clinicId,
@@ -69,16 +106,29 @@ router.get("/slots", async (req, res) => {
 // Create a new appointment booking
 router.post("/", async (req, res) => {
   try {
-    const { citizenId, clinicId, date, time } = req.body;
+    const { citizenId, familyProfileId, clinicId, date, time } = req.body;
 
-    // Check required fields
     if (!citizenId || !clinicId || !date || !time) {
       return res.status(400).json({
         message: "citizenId, clinicId, date and time are required",
       });
     }
 
-    // Convert date + time into Date object
+    let selectedFamilyProfile = null;
+
+    if (familyProfileId) {
+      selectedFamilyProfile = await FamilyProfile.findOne({
+        _id: familyProfileId,
+        guardianId: citizenId,
+      });
+
+      if (!selectedFamilyProfile) {
+        return res.status(400).json({
+          message: "Invalid family profile",
+        });
+      }
+    }
+
     const appointmentDateTime = new Date(`${date} ${time}`);
 
     if (isNaN(appointmentDateTime.getTime())) {
@@ -87,7 +137,37 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Check whether this slot is already booked
+    // Prevent booking appointments for past dates or times
+    if (appointmentDateTime <= new Date()) {
+      return res.status(400).json({
+        message: "Cannot book appointments for past times or dates.",
+      });
+    }
+
+    // Check if this specific person (self or family member) already has an appointment on this date
+    const startOfDay = new Date(`${date}T00:00:00`);
+    const endOfDay = new Date(`${date}T23:59:59`);
+
+    const duplicateQuery = {
+      dateTime: { $gte: startOfDay,$lte: endOfDay },
+      status: { $ne: "Cancelled" },
+    };
+
+    if (familyProfileId) {
+      duplicateQuery.familyProfileId = familyProfileId;
+    } else {
+      duplicateQuery.citizenId = citizenId;
+      duplicateQuery.familyProfileId = null;
+    }
+
+    const existingPersonAppointment = await Appointment.findOne(duplicateQuery);
+    if (existingPersonAppointment) {
+      return res.status(409).json({
+        message: "This person already has an appointment booked for this day. Only one appointment per person per day is allowed.",
+      });
+    }
+
+    // Check whether this specific time slot is already booked for the clinic
     const existingAppointment = await Appointment.findOne({
       clinicId,
       dateTime: appointmentDateTime,
@@ -105,6 +185,7 @@ router.post("/", async (req, res) => {
     // Create appointment
     const appointment = await Appointment.create({
       citizenId,
+      familyProfileId: familyProfileId || null,
       clinicId,
       dateTime: appointmentDateTime,
       status: "Pending",
@@ -124,7 +205,7 @@ router.post("/", async (req, res) => {
     });
   }
 });
-// Test route
+
 // Get pending appointments for a clinic
 router.get("/clinic/:clinicId", async (req, res) => {
   try {
@@ -135,6 +216,7 @@ router.get("/clinic/:clinicId", async (req, res) => {
       status: "Pending",
     })
       .populate("citizenId", "name email")
+      .populate("familyProfileId", "name relationship gender dateOfBirth")
       .sort({ dateTime: 1 });
 
     res.json({
@@ -148,7 +230,8 @@ router.get("/clinic/:clinicId", async (req, res) => {
     });
   }
 });
-// Get appointments for a citizen
+
+// Get appointments for a citizen (includes family members' appointments)
 router.get("/citizen/:citizenId", async (req, res) => {
   try {
     const { citizenId } = req.params;
@@ -157,6 +240,7 @@ router.get("/citizen/:citizenId", async (req, res) => {
       citizenId,
     })
       .populate("clinicId", "name location contact")
+      .populate("familyProfileId", "name relationship gender dateOfBirth")
       .sort({ dateTime: 1 });
 
     res.json({
@@ -170,6 +254,7 @@ router.get("/citizen/:citizenId", async (req, res) => {
     });
   }
 });
+
 // Approve an appointment
 router.patch("/:appointmentId/approve", async (req, res) => {
   try {
@@ -200,6 +285,7 @@ router.patch("/:appointmentId/approve", async (req, res) => {
     });
   }
 });
+
 // Cancel an appointment by citizen
 router.patch("/:appointmentId/cancel", async (req, res) => {
   try {
@@ -230,6 +316,7 @@ router.patch("/:appointmentId/cancel", async (req, res) => {
     });
   }
 });
+
 // Reject an appointment
 router.patch("/:appointmentId/reject", async (req, res) => {
   try {
@@ -260,6 +347,7 @@ router.patch("/:appointmentId/reject", async (req, res) => {
     });
   }
 });
+
 router.get("/test", (req, res) => {
   res.json({
     message: "Appointment API is working",
