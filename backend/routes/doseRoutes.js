@@ -5,6 +5,7 @@ const DoseRecord = require("../models/DoseRecord");
 const VaccineInventory = require("../models/VaccineInventory");
 const FamilyProfile = require("../models/FamilyProfile");
 const User = require("../models/User");
+const Appointment = require("../models/Appointment");
 
 const authMiddleware = require("../middleware/authMiddleware");
 const certificateService = require("../services/certificateService");
@@ -16,13 +17,35 @@ const CITIZEN_TYPE_MAP = {
   family: "FamilyProfile",
 };
 
-function resolveCitizenModel(citizenType) {
-  const modelName = CITIZEN_TYPE_MAP[citizenType];
-  if (!modelName) return null;
-  return modelName === "User" ? User : FamilyProfile;
+function isStaffRole(role) {
+  return role === "worker" || role === "clinicAdmin";
 }
 
+function resolveCitizenModel(citizenType) {
+  const modelName = CITIZEN_TYPE_MAP[citizenType];
 
+  if (!modelName) return null;
+
+  return modelName === "User"
+    ? User
+    : FamilyProfile;
+}
+
+/*
+|--------------------------------------------------------------------------
+| CREATE DOSE RECORD
+|--------------------------------------------------------------------------
+| Citizen's own dose:
+|   citizenType = "user"
+|   citizenId   = User._id
+|
+| Family member dose:
+|   citizenType = "family"
+|   citizenId   = FamilyProfile._id
+|
+| Certificate is automatically generated after dose creation.
+|--------------------------------------------------------------------------
+*/
 
 router.post("/", authMiddleware, async (req, res) => {
   let reserved = null;
@@ -30,13 +53,23 @@ router.post("/", authMiddleware, async (req, res) => {
   try {
     const {
       citizenId,
-      citizenType, 
+      citizenType,
       vaccineType,
       batchNumber,
       dateAdministered,
+      appointmentId,
     } = req.body;
 
-    if (!citizenId || !citizenType || !vaccineType || !batchNumber) {
+    // ------------------------------------------------------------
+    // Basic validation
+    // ------------------------------------------------------------
+
+    if (
+      !citizenId ||
+      !citizenType ||
+      !vaccineType ||
+      !batchNumber
+    ) {
       return res.status(400).json({
         message:
           "Citizen, citizen type, vaccine type and batch number are required",
@@ -49,13 +82,19 @@ router.post("/", authMiddleware, async (req, res) => {
       });
     }
 
-    const CitizenModel = resolveCitizenModel(citizenType);
+    const CitizenModel =
+      resolveCitizenModel(citizenType);
 
     if (!CitizenModel) {
       return res.status(400).json({
-        message: "citizenType must be either 'user' or 'family'",
+        message:
+          "citizenType must be either 'user' or 'family'",
       });
     }
+
+    // ------------------------------------------------------------
+    // Logged-in worker
+    // ------------------------------------------------------------
 
     const user = await User.findById(req.user.id);
 
@@ -67,18 +106,27 @@ router.post("/", authMiddleware, async (req, res) => {
 
     if (!user.clinicId) {
       return res.status(400).json({
-        message: "User is not assigned to any clinic",
+        message:
+          "User is not assigned to any clinic",
       });
     }
 
-    if (user.role !== "clinicAdmin" && user.role !== "worker") {
+    if (
+      user.role !== "clinicAdmin" &&
+      user.role !== "worker"
+    ) {
       return res.status(403).json({
-        message: "Only Clinic Admin or Worker can log dose records",
+        message:
+          "Only Clinic Admin or Worker can log dose records",
       });
     }
 
-   
-    const citizen = await CitizenModel.findById(citizenId);
+    // ------------------------------------------------------------
+    // Find vaccination recipient
+    // ------------------------------------------------------------
+
+    const citizen =
+      await CitizenModel.findById(citizenId);
 
     if (!citizen) {
       return res.status(404).json({
@@ -86,29 +134,188 @@ router.post("/", authMiddleware, async (req, res) => {
       });
     }
 
-    const trimmedVaccineType = vaccineType.trim();
-    const trimmedBatchNumber = batchNumber.trim();
+    // ------------------------------------------------------------
+    // Appointment validation
+    // ------------------------------------------------------------
+
+    let linkedAppointment = null;
+
+    if (appointmentId) {
+      if (
+        !mongoose.Types.ObjectId.isValid(
+          appointmentId
+        )
+      ) {
+        return res.status(400).json({
+          message:
+            "Invalid appointment reference",
+        });
+      }
+
+      linkedAppointment =
+        await Appointment.findById(
+          appointmentId
+        );
+
+      if (!linkedAppointment) {
+        return res.status(404).json({
+          message: "Appointment not found",
+        });
+      }
+
+      // Appointment must already be completed
+      if (
+        linkedAppointment.status !== "Completed"
+      ) {
+        return res.status(400).json({
+          message:
+            "Appointment must be completed before logging the dose",
+        });
+      }
+
+      // Appointment must belong to same clinic
+      if (
+        String(linkedAppointment.clinicId) !==
+        String(user.clinicId)
+      ) {
+        return res.status(403).json({
+          message:
+            "This appointment does not belong to your clinic",
+        });
+      }
+
+      /*
+       * IMPORTANT:
+       *
+       * If appointment has familyProfileId,
+       * vaccination recipient is the family member.
+       *
+       * Otherwise recipient is the citizen.
+       */
+
+      const expectedCitizenId =
+        linkedAppointment.familyProfileId
+          ? String(
+              linkedAppointment.familyProfileId
+            )
+          : String(
+              linkedAppointment.citizenId
+            );
+
+      const expectedCitizenType =
+        linkedAppointment.familyProfileId
+          ? "FamilyProfile"
+          : "User";
+
+      if (
+        expectedCitizenId !==
+          String(citizenId) ||
+        expectedCitizenType !==
+          CITIZEN_TYPE_MAP[citizenType]
+      ) {
+        return res.status(400).json({
+          message:
+            "Selected citizen does not match the completed appointment",
+        });
+      }
+
+      // Prevent duplicate dose for same appointment
+      const existingDose =
+        await DoseRecord.findOne({
+          appointmentId,
+        });
+
+      if (existingDose) {
+        return res.status(409).json({
+          message:
+            "A dose has already been logged for this appointment",
+          doseRecordId:
+            existingDose._id,
+        });
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Family member safety check
+    // ------------------------------------------------------------
+    /*
+     * If the selected recipient is a FamilyProfile,
+     * make sure that family member belongs to the
+     * guardian/appointment context.
+     *
+     * This prevents a random FamilyProfile from being used.
+     */
+
+    if (citizenType === "family") {
+      if (
+        citizen.guardianId &&
+        linkedAppointment
+      ) {
+        const appointmentGuardian =
+          linkedAppointment.citizenId;
+
+        if (
+          String(citizen.guardianId) !==
+          String(appointmentGuardian)
+        ) {
+          return res.status(400).json({
+            message:
+              "This family member does not belong to the appointment guardian",
+          });
+        }
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Inventory
+    // ------------------------------------------------------------
+
+    const trimmedVaccineType =
+      vaccineType.trim();
+
+    const trimmedBatchNumber =
+      batchNumber.trim();
+
     const now = new Date();
 
-    reserved = await VaccineInventory.findOneAndUpdate(
-      {
-        clinicId: user.clinicId,
-        vaccineType: trimmedVaccineType,
-        batchNumber: trimmedBatchNumber,
-        expiryDate: { $gt: now },
-        quantity: { $gte: 1 },
-      },
-      { $inc: { quantity: -1 } },
-      { new: true }
-    );
+    reserved =
+      await VaccineInventory.findOneAndUpdate(
+        {
+          clinicId: user.clinicId,
+          vaccineType: trimmedVaccineType,
+          batchNumber: trimmedBatchNumber,
+
+          // Batch must not be expired
+          expiryDate: {
+            $gt: now,
+          },
+
+          // At least one stock
+          quantity: {
+            $gte: 1,
+          },
+        },
+        {
+          $inc: {
+            quantity: -1,
+          },
+        },
+        {
+          new: true,
+        }
+      );
+
+    // ------------------------------------------------------------
+    // Inventory validation error
+    // ------------------------------------------------------------
 
     if (!reserved) {
-      
-      const existingBatch = await VaccineInventory.findOne({
-        clinicId: user.clinicId,
-        vaccineType: trimmedVaccineType,
-        batchNumber: trimmedBatchNumber,
-      });
+      const existingBatch =
+        await VaccineInventory.findOne({
+          clinicId: user.clinicId,
+          vaccineType: trimmedVaccineType,
+          batchNumber: trimmedBatchNumber,
+        });
 
       if (!existingBatch) {
         return res.status(400).json({
@@ -117,74 +324,164 @@ router.post("/", authMiddleware, async (req, res) => {
         });
       }
 
-      if (existingBatch.expiryDate <= now) {
+      if (
+        existingBatch.expiryDate <= now
+      ) {
         return res.status(400).json({
-          message: "This batch has expired and cannot be administered",
+          message:
+            "This batch has expired and cannot be administered",
         });
       }
 
       return res.status(400).json({
-        message: "No stock remaining for this batch",
+        message:
+          "No stock remaining for this batch",
       });
     }
 
-    
+    // ------------------------------------------------------------
+    // Create Dose Record
+    // ------------------------------------------------------------
+
     let record;
 
     try {
       record = await DoseRecord.create({
         citizenId,
-        citizenType: CITIZEN_TYPE_MAP[citizenType],
-        vaccineType: trimmedVaccineType,
-        batchNumber: trimmedBatchNumber,
-        dateAdministered: dateAdministered || undefined,
-        healthWorkerId: user._id,
-        clinicId: user.clinicId,
+
+        /*
+         * User:
+         *   "User"
+         *
+         * Family:
+         *   "FamilyProfile"
+         */
+        citizenType:
+          CITIZEN_TYPE_MAP[citizenType],
+
+        vaccineType:
+          trimmedVaccineType,
+
+        batchNumber:
+          trimmedBatchNumber,
+
+        dateAdministered:
+          dateAdministered || undefined,
+
+        healthWorkerId:
+          user._id,
+
+        clinicId:
+          user.clinicId,
+
+        appointmentId:
+          appointmentId || null,
       });
     } catch (createError) {
-      
+      // Restore inventory if DoseRecord creation fails
       await VaccineInventory.updateOne(
-        { _id: reserved._id },
-        { $inc: { quantity: 1 } }
+        {
+          _id: reserved._id,
+        },
+        {
+          $inc: {
+            quantity: 1,
+          },
+        }
       );
-      reserved = null; 
 
-      if (createError.name === "ValidationError") {
+      reserved = null;
+
+      if (
+        createError.name ===
+        "ValidationError"
+      ) {
         return res.status(400).json({
-          message: createError.message,
+          message:
+            createError.message,
         });
       }
 
       throw createError;
     }
 
+    // ------------------------------------------------------------
+    // AUTOMATIC CERTIFICATE GENERATION
+    // ------------------------------------------------------------
+
     let certificate = null;
 
     try {
-      const issued = await certificateService.issueForDose(record);
-      certificate = await certificateService.buildQrPayload(
+      /*
+       * IMPORTANT:
+       *
+       * record contains:
+       *
+       * citizenId
+       * citizenType
+       *
+       * Therefore certificateService can determine whether
+       * this certificate belongs to:
+       *
+       * - User
+       * - FamilyProfile
+       */
+
+      const issued =
+        await certificateService.issueForDose(
+          record
+        );
+
+      if (
+        issued &&
         issued.certificate
-      );
+      ) {
+        certificate =
+          await certificateService.buildQrPayload(
+            issued.certificate
+          );
+      }
     } catch (certificateError) {
       console.error(
         `Certificate issuance failed for dose ${record._id}:`,
-        certificateError.message
+        certificateError
       );
     }
 
-    res.status(201).json({
-      message: "Dose record created successfully",
-      doseRecordId: record._id,
+    // ------------------------------------------------------------
+    // Final response
+    // ------------------------------------------------------------
+
+    return res.status(201).json({
+      message:
+        "Dose record created successfully",
+
+      doseRecordId:
+        record._id,
+
       record,
-      remainingStock: reserved.quantity,
+
+      remainingStock:
+        reserved.quantity,
+
       certificate,
     });
   } catch (error) {
+    // ------------------------------------------------------------
+    // Inventory rollback
+    // ------------------------------------------------------------
+
     if (reserved) {
       try {
         await VaccineInventory.updateOne(
-          { _id: reserved._id },
-          { $inc: { quantity: 1 } }
+          {
+            _id: reserved._id,
+          },
+          {
+            $inc: {
+              quantity: 1,
+            },
+          }
         );
       } catch (rollbackError) {
         console.error(
@@ -194,80 +491,363 @@ router.post("/", authMiddleware, async (req, res) => {
       }
     }
 
-    console.error("Dose record creation error:", error.message);
+    console.error(
+      "Dose record creation error:",
+      error
+    );
 
-    res.status(500).json({
-      message: "Server error while creating dose record",
+    return res.status(500).json({
+      message:
+        "Server error while creating dose record",
     });
   }
 });
 
+/*
+|--------------------------------------------------------------------------
+| MY HISTORY
+|--------------------------------------------------------------------------
+| Citizen's own vaccination history only.
+|--------------------------------------------------------------------------
+*/
 
-router.get("/my-history", authMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== "citizen") {
-      return res.status(403).json({
-        message: "Only citizens can access their vaccination history",
-      });
-    }
-
-    const doses = await DoseRecord.find({
-      citizenId: req.user.id,
-      citizenType: "User",
-    })
-      .sort({ dateAdministered: -1 })
-      .populate("clinicId", "name location")
-      .populate("healthWorkerId", "name");
-
-    res.json({ doses });
-  } catch (error) {
-    console.error("My vaccination history error:", error.message);
-
-    res.status(500).json({
-      message: "Server error while fetching vaccination history",
-    });
-  }
-});
-
-router.get("/citizen/:citizenId", authMiddleware, async (req, res) => {
-  try {
-    const { citizenId } = req.params;
-    const citizenType = req.query.citizenType;
-
-    if (!mongoose.Types.ObjectId.isValid(citizenId)) {
-      return res.status(400).json({
-        message: "Invalid citizen reference",
-      });
-    }
-
-    const filter = { citizenId };
-
-    if (citizenType) {
-      const modelName = CITIZEN_TYPE_MAP[citizenType];
-
-      if (!modelName) {
-        return res.status(400).json({
-          message: "citizenType must be either 'user' or 'family'",
+router.get(
+  "/my-history",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      if (req.user.role !== "citizen") {
+        return res.status(403).json({
+          message:
+            "Only citizens can access their vaccination history",
         });
       }
 
-      filter.citizenType = modelName;
+      const doses =
+        await DoseRecord.find({
+          citizenId: req.user.id,
+          citizenType: "User",
+        })
+          .sort({
+            dateAdministered: -1,
+          })
+          .populate(
+            "citizenId",
+            "name dateOfBirth relationship email"
+          )
+          .populate(
+            "healthWorkerId",
+            "name"
+          )
+          .populate(
+            "clinicId",
+            "name location"
+          );
+
+      return res.json({
+        doses,
+      });
+    } catch (error) {
+      console.error(
+        "My vaccination history error:",
+        error.message
+      );
+
+      return res.status(500).json({
+        message:
+          "Server error while fetching vaccination history",
+      });
     }
-
-    const doses = await DoseRecord.find(filter)
-      .sort({ dateAdministered: -1 })
-      .populate("citizenId", "name dateOfBirth relationship email")
-      .populate("healthWorkerId", "name")
-      .populate("clinicId", "name location");
-
-    res.json({ doses });
-  } catch (error) {
-    console.error("Dose history fetch error:", error.message);
-
-    res.status(500).json({
-      message: "Server error while fetching dose history",
-    });
   }
-});
+);
+
+/*
+|--------------------------------------------------------------------------
+| GET DOSE HISTORY
+|--------------------------------------------------------------------------
+|
+| IMPORTANT FIX:
+|
+| When a citizen/guardian requests:
+|
+| GET /doses/citizen/GUARDIAN_ID?citizenType=user
+|
+| return:
+|
+| 1. Guardian's own doses
+| 2. ALL family member doses belonging to that guardian
+|
+| This is the main fix for My Certificate.
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/citizen/:citizenId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const {
+        citizenId,
+      } = req.params;
+
+      const citizenType =
+        req.query.citizenType;
+
+      // ----------------------------------------------------------
+      // Validate ID
+      // ----------------------------------------------------------
+
+      if (
+        !mongoose.Types.ObjectId.isValid(
+          citizenId
+        )
+      ) {
+        return res.status(400).json({
+          message:
+            "Invalid citizen reference",
+        });
+      }
+
+      const role = req.user.role;
+
+      // ----------------------------------------------------------
+      // Staff/Admin
+      // ----------------------------------------------------------
+
+      let allowed =
+        role === "admin" ||
+        isStaffRole(role);
+
+      // ----------------------------------------------------------
+      // Citizen authorization
+      // ----------------------------------------------------------
+
+      if (
+        !allowed &&
+        role === "citizen"
+      ) {
+        /*
+         * Citizen can access:
+         *
+         * 1. Own User ID
+         * 2. Their own FamilyProfile ID
+         */
+
+        if (
+          String(citizenId) ===
+          String(req.user.id)
+        ) {
+          allowed = true;
+        } else {
+          const familyMember =
+            await FamilyProfile.findOne({
+              _id: citizenId,
+              guardianId: req.user.id,
+            });
+
+          allowed =
+            !!familyMember;
+        }
+      }
+
+      if (!allowed) {
+        return res.status(403).json({
+          message:
+            "You are not allowed to view this vaccination history",
+        });
+      }
+
+      // ----------------------------------------------------------
+      // Validate citizenType
+      // ----------------------------------------------------------
+
+      if (citizenType) {
+        const modelName =
+          CITIZEN_TYPE_MAP[
+            citizenType
+          ];
+
+        if (!modelName) {
+          return res.status(400).json({
+            message:
+              "citizenType must be either 'user' or 'family'",
+          });
+        }
+      }
+
+      // ==========================================================
+      // IMPORTANT FIX FOR GUARDIAN
+      // ==========================================================
+      //
+      // If a citizen requests their own User history:
+      //
+      // GET /citizen/:userId?citizenType=user
+      //
+      // we return:
+      //
+      // own User doses
+      // +
+      // all FamilyProfile doses
+      //
+      // belonging to this guardian.
+      // ==========================================================
+
+      let doses = [];
+
+      if (
+        role === "citizen" &&
+        String(citizenId) ===
+          String(req.user.id) &&
+        citizenType === "user"
+      ) {
+        // --------------------------------------------------------
+        // 1. Get guardian's own doses
+        // --------------------------------------------------------
+
+        const ownDoses =
+          await DoseRecord.find({
+            citizenId: req.user.id,
+            citizenType: "User",
+          })
+            .sort({
+              dateAdministered: -1,
+            })
+            .populate(
+              "citizenId",
+              "name dateOfBirth relationship email"
+            )
+            .populate(
+              "healthWorkerId",
+              "name"
+            )
+            .populate(
+              "clinicId",
+              "name location"
+            );
+
+        // --------------------------------------------------------
+        // 2. Find ALL family members of this guardian
+        // --------------------------------------------------------
+
+        const familyMembers =
+          await FamilyProfile.find({
+            guardianId: req.user.id,
+          }).select("_id");
+
+        const familyIds =
+          familyMembers.map(
+            (member) => member._id
+          );
+
+        // --------------------------------------------------------
+        // 3. Get doses of all family members
+        // --------------------------------------------------------
+
+        let familyDoses = [];
+
+        if (familyIds.length > 0) {
+          familyDoses =
+            await DoseRecord.find({
+              citizenId: {
+                $in: familyIds,
+              },
+
+              citizenType:
+                "FamilyProfile",
+            })
+              .sort({
+                dateAdministered: -1,
+              })
+              .populate(
+                "citizenId",
+                "name dateOfBirth relationship email guardianId"
+              )
+              .populate(
+                "healthWorkerId",
+                "name"
+              )
+              .populate(
+                "clinicId",
+                "name location"
+              );
+        }
+
+        // --------------------------------------------------------
+        // 4. Combine own + family doses
+        // --------------------------------------------------------
+
+        doses = [
+          ...ownDoses,
+          ...familyDoses,
+        ];
+
+        // --------------------------------------------------------
+        // 5. Sort all together by vaccination date
+        // --------------------------------------------------------
+
+        doses.sort(
+          (a, b) =>
+            new Date(
+              b.dateAdministered
+            ) -
+            new Date(
+              a.dateAdministered
+            )
+        );
+      } else {
+        // ========================================================
+        // NORMAL HISTORY REQUEST
+        // ========================================================
+
+        const filter = {
+          citizenId,
+        };
+
+        if (citizenType) {
+          filter.citizenType =
+            CITIZEN_TYPE_MAP[
+              citizenType
+            ];
+        }
+
+        doses =
+          await DoseRecord.find(filter)
+            .sort({
+              dateAdministered: -1,
+            })
+            .populate(
+              "citizenId",
+              "name dateOfBirth relationship email guardianId"
+            )
+            .populate(
+              "healthWorkerId",
+              "name"
+            )
+            .populate(
+              "clinicId",
+              "name location"
+            );
+      }
+
+      // ----------------------------------------------------------
+      // Return doses
+      // ----------------------------------------------------------
+
+      return res.json({
+        doses,
+      });
+    } catch (error) {
+      console.error(
+        "Dose history fetch error:",
+        error
+      );
+
+      return res.status(500).json({
+        message:
+          "Server error while fetching dose history",
+      });
+    }
+  }
+);
 
 module.exports = router;

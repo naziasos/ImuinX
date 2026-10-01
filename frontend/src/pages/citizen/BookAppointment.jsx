@@ -172,7 +172,7 @@ function BookAppointment({ onBack }) {
           `Date: ${date}\n` +
           `Time: ${selectedSlot}\n\n` +
           `Appointment ID: ${data.appointmentId || "N/A"}\n` +
-          `Status: ${data.status || "Pending"}`
+          `Status: ${data.status || "Confirmed"}`
       );
 
       // Refresh appointment list

@@ -60,6 +60,114 @@ router.post("/verify", verifyRateLimit, async (req, res) => {
   }
 });
 
+// All certificates a citizen can show: their own plus every family member
+// they are guardian of. Used by the "My Certificate" page.
+router.get("/mine", authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== "citizen") {
+      return res.status(403).json({
+        message: "Only citizens can view their certificates",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    const familyMembers = await FamilyProfile.find({ guardianId: user._id });
+
+    const people = new Map();
+    people.set(String(user._id), {
+      id: user._id,
+      type: "user",
+      name: user.name,
+      relationship: "Self",
+    });
+
+    familyMembers.forEach((member) => {
+      people.set(String(member._id), {
+        id: member._id,
+        type: "family",
+        name: member.name,
+        relationship: member.relationship,
+      });
+    });
+
+    const doses = await DoseRecord.find({
+      $or: [
+        { citizenId: user._id, citizenType: "User" },
+        {
+          citizenId: { $in: familyMembers.map((member) => member._id) },
+          citizenType: "FamilyProfile",
+        },
+      ],
+    })
+      .sort({ dateAdministered: -1 })
+      .populate("clinicId", "name location");
+
+    const certificates = await Certificate.find({
+      doseRecordId: { $in: doses.map((dose) => dose._id) },
+    });
+
+    const certificateByDose = new Map(
+      certificates.map((certificate) => [
+        String(certificate.doseRecordId),
+        certificate,
+      ])
+    );
+
+    const items = [];
+
+    for (const dose of doses) {
+      const person = people.get(String(dose.citizenId));
+
+      if (!person) continue;
+
+      // A dose must always have a certificate. If an earlier dose was
+      // created while certificate generation failed, repair it here.
+      // This is especially important for FamilyProfile doses because the
+      // guardian should see the child's certificate without needing to
+      // repeat the vaccination.
+      let certificate = certificateByDose.get(String(dose._id));
+
+      if (!certificate) {
+        try {
+          const issued = await certificateService.issueForDose(dose);
+          certificate = issued.certificate;
+          certificateByDose.set(String(dose._id), certificate);
+        } catch (issueError) {
+          console.error(
+            `Certificate repair failed for dose ${dose._id}:`,
+            issueError.message
+          );
+          continue;
+        }
+      }
+
+      items.push({
+        person,
+        dose,
+        certificate: await certificateService.buildQrPayload(
+          certificate,
+          dose.dateAdministered
+        ),
+      });
+    }
+
+    return res.status(200).json({
+      people: Array.from(people.values()),
+      items,
+    });
+  } catch (error) {
+    console.error("My certificates error:", error.message);
+    return res.status(500).json({
+      message: "Server error while fetching certificates",
+    });
+  }
+});
+
 router.get("/dose/:doseRecordId", authMiddleware, async (req, res) => {
   try {
     const { doseRecordId } = req.params;
@@ -111,12 +219,23 @@ router.get("/dose/:doseRecordId", authMiddleware, async (req, res) => {
       });
     }
 
-    const certificate = await Certificate.findOne({ doseRecordId });
+    let certificate = await Certificate.findOne({ doseRecordId });
 
+    // Repair older doses that were saved successfully but missed certificate
+    // generation. This also covers FamilyProfile/child doses.
     if (!certificate) {
-      return res.status(404).json({
-        message: "Certificate has not been issued for this dose yet",
-      });
+      try {
+        const issued = await certificateService.issueForDose(dose);
+        certificate = issued.certificate;
+      } catch (issueError) {
+        console.error(
+          `Certificate repair failed for dose ${doseRecordId}:`,
+          issueError.message
+        );
+        return res.status(500).json({
+          message: "Certificate could not be generated for this dose",
+        });
+      }
     }
 
     const payload = await certificateService.buildQrPayload(

@@ -30,8 +30,21 @@ const doseRecordSchema = new mongoose.Schema(
       required: true,
       default: Date.now,
       validate: {
+        // dateAdministered is a calendar date, not an exact time.
+        // Compare calendar dates in the app's local timezone so today's
+        // date is accepted even when the server is running in UTC.
         validator: function (value) {
-          return value <= new Date();
+          const timeZone = process.env.APP_TIMEZONE || "Asia/Dhaka";
+
+          const formatDate = (date) =>
+            new Intl.DateTimeFormat("en-CA", {
+              timeZone,
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }).format(date);
+
+          return formatDate(value) <= formatDate(new Date());
         },
         message: "Date administered cannot be in the future",
       },
@@ -47,6 +60,12 @@ const doseRecordSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Clinic",
       required: true,
+    },
+
+    appointmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Appointment",
+      default: null,
     },
   },
   {

@@ -34,7 +34,7 @@ function calcAge(dob) {
   return `${years} yr`;
 }
 
-function LogDose({ onBack, onAppointments,onLogout, }) {
+function LogDose({ onBack, onAppointments, onLogout, appointmentContext = null }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   // ----- Citizen search -----
@@ -119,6 +119,32 @@ function LogDose({ onBack, onAppointments,onLogout, }) {
     }
   };
 
+  useEffect(() => {
+    if (!appointmentContext) return;
+
+    const appointmentPatient = appointmentContext.familyProfileId
+      ? {
+          _id: appointmentContext.familyProfileId._id,
+          type: "family",
+          name: appointmentContext.familyProfileId.name,
+          relationship: appointmentContext.familyProfileId.relationship,
+          dateOfBirth: appointmentContext.familyProfileId.dateOfBirth,
+          gender: appointmentContext.familyProfileId.gender,
+          guardianId: appointmentContext.citizenId,
+        }
+      : {
+          _id: appointmentContext.citizenId._id,
+          type: "user",
+          name: appointmentContext.citizenId.name,
+          relationship: "Self (registered citizen)",
+          dateOfBirth: null,
+          gender: null,
+          guardianId: null,
+        };
+
+    selectCitizen(appointmentPatient);
+  }, [appointmentContext]);
+
   const clearCitizen = () => {
     setSelectedCitizen(null);
     setCitizenQuery("");
@@ -182,12 +208,15 @@ function LogDose({ onBack, onAppointments,onLogout, }) {
     if (!dateAdministered) {
       next.dateAdministered = "Select the date the dose was given.";
     } else {
-      const chosen = new Date(dateAdministered);
-      const today = new Date(todayISO());
+      // input[type="date"] returns YYYY-MM-DD. Compare the calendar-date
+      // strings directly so timezone conversion cannot make today's date
+      // look like a future date.
+      const validDate = /^\d{4}-\d{2}-\d{2}$/.test(dateAdministered);
+      const today = todayISO();
 
-      if (isNaN(chosen.getTime())) {
+      if (!validDate) {
         next.dateAdministered = "That date isn't valid.";
-      } else if (chosen > today) {
+      } else if (dateAdministered > today) {
         next.dateAdministered = "Date can't be in the future.";
       }
     }
@@ -219,6 +248,7 @@ function LogDose({ onBack, onAppointments,onLogout, }) {
         vaccineType,
         batchNumber,
         dateAdministered,
+        appointmentId: appointmentContext?._id || null,
       });
 
       const historyRes = await api.get(

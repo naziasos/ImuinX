@@ -48,7 +48,7 @@ if (!clinicId) {
   throw new Error("Clinic ID not found");
 }
 
-// Load pending appointments for this clinic
+// Load confirmed appointments for this clinic
 const appointmentResponse = await fetch(
   `http://localhost:5000/api/appointments/clinic/${clinicId}`
 );
@@ -73,35 +73,6 @@ const appointmentResponse = await fetch(
   useEffect(() => {
     loadDashboard();
   }, []);
-const handleAppointmentAction = async (appointmentId, action) => {
-  try {
-    const response = await fetch(
-      `http://localhost:5000/api/appointments/${appointmentId}/${action}`,
-      {
-        method: "PATCH",
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.message || "Failed to update appointment.");
-      return;
-    }
-
-    alert(data.message);
-
-    // Remove the appointment from Pending list
-    setAppointments((prevAppointments) =>
-      prevAppointments.filter(
-        (appointment) => appointment._id !== appointmentId
-      )
-    );
-  } catch (error) {
-    console.error("Appointment action error:", error);
-    alert("Something went wrong.");
-  }
-};
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -314,7 +285,7 @@ const handleAppointmentAction = async (appointmentId, action) => {
           </div>
 
         </section>
-{/* Pending Appointments */}
+{/* Confirmed Appointments */}
 <section className="workers-section">
 
   <div className="workers-header">
@@ -325,11 +296,11 @@ const handleAppointmentAction = async (appointmentId, action) => {
       </p>
 
       <h2>
-        Pending Appointments
+        Confirmed Appointments
       </h2>
 
       <p>
-        Appointments waiting for clinic approval.
+        Appointments are confirmed automatically when citizens book.
       </p>
     </div>
 
@@ -355,11 +326,11 @@ const handleAppointmentAction = async (appointmentId, action) => {
       </div>
 
       <h3>
-        No pending appointments
+        No confirmed appointments
       </h3>
 
       <p>
-        New appointment requests will appear here.
+        Confirmed appointments for this clinic will appear here.
       </p>
 
     </div>
@@ -404,29 +375,8 @@ const handleAppointmentAction = async (appointmentId, action) => {
           </div>
 
           <span className="worker-role">
-            Pending
+            Confirmed
           </span>
-          <div className="appointment-actions">
-  <button
-    type="button"
-    className="approve-btn"
-    onClick={() =>
-      handleAppointmentAction(appointment._id, "approve")
-    }
-  >
-    Approve
-  </button>
-
-  <button
-    type="button"
-    className="reject-btn"
-    onClick={() =>
-      handleAppointmentAction(appointment._id, "reject")
-    }
-  >
-    Reject
-  </button>
-</div>
 
         </div>
 

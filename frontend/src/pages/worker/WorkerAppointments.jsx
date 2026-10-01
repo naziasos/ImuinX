@@ -3,15 +3,12 @@ import "./WorkerAppointments.css";
 
 function WorkerAppointments({ onBack, onLogDose,onShowWork, onLogout,  }) {
   const [appointments, setAppointments] = useState([]);
-  const [inventory, setInventory] = useState([]);
   const [dutyAssigned, setDutyAssigned] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [vaccineType, setVaccineType] = useState("");
-  const [batchNumber, setBatchNumber] = useState("");
   const [completing, setCompleting] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -24,6 +21,19 @@ function WorkerAppointments({ onBack, onLogDose,onShowWork, onLogout,  }) {
 
     return `${year}-${month}-${day}`;
   };
+
+  // Patient = family member if the booking was made for one, else the citizen
+  const patientName = (appointment) =>
+    appointment?.familyProfileId?.name ||
+    appointment?.citizenId?.name ||
+    "Unknown Citizen";
+
+  const patientSubtitle = (appointment) =>
+    appointment?.familyProfileId
+      ? `${appointment.familyProfileId.relationship} of ${
+          appointment.citizenId?.name || "guardian"
+        }`
+      : appointment?.citizenId?.email || "No email available";
 
   const formatTime = (date) => {
     return new Date(date).toLocaleTimeString([], {
@@ -73,38 +83,12 @@ function WorkerAppointments({ onBack, onLogDose,onShowWork, onLogout,  }) {
     }
   };
 
-  const fetchInventory = async () => {
-    try {
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(
-        "http://localhost:5000/api/worker-appointments/inventory",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setInventory(data.inventory || []);
-      }
-    } catch (err) {
-      console.error("Inventory error:", err);
-    }
-  };
-
   useEffect(() => {
     fetchAppointments();
-    fetchInventory();
   }, []);
 
   const openAppointment = (appointment) => {
     setSelectedAppointment(appointment);
-    setVaccineType("");
-    setBatchNumber("");
     setError("");
   };
 
@@ -112,24 +96,9 @@ function WorkerAppointments({ onBack, onLogDose,onShowWork, onLogout,  }) {
     if (completing) return;
 
     setSelectedAppointment(null);
-    setVaccineType("");
-    setBatchNumber("");
   };
 
-  const availableVaccines = [
-    ...new Set(inventory.map((item) => item.vaccineType)),
-  ];
-
-  const availableBatches = inventory.filter(
-    (item) => item.vaccineType === vaccineType
-  );
-
   const completeAppointment = async () => {
-    if (!vaccineType || !batchNumber) {
-      setError("Please select vaccine type and batch number.");
-      return;
-    }
-
     try {
       setCompleting(true);
       setError("");
@@ -141,13 +110,8 @@ function WorkerAppointments({ onBack, onLogDose,onShowWork, onLogout,  }) {
         {
           method: "PATCH",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            vaccineType,
-            batchNumber,
-          }),
         }
       );
 
@@ -157,14 +121,17 @@ function WorkerAppointments({ onBack, onLogDose,onShowWork, onLogout,  }) {
         throw new Error(data.message || "Failed to complete appointment");
       }
 
+      const completedAppointment = selectedAppointment;
       setSelectedAppointment(null);
-      setVaccineType("");
-      setBatchNumber("");
-
       await fetchAppointments();
-      await fetchInventory();
 
-      alert("Appointment completed successfully.");
+      alert(
+        "Appointment completed successfully. Now log the administered dose."
+      );
+
+      if (onLogDose) {
+        onLogDose(completedAppointment);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -353,7 +320,6 @@ function WorkerAppointments({ onBack, onLogDose,onShowWork, onLogout,  }) {
               className="refresh-btn"
               onClick={() => {
                 fetchAppointments();
-                fetchInventory();
               }}
             >
               ↻ Refresh
@@ -402,21 +368,15 @@ function WorkerAppointments({ onBack, onLogDose,onShowWork, onLogout,  }) {
                   <div className="appointment-citizen">
 
                     <div className="citizen-avatar">
-                      {appointment.citizenId?.name
-                        ?.charAt(0)
-                        ?.toUpperCase() || "C"}
+                      {patientName(appointment)
+                        .charAt(0)
+                        .toUpperCase()}
                     </div>
 
                     <div>
-                      <h3>
-                        {appointment.citizenId?.name ||
-                          "Unknown Citizen"}
-                      </h3>
+                      <h3>{patientName(appointment)}</h3>
 
-                      <p>
-                        {appointment.citizenId?.email ||
-                          "No email available"}
-                      </p>
+                      <p>{patientSubtitle(appointment)}</p>
                     </div>
 
                   </div>
@@ -473,15 +433,19 @@ function WorkerAppointments({ onBack, onLogDose,onShowWork, onLogout,  }) {
             <div className="patient-box">
 
               <div className="patient-avatar">
-                {selectedAppointment.citizenId?.name
-                  ?.charAt(0)
-                  ?.toUpperCase() || "C"}
+                {patientName(selectedAppointment)
+                  .charAt(0)
+                  .toUpperCase()}
               </div>
 
               <div>
-                <span>Citizen</span>
+                <span>
+                  {selectedAppointment.familyProfileId
+                    ? "Family Member"
+                    : "Citizen"}
+                </span>
                 <strong>
-                  {selectedAppointment.citizenId?.name}
+                  {patientName(selectedAppointment)}
                 </strong>
 
                 <small>
@@ -499,64 +463,22 @@ function WorkerAppointments({ onBack, onLogDose,onShowWork, onLogout,  }) {
 
             <div className="form-field">
 
-              <label>Vaccine Type</label>
+              <label>Appointment Status</label>
 
-              <select
-                value={vaccineType}
-                onChange={(e) => {
-                  setVaccineType(e.target.value);
-                  setBatchNumber("");
-                }}
-              >
-                <option value="">
-                  Select vaccine
-                </option>
-
-                {availableVaccines.map((vaccine) => (
-                  <option
-                    key={vaccine}
-                    value={vaccine}
-                  >
-                    {vaccine}
-                  </option>
-                ))}
-              </select>
-
-            </div>
-
-            <div className="form-field">
-
-              <label>Batch Number</label>
-
-              <select
-                value={batchNumber}
-                onChange={(e) =>
-                  setBatchNumber(e.target.value)
-                }
-                disabled={!vaccineType}
-              >
-                <option value="">
-                  Select batch number
-                </option>
-
-                {availableBatches.map((item) => (
-                  <option
-                    key={item._id}
-                    value={item.batchNumber}
-                  >
-                    {item.batchNumber} — {item.quantity} available
-                  </option>
-                ))}
-
-              </select>
+              <div className="patient-box">
+                <div>
+                  <strong>Confirmed</strong>
+                  <small>Vaccination is being administered for this appointment.</small>
+                </div>
+              </div>
 
             </div>
 
             <div className="modal-info">
               <span>✓</span>
               <p>
-                Completing this appointment will create the
-                vaccination dose record automatically.
+                Marking the appointment completed will move you to Log Dose.
+                Vaccine, batch, inventory, and certificate processing happen there.
               </p>
             </div>
 
@@ -577,7 +499,7 @@ function WorkerAppointments({ onBack, onLogDose,onShowWork, onLogout,  }) {
               >
                 {completing
                   ? "Completing..."
-                  : "✓ Complete Appointment"}
+                  : "✓ Mark Appointment Completed"}
               </button>
 
             </div>

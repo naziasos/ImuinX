@@ -58,11 +58,11 @@ router.get("/slots", async (req, res) => {
 
     // Convert booked dateTime into time strings
     const bookedSlots = appointments.map((appointment) => {
-      return appointment.toLocaleTimeString ? appointment.dateTime.toLocaleTimeString("en-US", {
+      return appointment.dateTime.toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
         hour12: true,
-      }) : "";
+      });
     });
 
     const now = new Date();
@@ -188,7 +188,7 @@ router.post("/", async (req, res) => {
       familyProfileId: familyProfileId || null,
       clinicId,
       dateTime: appointmentDateTime,
-      status: "Pending",
+      status: "Confirmed",
     });
 
     // Return booking confirmation
@@ -206,14 +206,14 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Get pending appointments for a clinic
+// Get confirmed appointments for a clinic
 router.get("/clinic/:clinicId", async (req, res) => {
   try {
     const { clinicId } = req.params;
 
     const appointments = await Appointment.find({
       clinicId,
-      status: "Pending",
+      status: "Confirmed",
     })
       .populate("citizenId", "name email")
       .populate("familyProfileId", "name relationship gender dateOfBirth")
@@ -255,37 +255,6 @@ router.get("/citizen/:citizenId", async (req, res) => {
   }
 });
 
-// Approve an appointment
-router.patch("/:appointmentId/approve", async (req, res) => {
-  try {
-    const { appointmentId } = req.params;
-
-    const appointment = await Appointment.findByIdAndUpdate(
-      appointmentId,
-      { status: "Confirmed" },
-      { new: true }
-    );
-
-    if (!appointment) {
-      return res.status(404).json({
-        message: "Appointment not found",
-      });
-    }
-
-    res.json({
-      message: "Appointment approved successfully",
-      appointmentId: appointment._id,
-      status: appointment.status,
-    });
-  } catch (error) {
-    console.error("Error approving appointment:", error);
-
-    res.status(500).json({
-      message: "Failed to approve appointment",
-    });
-  }
-});
-
 // Cancel an appointment by citizen
 router.patch("/:appointmentId/cancel", async (req, res) => {
   try {
@@ -313,37 +282,6 @@ router.patch("/:appointmentId/cancel", async (req, res) => {
 
     res.status(500).json({
       message: "Failed to cancel appointment",
-    });
-  }
-});
-
-// Reject an appointment
-router.patch("/:appointmentId/reject", async (req, res) => {
-  try {
-    const { appointmentId } = req.params;
-
-    const appointment = await Appointment.findByIdAndUpdate(
-      appointmentId,
-      { status: "Cancelled" },
-      { new: true }
-    );
-
-    if (!appointment) {
-      return res.status(404).json({
-        message: "Appointment not found",
-      });
-    }
-
-    res.json({
-      message: "Appointment rejected successfully",
-      appointmentId: appointment._id,
-      status: appointment.status,
-    });
-  } catch (error) {
-    console.error("Error rejecting appointment:", error);
-
-    res.status(500).json({
-      message: "Failed to reject appointment",
     });
   }
 });
