@@ -203,6 +203,31 @@ router.post("/", authMiddleware, async (req, res) => {
 });
 
 
+router.get("/my-history", authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== "citizen") {
+      return res.status(403).json({
+        message: "Only citizens can access their vaccination history",
+      });
+    }
+
+    const doses = await DoseRecord.find({
+      citizenId: req.user.id,
+      citizenType: "User",
+    })
+      .sort({ dateAdministered: -1 })
+      .populate("clinicId", "name location")
+      .populate("healthWorkerId", "name");
+
+    res.json({ doses });
+  } catch (error) {
+    console.error("My vaccination history error:", error.message);
+
+    res.status(500).json({
+      message: "Server error while fetching vaccination history",
+    });
+  }
+});
 
 router.get("/citizen/:citizenId", authMiddleware, async (req, res) => {
   try {

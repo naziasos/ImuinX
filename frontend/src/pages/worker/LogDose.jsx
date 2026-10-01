@@ -150,9 +150,14 @@ function LogDose({ onBack, onAppointments,onLogout, }) {
   };
 
   const handleBatchSelect = (num) => {
-    setBatchNumber(num);
-    setErrors((prev) => ({ ...prev, batchNumber: undefined }));
-  };
+  console.log("CLICKED BATCH:", num);
+
+  setBatchNumber(num);
+  setErrors((prev) => ({
+    ...prev,
+    batchNumber: undefined,
+  }));
+};
 
   const handleDateChange = (e) => {
     setDateAdministered(e.target.value);
@@ -557,7 +562,15 @@ function LogDose({ onBack, onAppointments,onLogout, }) {
                               className={`logdose-batch-card ${
                                 batchNumber === b.batchNumber ? "active" : ""
                               }`}
-                              onClick={() => handleBatchSelect(b.batchNumber)}
+                              onMouseDown={(e) => e.preventDefault()}
+  onClick={() => {
+    console.log("Batch selected:", b.batchNumber);
+    setBatchNumber(b.batchNumber);
+    setErrors((prev) => ({
+      ...prev,
+      batchNumber: undefined,
+    }));
+  }}
                             >
                               <strong>{b.batchNumber}</strong>
                               <span>{b.quantity} left</span>

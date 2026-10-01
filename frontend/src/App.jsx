@@ -22,6 +22,7 @@ import WorkerAppointments from "./pages/worker/WorkerAppointments";
 import VaccineInventory from "./pages/VaccineInventory";
 import FamilyAccount from "./pages/citizen/FamilyAccount";
 import MyCertificate from "./pages/citizen/MyCertificate";
+import MyVaccinationRecord from "./pages/citizen/MyVaccinationRecord";
 import Verify from "./pages/Verify";
 
 import Navbar from "./components/Navbar";
@@ -93,6 +94,7 @@ function App() {
             page !== "familyAccount" &&
             page !== "bookAppointment" &&
             page !== "myCertificate" &&
+            page !== "myVaccinations" &&
             page !== "verifyCertificate" &&
             page !== "showWork" && (
             <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
@@ -175,6 +177,7 @@ function App() {
               onFamilyAccount={() => setPage("familyAccount")}
               onAppointments={() => setPage("bookAppointment")}
               onCertificate={() => setPage("myCertificate")}
+              onVaccinations={() => setPage("myVaccinations")}
               onLogout={() => { 
                 localStorage.removeItem("token"); 
                 localStorage.removeItem("user"); 
@@ -207,6 +210,22 @@ function App() {
               onBack={() => setPage("citizenDashboard")}
             />
           )}
+
+          {/* My Vaccination Record */}
+{page === "myVaccinations" && (
+  <MyVaccinationRecord
+    onDashboard={() => setPage("citizenDashboard")}
+    onAppointments={() => setPage("bookAppointment")}
+    onCertificate={() => setPage("myCertificate")}
+    onFamilyAccount={() => setPage("familyAccount")}
+    onLogout={() => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setCurrentUser(null);
+      setPage("login");
+    }}
+  />
+)}
 
           {/* Book Appointment */}
           {page === "bookAppointment" && (
@@ -323,6 +342,7 @@ function App() {
         page !== "logDose" &&
         page !== "bookAppointment" &&
         page !== "myCertificate" &&
+        page !== "myVaccinations" &&
         page !== "verifyCertificate" &&
         page !== "showWork" && (
         <Footer />

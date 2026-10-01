@@ -512,7 +512,9 @@
   color: #1e293b;
   cursor: pointer;
   text-align: left;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  width: 100%;
+  position: relative;
+  z-index: 5;
 }
 
 .logdose-batch-card strong {
@@ -725,4 +727,16 @@
   .logdose-hero-badge {
     align-self: flex-end;
   }
+}
+
+.logdose-batch-grid {
+  position: relative;
+  z-index: 100;
+}
+
+.logdose-batch-card {
+  position: relative;
+  z-index: 101;
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }
