@@ -1,9 +1,8 @@
 import AddWorker from "./pages/AddWorker.jsx";
 import BookAppointment from "./pages/citizen/BookAppointment";
 
-
 import { useEffect, useState } from "react";
-
+import Feedback from "./pages/citizen/Feedback";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -32,6 +31,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [page, setPage] = useState("home");
   const [authEmail, setAuthEmail] = useState("");
+
   const [currentUser, setCurrentUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
     return savedUser ? JSON.parse(savedUser) : null;
@@ -73,7 +73,6 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-1">
-
         <div className="w-full">
 
           {/* Home Page */}
@@ -96,59 +95,64 @@ function App() {
             page !== "myCertificate" &&
             page !== "myVaccinations" &&
             page !== "verifyCertificate" &&
-            page !== "showWork" && (
-            <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
+            page !== "showWork" &&
+            page !== "feedback" && (
+              <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
 
-              {page === "register" && (
-                <Register
-                  onRegisterSuccess={(email) => {
-                    setAuthEmail(email);
-                    setPage("verify");
-                  }}
-                  onLoginClick={() => setPage("login")}
-                />
-              )}
+                {/* Register */}
+                {page === "register" && (
+                  <Register
+                    onRegisterSuccess={(email) => {
+                      setAuthEmail(email);
+                      setPage("verify");
+                    }}
+                    onLoginClick={() => setPage("login")}
+                  />
+                )}
 
-              {page === "verify" && (
-                <VerifyEmail
-                  email={authEmail}
-                  onVerifySuccess={() => setPage("login")}
-                />
-              )}
+                {/* Verify Email */}
+                {page === "verify" && (
+                  <VerifyEmail
+                    email={authEmail}
+                    onVerifySuccess={() => setPage("login")}
+                  />
+                )}
 
-              {page === "login" && (
-                <Login
-                  onLoginSuccess={(user) => {
-                    setCurrentUser(user);
+                {/* Login */}
+                {page === "login" && (
+                  <Login
+                    onLoginSuccess={(user) => {
+                      setCurrentUser(user);
 
-                    // Route each role to its own dashboard
-                    if (user.role === "admin") {
-                      setPage("dashboard");
-                    } else if (user.role === "clinicAdmin") {
-                      setPage("clinicDashboard");
-                    } else if (user.role === "worker") {
-                      setPage("workerDashboard");
-                    } else {
-                      setPage("citizenDashboard");
-                    }
-                  }}
-                  onBack={() => setPage("register")}
-                  onSignUp={() => setPage("register")}
-                  onForgotPassword={() => setPage("forgotPassword")}
-                />
-              )}
+                      if (user.role === "admin") {
+                        setPage("dashboard");
+                      } else if (user.role === "clinicAdmin") {
+                        setPage("clinicDashboard");
+                      } else if (user.role === "worker") {
+                        setPage("workerDashboard");
+                      } else {
+                        setPage("citizenDashboard");
+                      }
+                    }}
+                    onBack={() => setPage("register")}
+                    onSignUp={() => setPage("register")}
+                    onForgotPassword={() => setPage("forgotPassword")}
+                  />
+                )}
 
-              {page === "forgotPassword" && (
-                <ForgotPassword
-                  onBack={() => setPage("login")}
-                  onSuccess={() => setPage("login")}
-                />
-              )}
+                {/* Forgot Password */}
+                {page === "forgotPassword" && (
+                  <ForgotPassword
+                    onBack={() => setPage("login")}
+                    onSuccess={() => setPage("login")}
+                  />
+                )}
 
-              {page === "admin" && <CreateAdmin />}
+                {/* Create Admin */}
+                {page === "admin" && <CreateAdmin />}
 
-            </div>
-          )}
+              </div>
+            )}
 
           {/* Clinic Admin Dashboard */}
           {page === "clinicDashboard" && (
@@ -165,6 +169,7 @@ function App() {
             />
           )}
 
+          {/* Admin Dashboard */}
           {page === "dashboard" && (
             <AdminDashboard
               onAddClinic={() => setPage("addClinic")}
@@ -172,21 +177,28 @@ function App() {
           )}
 
           {/* Citizen Dashboard */}
-          {page === "citizenDashboard" && ( 
+          {page === "citizenDashboard" && (
             <CitizenDashboard
               onFamilyAccount={() => setPage("familyAccount")}
               onAppointments={() => setPage("bookAppointment")}
               onCertificate={() => setPage("myCertificate")}
               onVaccinations={() => setPage("myVaccinations")}
-              onLogout={() => { 
-                localStorage.removeItem("token"); 
-                localStorage.removeItem("user"); 
-                setCurrentUser(null); 
-                setPage("login"); 
-              }} 
-            /> 
+              onFeedback={() => setPage("feedback")}
+              onLogout={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                setCurrentUser(null);
+                setPage("login");
+              }}
+            />
           )}
 
+          {/* Feedback Page */}
+          {page === "feedback" && (
+            <Feedback
+              onBack={() => setPage("citizenDashboard")}
+            />
+          )}
 
           {/* Family Account */}
           {page === "familyAccount" && (
@@ -201,7 +213,7 @@ function App() {
             />
           )}
 
-          {/* Public certificate verifier (no login required) */}
+          {/* Public Certificate Verifier */}
           {page === "verifyCertificate" && <Verify />}
 
           {/* My Certificate */}
@@ -212,20 +224,20 @@ function App() {
           )}
 
           {/* My Vaccination Record */}
-{page === "myVaccinations" && (
-  <MyVaccinationRecord
-    onDashboard={() => setPage("citizenDashboard")}
-    onAppointments={() => setPage("bookAppointment")}
-    onCertificate={() => setPage("myCertificate")}
-    onFamilyAccount={() => setPage("familyAccount")}
-    onLogout={() => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      setCurrentUser(null);
-      setPage("login");
-    }}
-  />
-)}
+          {page === "myVaccinations" && (
+            <MyVaccinationRecord
+              onDashboard={() => setPage("citizenDashboard")}
+              onAppointments={() => setPage("bookAppointment")}
+              onCertificate={() => setPage("myCertificate")}
+              onFamilyAccount={() => setPage("familyAccount")}
+              onLogout={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                setCurrentUser(null);
+                setPage("login");
+              }}
+            />
+          )}
 
           {/* Book Appointment */}
           {page === "bookAppointment" && (
@@ -240,8 +252,7 @@ function App() {
             />
           )}
 
-
-          {}
+          {/* Worker Dashboard */}
           {page === "workerDashboard" && (
             <WorkerDashboard
               onLogDose={() => setPage("logDose")}
@@ -256,42 +267,12 @@ function App() {
             />
           )}
 
+          {/* Worker Appointments */}
           {page === "workerAppointments" && (
-  <WorkerAppointments
-    onBack={() => setPage("workerDashboard")}
-    onLogDose={() => setPage("logDose")}
-    onShowWork={() => setPage("showWork")}
-    onLogout={() => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      setCurrentUser(null);
-      setPage("login");
-    }}
-  />
-)}
-
-
-
-          {}
-          {page === "showWork" && (
-  <ShowWork
-    onBack={() => setPage("workerDashboard")}
-    onLogDose={() => setPage("logDose")}
-    onAppointments={() => setPage("workerAppointments")}
-    onLogout={() => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      setCurrentUser(null);
-      setPage("login");
-    }}
-  />
-)}
-
-          {}
-          {page === "logDose" && (
-            <LogDose
+            <WorkerAppointments
               onBack={() => setPage("workerDashboard")}
-               onAppointments={() => setPage("workerAppointments")}
+              onLogDose={() => setPage("logDose")}
+              onShowWork={() => setPage("showWork")}
               onLogout={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
@@ -301,7 +282,36 @@ function App() {
             />
           )}
 
-          {}
+          {/* Show Work */}
+          {page === "showWork" && (
+            <ShowWork
+              onBack={() => setPage("workerDashboard")}
+              onLogDose={() => setPage("logDose")}
+              onAppointments={() => setPage("workerAppointments")}
+              onLogout={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                setCurrentUser(null);
+                setPage("login");
+              }}
+            />
+          )}
+
+          {/* Log Dose */}
+          {page === "logDose" && (
+            <LogDose
+              onBack={() => setPage("workerDashboard")}
+              onAppointments={() => setPage("workerAppointments")}
+              onLogout={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                setCurrentUser(null);
+                setPage("login");
+              }}
+            />
+          )}
+
+          {/* Add Clinic */}
           {page === "addClinic" && (
             <AddClinic
               onBack={() => setPage("dashboard")}
@@ -309,21 +319,20 @@ function App() {
             />
           )}
 
-          {}
+          {/* Add Worker */}
           {page === "addWorker" && (
             <AddWorker
               onBack={() => setPage("clinicDashboard")}
               onWorkerCreated={() => setPage("clinicDashboard")}
             />
-
-            
           )}
-          {}
+
+          {/* Vaccine Inventory */}
           {page === "inventory" && (
-             <VaccineInventory />
+            <VaccineInventory />
           )}
 
-
+          {/* Assign Duty */}
           {page === "assignDuty" && (
             <AssignDuty
               onBack={() => setPage("clinicDashboard")}
@@ -331,7 +340,6 @@ function App() {
           )}
 
         </div>
-
       </main>
 
       {/* Footer */}
@@ -344,9 +352,11 @@ function App() {
         page !== "myCertificate" &&
         page !== "myVaccinations" &&
         page !== "verifyCertificate" &&
-        page !== "showWork" && (
-        <Footer />
-      )}
+        page !== "showWork" &&
+        page !== "feedback" && (
+          <Footer />
+        )}
+
     </div>
   );
 }
