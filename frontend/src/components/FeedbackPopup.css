@@ -1,0 +1,84 @@
+.fbp-backdrop {
+  position: fixed; inset: 0; z-index: 1000; padding: 16px;
+  display: grid; place-items: center;
+  background: rgba(15, 23, 42, .5); backdrop-filter: blur(3px);
+  animation: fbp-fade .2s ease-out;
+}
+.fbp-modal {
+  position: relative; width: 100%; max-width: 460px; max-height: 92vh; overflow-y: auto;
+  background: #fff; border-radius: 22px; padding: 28px 26px 22px;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, .35);
+  font-family: "Inter", "Segoe UI", Arial, sans-serif; color: #0f172a;
+  animation: fbp-pop .25s cubic-bezier(.2, .9, .3, 1.2);
+}
+.fbp-modal *, .fbp-modal *::before, .fbp-modal *::after { box-sizing: border-box; }
+@keyframes fbp-fade { from { opacity: 0; } }
+@keyframes fbp-pop { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+
+.fbp-x {
+  position: absolute; top: 12px; right: 14px; width: 32px; height: 32px;
+  border: none; border-radius: 50%; background: #f1f5f9; color: #64748b;
+  font-size: 20px; line-height: 1; cursor: pointer;
+}
+.fbp-x:hover { background: #e2e8f0; }
+
+.fbp-head { text-align: center; margin-bottom: 14px; }
+.fbp-emoji {
+  display: inline-grid; place-items: center; width: 52px; height: 52px;
+  border-radius: 16px; background: #eaf0ff; font-size: 24px; margin-bottom: 10px;
+}
+.fbp-head h2 { margin: 0 0 6px; font-size: 20px; letter-spacing: -0.01em; }
+.fbp-head p { margin: 0; color: #64748b; font-size: 13.5px; }
+
+.fbp-rate { display: flex; justify-content: center; gap: 4px; }
+.fbp-rate button {
+  border: none; background: none; cursor: pointer; padding: 2px;
+  font-size: 42px; line-height: 1; color: #cbd5e1; transition: transform .1s, color .1s;
+}
+.fbp-rate button.on { color: #f59e0b; }
+.fbp-rate button:hover { transform: scale(1.12); }
+.fbp-rate-label { text-align: center; color: #64748b; font-weight: 600; font-size: 14px; margin: 2px 0 14px; min-height: 20px; }
+
+.fbp-more { display: grid; gap: 12px; margin-bottom: 14px; animation: fbp-fade .25s ease-out; }
+.fbp-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.fbp-chips button {
+  border: 1px solid #e2e8f0; background: #fff; color: #334155; cursor: pointer;
+  padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500;
+}
+.fbp-chips button.selected { background: #eaf0ff; border-color: #2563eb; color: #2563eb; font-weight: 600; }
+.fbp-more textarea {
+  width: 100%; resize: vertical; font: inherit; font-size: 14px; padding: 10px 12px;
+  border: 1px solid #e2e8f0; border-radius: 12px;
+}
+.fbp-more textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+.fbp-anon { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #475569; cursor: pointer; }
+.fbp-anon input { accent-color: #2563eb; width: 16px; height: 16px; }
+
+.fbp-error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 9px 12px; border-radius: 10px; font-size: 13.5px; margin-bottom: 12px; }
+
+.fbp-actions { display: flex; gap: 10px; }
+.fbp-actions button {
+  flex: 1; padding: 12px; border-radius: 12px; font-size: 14.5px; font-weight: 600; cursor: pointer;
+  border: 1px solid transparent;
+}
+.fbp-actions .ghost { background: #fff; border-color: #e2e8f0; color: #475569; }
+.fbp-actions .ghost:hover:not(:disabled) { background: #f8fafc; }
+.fbp-actions .primary { background: #2563eb; color: #fff; }
+.fbp-actions .primary:hover:not(:disabled) { background: #1d4ed8; }
+.fbp-actions button:disabled { opacity: .6; cursor: not-allowed; }
+
+.fbp-link {
+  display: block; margin: 14px auto 0; border: none; background: none;
+  color: #2563eb; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.fbp-link:hover { text-decoration: underline; }
+
+.fbp-done { text-align: center; padding: 22px 0 10px; }
+.fbp-done h2 { margin: 12px 0 6px; font-size: 22px; }
+.fbp-done p { margin: 0; color: #64748b; }
+.fbp-check {
+  width: 62px; height: 62px; margin: 0 auto; border-radius: 50%; display: grid; place-items: center;
+  background: #dcfce7; color: #16a34a; font-size: 30px; font-weight: 700;
+}
+@media (max-width: 420px) { .fbp-rate button { font-size: 36px; } }
+@media print { .fbp-backdrop { display: none !important; } }

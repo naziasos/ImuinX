@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, errorMessage } from "../../services/api";
+import FeedbackPopup from "../../components/FeedbackPopup";
 import "./MyCertificate.css";
 
 function formatDate(value) {
@@ -59,7 +60,7 @@ function getInitial(name) {
   return name.trim().charAt(0).toUpperCase();
 }
 
-function MyCertificate({ onBack }) {
+function MyCertificate({ onBack, onOpenFeedback }) {
   const user = useMemo(
     () => JSON.parse(localStorage.getItem("user") || "null"),
     []
@@ -539,6 +540,12 @@ function MyCertificate({ onBack }) {
           )}
 
       </div>
+
+      {/* Asks for feedback automatically once the certificate has loaded */}
+      <FeedbackPopup
+        enabled={!loading && !error}
+        onOpenFeedback={onOpenFeedback}
+      />
     </div>
   );
 }

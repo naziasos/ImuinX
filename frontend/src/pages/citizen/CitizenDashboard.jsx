@@ -1,8 +1,24 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { api } from "../../services/api";
 import "../clinicAdmin/ClinicAdminDashboard.css";
 
 function CitizenDashboard({onFamilyAccount,onAppointments,onCertificate,onVaccinations, onFeedback,onLogout}) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
+  const [pendingFeedback, setPendingFeedback] = useState(0);
+
+  // Badge on the Feedback nav item: vaccinations still waiting for a review
+  useEffect(() => {
+    let active = true;
+    api
+      .get("/feedback/my-pending")
+      .then((res) => {
+        if (active) setPendingFeedback((res.data.feedback || []).length);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -81,6 +97,30 @@ function CitizenDashboard({onFamilyAccount,onAppointments,onCertificate,onVaccin
 
 
 
+            <button
+              className="clinic-nav-item"
+              onClick={onFeedback}
+            >
+              <span>💬</span>
+              Feedback
+              {pendingFeedback > 0 && (
+                <em
+                  style={{
+                    marginLeft: "auto",
+                    fontStyle: "normal",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    background: "#2563eb",
+                    color: "#fff",
+                    borderRadius: 999,
+                    padding: "2px 8px",
+                  }}
+                >
+                  {pendingFeedback}
+                </em>
+              )}
+            </button>
+
             <p className="clinic-nav-title system-title">
               SYSTEM
             </p>
@@ -92,12 +132,6 @@ function CitizenDashboard({onFamilyAccount,onAppointments,onCertificate,onVaccin
 
           </nav>
         </div>
-          <button
-            onClick={onFeedback}
-            className="..."
-          >
-            Feedback
-          </button>
         <button
           className="clinic-logout"
           onClick={handleLogout}

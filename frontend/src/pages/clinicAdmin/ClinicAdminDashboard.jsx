@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
+import { api } from "../../services/api";
 import "./ClinicAdminDashboard.css";
 
-function ClinicAdminDashboard({ onLogout, onAddWorker, onOpenInventory, onAssignDuty}) {
+function ClinicAdminDashboard({ onLogout, onAddWorker, onOpenInventory, onAssignDuty, onFeedback}) {
   const [clinic, setClinic] = useState(null);
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [appointments, setAppointments] = useState([]);
 const [appointmentLoading, setAppointmentLoading] = useState(false);
+  const [feedbackSummary, setFeedbackSummary] = useState(null);
 
   const loadDashboard = async () => {
     try {
@@ -72,6 +74,12 @@ const appointmentResponse = await fetch(
 
   useEffect(() => {
     loadDashboard();
+
+    // Feedback numbers for the stat card + sidebar badge
+    api
+      .get("/feedback/clinic/summary")
+      .then((res) => setFeedbackSummary(res.data.summary))
+      .catch(() => {});
   }, []);
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -156,6 +164,30 @@ const appointmentResponse = await fetch(
             >
               <span>📦</span>
               Inventory
+            </button>
+
+            <button
+              className="clinic-nav-item"
+              onClick={onFeedback}
+            >
+              <span>💬</span>
+              Feedback
+              {feedbackSummary?.newCount > 0 && (
+                <em
+                  style={{
+                    marginLeft: "auto",
+                    fontStyle: "normal",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    background: "#2563eb",
+                    color: "#fff",
+                    borderRadius: 999,
+                    padding: "2px 8px",
+                  }}
+                >
+                  {feedbackSummary.newCount}
+                </em>
+              )}
             </button>
 
             <p className="clinic-nav-title system-title">
@@ -280,6 +312,32 @@ const appointmentResponse = await fetch(
               </h2>
               <span>
                 Current clinic status
+              </span>
+            </div>
+          </div>
+
+          <div
+            className="clinic-stat-card"
+            onClick={onFeedback}
+            style={{ cursor: "pointer" }}
+          >
+            <div className="clinic-stat-icon">
+              💬
+            </div>
+
+            <div>
+              <p>Patient Feedback</p>
+              <h2>{feedbackSummary ? feedbackSummary.total : "—"}</h2>
+              <span>
+                {feedbackSummary
+                  ? `${
+                      feedbackSummary.total
+                        ? `★ ${feedbackSummary.averageRating.toFixed(1)} avg · `
+                        : ""
+                    }${feedbackSummary.newCount} new · ${
+                      feedbackSummary.awaitingCitizen
+                    } awaiting patient`
+                  : "Loading…"}
               </span>
             </div>
           </div>

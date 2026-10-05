@@ -81,6 +81,17 @@ async function getFeedbackForAuthorizedUser(req, feedbackId) {
   };
 }
 
+// Staff/admin must never see who wrote anonymous feedback
+function hideIdentityIfAnonymous(feedbackDoc) {
+  const obj = feedbackDoc.toObject();
+  if (obj.isAnonymous) {
+    delete obj.userId;
+    delete obj.citizenId;
+    delete obj.citizenType;
+  }
+  return obj;
+}
+
 /*
 |--------------------------------------------------------------------------
 | GET MY PENDING FEEDBACK
@@ -168,6 +179,10 @@ router.get("/:feedbackId", authMiddleware, async (req, res) => {
       .populate("citizenId", "name dateOfBirth relationship")
       .populate("doseRecordId", "vaccineType batchNumber dateAdministered")
       .populate("responses.responderId", "name role");
+
+    if (req.user.role !== "citizen") {
+      return res.json({ feedback: hideIdentityIfAnonymous(feedback) });
+    }
 
     return res.json({ feedback });
   } catch (error) {
@@ -414,15 +429,7 @@ router.get("/clinic/list", authMiddleware, async (req, res) => {
       .populate("doseRecordId", "vaccineType batchNumber dateAdministered")
       .populate("responses.responderId", "name role");
 
-    const safeFeedback = feedback.map((item) => {
-      const obj = item.toObject();
-
-      if (obj.isAnonymous) {
-        delete obj.userId;
-      }
-
-      return obj;
-    });
+    const safeFeedback = feedback.map(hideIdentityIfAnonymous);
 
     return res.json({
       feedback: safeFeedback,
@@ -642,6 +649,18 @@ router.get("/clinic/summary", authMiddleware, async (req, res) => {
     }
 
     delete data._id;
+
+    // Extra counters for the clinic dashboard
+    const { promptStatus: _submitted, ...clinicScope } = filter;
+    data.newCount = await Feedback.countDocuments({
+      ...clinicScope,
+      promptStatus: "Submitted",
+      reviewStatus: "New",
+    });
+    data.awaitingCitizen = await Feedback.countDocuments({
+      ...clinicScope,
+      promptStatus: "Pending",
+    });
 
     return res.json({ summary: data });
   } catch (error) {

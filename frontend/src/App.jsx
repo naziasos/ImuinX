@@ -3,6 +3,7 @@ import BookAppointment from "./pages/citizen/BookAppointment";
 
 import { useEffect, useState } from "react";
 import Feedback from "./pages/citizen/Feedback";
+import ClinicFeedback from "./pages/clinicAdmin/ClinicFeedback";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -96,7 +97,8 @@ function App() {
             page !== "myVaccinations" &&
             page !== "verifyCertificate" &&
             page !== "showWork" &&
-            page !== "feedback" && (
+            page !== "feedback" &&
+            page !== "clinicFeedback" && (
               <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
 
                 {/* Register */}
@@ -160,6 +162,7 @@ function App() {
               onAddWorker={() => setPage("addWorker")}
               onAssignDuty={() => setPage("assignDuty")}
               onOpenInventory={() => setPage("inventory")}
+              onFeedback={() => setPage("clinicFeedback")}
               onLogout={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
@@ -220,6 +223,7 @@ function App() {
           {page === "myCertificate" && (
             <MyCertificate
               onBack={() => setPage("citizenDashboard")}
+              onOpenFeedback={() => setPage("feedback")}
             />
           )}
 
@@ -332,6 +336,13 @@ function App() {
             <VaccineInventory />
           )}
 
+          {/* Clinic Feedback (staff) */}
+          {page === "clinicFeedback" && (
+            <ClinicFeedback
+              onBack={() => setPage("clinicDashboard")}
+            />
+          )}
+
           {/* Assign Duty */}
           {page === "assignDuty" && (
             <AssignDuty
@@ -353,7 +364,8 @@ function App() {
         page !== "myVaccinations" &&
         page !== "verifyCertificate" &&
         page !== "showWork" &&
-        page !== "feedback" && (
+        page !== "feedback" &&
+        page !== "clinicFeedback" && (
           <Footer />
         )}
 
