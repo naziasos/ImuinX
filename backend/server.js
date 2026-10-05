@@ -12,6 +12,7 @@ const doseRoutes = require("./routes/doseRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const workerAppointmentRoutes = require("./routes/workerAppointmentRoutes");
 const certificateRoutes = require("./routes/certificateRoutes");
+const feedbackRoutes = require("./routes/feedbackRoutes");
 
 
 
@@ -32,6 +33,7 @@ app.use(
   workerAppointmentRoutes
 );
 app.use("/api/certificates", certificateRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 
 const familyRoutes = require("./routes/familyRoutes");

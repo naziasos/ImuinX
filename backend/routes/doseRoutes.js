@@ -6,6 +6,7 @@ const VaccineInventory = require("../models/VaccineInventory");
 const FamilyProfile = require("../models/FamilyProfile");
 const User = require("../models/User");
 const Appointment = require("../models/Appointment");
+const Feedback = require("../models/Feedback");
 
 const authMiddleware = require("../middleware/authMiddleware");
 const certificateService = require("../services/certificateService");
@@ -406,6 +407,60 @@ router.post("/", authMiddleware, async (req, res) => {
     }
 
     // ------------------------------------------------------------
+    // AUTOMATIC FEEDBACK PROMPT CREATION
+    // ------------------------------------------------------------
+    // The feedback owner is:
+    //   User -> the vaccinated citizen
+    //   FamilyProfile -> the family member's guardian
+    //
+    // Link fields are derived from the dose record. The frontend
+    // never gets to choose userId/clinicId/vaccineType.
+    let feedback = null;
+
+    try {
+      let feedbackUserId = null;
+
+      if (record.citizenType === "User") {
+        feedbackUserId = record.citizenId;
+      } else if (record.citizenType === "FamilyProfile") {
+        const familyMember = await FamilyProfile.findById(
+          record.citizenId
+        ).select("guardianId");
+
+        feedbackUserId = familyMember?.guardianId || null;
+      }
+
+      if (feedbackUserId) {
+        feedback = await Feedback.findOneAndUpdate(
+          { doseRecordId: record._id },
+          {
+            $setOnInsert: {
+              doseRecordId: record._id,
+              appointmentId: record.appointmentId || null,
+              clinicId: record.clinicId,
+              userId: feedbackUserId,
+              citizenId: record.citizenId,
+              citizenType: record.citizenType,
+              vaccineType: record.vaccineType,
+              promptStatus: "Pending",
+            },
+          },
+          {
+            new: true,
+            upsert: true,
+            setDefaultsOnInsert: true,
+          }
+        );
+      }
+    } catch (feedbackError) {
+      // Feedback must never make a successfully administered dose fail.
+      console.error(
+        `Feedback prompt creation failed for dose ${record._id}:`,
+        feedbackError
+      );
+    }
+
+    // ------------------------------------------------------------
     // AUTOMATIC CERTIFICATE GENERATION
     // ------------------------------------------------------------
 
@@ -463,6 +518,13 @@ router.post("/", authMiddleware, async (req, res) => {
 
       remainingStock:
         reserved.quantity,
+
+      feedback: feedback
+        ? {
+            id: feedback._id,
+            promptStatus: feedback.promptStatus,
+          }
+        : null,
 
       certificate,
     });
