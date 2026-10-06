@@ -1,35 +1,165 @@
-/* Staff feedback page — builds on the fb- styles from citizen/Feedback.css */
 .cf-summary {
-  display: grid; grid-template-columns: 200px 1fr; gap: 28px; align-items: center;
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 18px;
-  padding: 22px 26px; margin-bottom: 20px;
-}
-.cf-score { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.cf-score strong { font-size: 44px; line-height: 1; letter-spacing: -0.03em; }
-.cf-score .fb-stars-static { font-size: 20px; }
-.cf-score small { color: #64748b; }
-.cf-bars { display: grid; gap: 7px; }
-.cf-bar-row { display: grid; grid-template-columns: 28px 1fr 32px; align-items: center; gap: 10px; font-size: 13px; color: #475569; }
-.cf-bar { height: 8px; border-radius: 999px; background: #eef2f7; overflow: hidden; }
-.cf-bar i { display: block; height: 100%; background: #f59e0b; border-radius: 999px; }
-.cf-bar-n { text-align: right; color: #64748b; }
-
-.cf-filters { display: flex; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
-.cf-filters label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: #64748b; }
-.cf-filters select {
-  min-width: 150px; padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 10px;
-  background: #fff; font-size: 14px; color: #0f172a;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 22px 26px;
+  margin-bottom: 20px;
 }
 
-.cf-list { display: grid; gap: 14px; }
-.cf-muted { color: #94a3b8; font-style: italic; }
-.cf-reply-box { display: grid; gap: 10px; border-top: 1px solid #eef2f7; padding-top: 14px; margin-top: 4px; }
+.cf-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.cf-score strong {
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #172554;
+}
+
+.cf-score .fb-stars-static {
+  font-size: 20px;
+}
+
+.cf-score small {
+  color: #64748b;
+}
+
+.cf-list {
+  display: grid;
+  gap: 18px;
+}
+
+.cf-rating {
+  margin: 10px 0;
+}
+
+.cf-low-rating {
+  border-left: 4px solid #dc2626;
+  background: #fffafa;
+}
+
+.cf-low-rating-text {
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.cf-reply-box {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid #eef2f7;
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.cf-reply-box label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
 .cf-reply-box textarea {
-  width: 100%; font: inherit; font-size: 14px; padding: 10px 12px; resize: vertical;
-  border: 1px solid #e2e8f0; border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 75px;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 11px 13px;
+  resize: vertical;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
 }
-.cf-reply-box textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+
+.cf-reply-box textarea::placeholder {
+  color: #94a3b8;
+}
+
+.cf-reply-box textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.cf-reply-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cf-character-count {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.cf-reply-box .fb-btn.primary {
+  min-width: 110px;
+}
+
+.cf-reply-box .fb-alert {
+  margin-top: 2px;
+}
+
+.cf-muted {
+  color: #94a3b8;
+  font-style: italic;
+}
 
 @media (max-width: 640px) {
-  .cf-summary { grid-template-columns: 1fr; }
+  .cf-summary {
+    padding: 18px;
+  }
+
+  .cf-score strong {
+    font-size: 38px;
+  }
+
+  .cf-reply-bottom {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cf-reply-box .fb-btn.primary {
+    width: 100%;
+  }
+}
+
+.cf-reply-box .fb-btn.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 110px;
+  min-height: 42px;
+
+  padding: 10px 18px;
+
+  background: #2563eb;
+  color: #ffffff;
+
+  border: none;
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.cf-reply-box .fb-btn.primary:hover {
+  background: #1d4ed8;
+}
+
+.cf-reply-box .fb-btn.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

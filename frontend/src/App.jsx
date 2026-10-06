@@ -340,6 +340,10 @@ function App() {
           {page === "clinicFeedback" && (
             <ClinicFeedback
               onBack={() => setPage("clinicDashboard")}
+              onWorkers={() => setPage("addWorker")}
+    onDailyDuties={() => setPage("assignDuty")}
+    onInventory={() => setPage("inventory")}
+    onFeedback={() => setPage("clinicFeedback")}
             />
           )}
 
