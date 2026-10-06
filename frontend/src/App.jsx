@@ -27,6 +27,7 @@ import Verify from "./pages/Verify";
 
 
 import RequestInHouseVisit from "./pages/citizen/RequestInHouseVisit";
+import MyInHouseRequests from "./pages/citizen/MyInHouseRequests";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -192,6 +193,7 @@ function App() {
               onVaccinations={() => setPage("myVaccinations")}
               onFeedback={() => setPage("feedback")}
               onInHouseVisit={() => setPage("requestInHouseVisit")}
+              onMyInHouseRequests={() => setPage("myInHouseRequests")}
               onLogout={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
@@ -224,8 +226,20 @@ function App() {
 
           {/* Request In-House Visit */}
           {page === "requestInHouseVisit" && (
-            <RequestInHouseVisit />
+            <RequestInHouseVisit 
+            onBack={() => setPage("citizenDashboard")}
+            />
           )}
+          {page === "myInHouseRequests" && (
+            <MyInHouseRequests
+              onBack={() => setPage("citizenDashboard")}
+            />
+          )}
+
+
+
+
+
 
           {/* Public Certificate Verifier */}
           {page === "verifyCertificate" && <Verify />}

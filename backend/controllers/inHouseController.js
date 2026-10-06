@@ -112,6 +112,37 @@ const createRequest = async (req, res) => {
   }
 };
 
+
+
+
+
+// @desc    Get logged-in citizen's in-house requests
+// @route   GET /api/in-house-requests/my
+// @access  Private (Citizen)
+const getMyRequests = async (req, res) => {
+  try {
+    const requests = await InHouseRequest.find({
+      citizen: req.user._id,
+    })
+      .populate("familyMember", "name relation relationship age")
+      .populate("assignedWorker", "name phone email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: requests.length,
+      data: requests,
+    });
+  } catch (error) {
+    console.error("Get my in-house requests error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // @desc    Get all pending in-house requests (Health Worker)
 // @route   GET /api/in-house-requests/pending
 // @access  Private (Health Worker)
@@ -212,8 +243,10 @@ const completeVisit = async (req, res) => {
   }
 };
 
+
 module.exports = {
   createRequest,
+  getMyRequests,
   getPendingRequests,
   acceptRequest,
   completeVisit,

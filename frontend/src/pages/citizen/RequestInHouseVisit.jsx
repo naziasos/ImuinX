@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../services/api";
 
-const RequestInHouseVisit = () => {
+const RequestInHouseVisit = ({ onBack}) => {
   const navigate = useNavigate();
 
   const [familyMembers, setFamilyMembers] = useState([]);
@@ -134,6 +134,22 @@ const RequestInHouseVisit = () => {
       <h2 className="text-2xl font-bold mb-6 text-gray-800">
         Request In-House Visit
       </h2>
+
+      <button
+        type="button"
+        onClick={onBack}
+        style={{
+            marginBottom: "20px",
+            padding: "10px 16px",
+            borderRadius: "6px",
+            border: "none",
+            background: "#2563eb",
+            color: "#fff",
+            cursor: "pointer",
+        }}
+        >
+        ← Back to Dashboard
+        </button>
 
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">

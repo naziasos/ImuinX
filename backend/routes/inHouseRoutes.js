@@ -5,6 +5,7 @@ const router = express.Router();
 
 const {
   createRequest,
+  getMyRequests,
   getPendingRequests,
   acceptRequest,
   completeVisit,
@@ -16,6 +17,14 @@ const authMiddleware = require("../middleware/authMiddleware");
 router
   .route("/")
   .post(authMiddleware, createRequest);
+
+
+
+router
+  .route("/my")
+  .get(authMiddleware, getMyRequests);
+
+  
 
 // Health Worker views pending requests
 router
