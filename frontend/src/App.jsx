@@ -25,6 +25,9 @@ import MyCertificate from "./pages/citizen/MyCertificate";
 import MyVaccinationRecord from "./pages/citizen/MyVaccinationRecord";
 import Verify from "./pages/Verify";
 
+
+import RequestInHouseVisit from "./pages/citizen/RequestInHouseVisit";
+
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
@@ -98,7 +101,8 @@ function App() {
             page !== "verifyCertificate" &&
             page !== "showWork" &&
             page !== "feedback" &&
-            page !== "clinicFeedback" && (
+            page !== "clinicFeedback" &&
+            page !== "requestInHouseVisit" && (
               <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
 
                 {/* Register */}
@@ -187,6 +191,7 @@ function App() {
               onCertificate={() => setPage("myCertificate")}
               onVaccinations={() => setPage("myVaccinations")}
               onFeedback={() => setPage("feedback")}
+              onInHouseVisit={() => setPage("requestInHouseVisit")}
               onLogout={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
@@ -214,6 +219,12 @@ function App() {
                 setPage("login");
               }}
             />
+          )}
+
+
+          {/* Request In-House Visit */}
+          {page === "requestInHouseVisit" && (
+            <RequestInHouseVisit />
           )}
 
           {/* Public Certificate Verifier */}

@@ -1,40 +1,55 @@
-const mongoose = require('mongoose');
+
+const mongoose = require("mongoose");
+
+
 
 const inHouseRequestSchema = new mongoose.Schema(
   {
     citizen: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
+
     familyMember: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'FamilyProfile',
-      default: null, // Null if the request is for the logged-in citizen themselves
+      ref: "FamilyProfile",
+      default: null,
     },
+
     address: {
       type: String,
-      required: [true, 'Please provide an address for the in-house visit'],
+      required: true,
       trim: true,
     },
+
+    location: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
     preferredDate: {
       type: Date,
-      required: [true, 'Please specify a preferred date'],
+      required: true,
     },
+
     vaccineOrReason: {
       type: String,
-      required: [true, 'Please specify the vaccine name or reason for visit'],
+      required: true,
       trim: true,
     },
+
     status: {
       type: String,
-      enum: ['Pending', 'Accepted', 'Completed', 'Cancelled'],
-      default: 'Pending',
+      enum: ["Pending", "Accepted", "Completed", "Cancelled"],
+      default: "Pending",
     },
+
     assignedWorker: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: null, // Track which health worker accepted/handled the visit
+      ref: "User",
+      default: null,
     },
   },
   {
@@ -42,4 +57,7 @@ const inHouseRequestSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('InHouseRequest', inHouseRequestSchema);
+module.exports = mongoose.model(
+  "InHouseRequest",
+  inHouseRequestSchema
+);
