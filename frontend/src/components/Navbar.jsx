@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 function Navbar({ page, setPage }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems = [
+    const navItems = [
     { label: "Home", value: "home" },
+    { label: "Who it's for", value: "whoFor", section: "who-its-for" },
     { label: "About", value: "about" },
     { label: "Services", value: "services" },
     { label: "Verify", value: "verifyCertificate" },
@@ -13,8 +14,24 @@ function Navbar({ page, setPage }) {
   const handleNavigation = (value) => {
     setPage(value);
     setMobileMenuOpen(false);
+    // already on this page: scroll up smoothly, otherwise jump to the top of the new page
+    window.scrollTo({ top: 0, behavior: value === page ? "smooth" : "auto" });
   };
+  const goToSection = (id) => {
+    setMobileMenuOpen(false);
 
+    const scroll = () =>
+      document
+        .getElementById(id)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    if (page === "home") {
+      scroll();
+    } else {
+      setPage("home");
+      setTimeout(scroll, 150); // wait for Home to mount
+    }
+  };
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,7 +74,9 @@ function Navbar({ page, setPage }) {
             {navItems.map((item) => (
               <button
                 key={item.value}
-                onClick={() => handleNavigation(item.value)}
+                onClick={() =>
+                    item.section ? goToSection(item.section) : handleNavigation(item.value)
+                  }
                 className={`relative px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   page === item.value
                     ? "text-blue-600 bg-blue-50"
@@ -78,10 +97,10 @@ function Navbar({ page, setPage }) {
             {}
             <button
               onClick={() => handleNavigation("register")}
-              className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+              className={`px-5 py-2.5 rounded-full border text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 ${
                 page === "register"
-                  ? "text-blue-600 bg-blue-50"
-                  : "text-slate-600 hover:text-blue-600 hover:bg-slate-50"
+                  ? "text-blue-600 bg-blue-50 border-blue-200"
+                  : "text-slate-700 border-slate-200 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
               }`}
             >
               Register
@@ -91,7 +110,7 @@ function Navbar({ page, setPage }) {
             {}
             <button
               onClick={() => handleNavigation("login")}
-              className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 hover:shadow-md transition-all duration-200"
+              className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold shadow-md shadow-blue-500/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/40 active:translate-y-0 active:scale-95 transition-all duration-200"
             >
               Login
             </button>
@@ -191,7 +210,7 @@ function Navbar({ page, setPage }) {
 
               <button
                 onClick={() => handleNavigation("login")}
-                className="mt-2 px-4 py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
+                className="mt-2 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold shadow-md shadow-blue-500/30 active:scale-95 transition"
               >
                 Login
               </button>

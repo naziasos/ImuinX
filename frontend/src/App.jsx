@@ -1,7 +1,9 @@
 import AddWorker from "./pages/AddWorker.jsx";
 import BookAppointment from "./pages/citizen/BookAppointment";
+import About from "./pages/About";
+import Services from "./pages/Services";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Feedback from "./pages/citizen/Feedback";
 import ClinicFeedback from "./pages/clinicAdmin/ClinicFeedback";
 import Home from "./pages/Home";
@@ -31,6 +33,7 @@ import MyInHouseRequests from "./pages/citizen/MyInHouseRequests";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import Loader from "./components/Loader";
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -42,36 +45,13 @@ function App() {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (showSplash) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <h1 className="text-6xl font-bold text-blue-600">
-            ImuinX
-          </h1>
-
-          <p className="text-xl text-slate-500 mt-3">
-            Vaccination Management System
-          </p>
-
-          <div className="mt-8 flex justify-center">
-            <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleSplashDone = useCallback(() => setShowSplash(false), []);
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
+
+      {/* Intro loader (overlay, lifts away when done) */}
+      {showSplash && <Loader onDone={handleSplashDone} />}
 
       {/* Navbar */}
       <Navbar page={page} setPage={setPage} />
@@ -87,9 +67,27 @@ function App() {
               onLogin={() => setPage("login")}
             />
           )}
+          {/* About */}
+          {page === "about" && (
+            <About
+              onGetStarted={() => setPage("register")}
+              onServices={() => setPage("services")}
+            />
+          )}
 
+          {/* Services */}
+          {page === "services" && (
+            <Services
+              onGetStarted={() => setPage("register")}
+              onVerify={() => setPage("verifyCertificate")}
+            />
+          )}
           {/* Page Card */}
           {page !== "home" &&
+          
+            page !== "about" &&
+            page !== "services" &&
+            page !== "dashboard" &&
             page !== "dashboard" &&
             page !== "clinicDashboard" &&
             page !== "citizenDashboard" &&
