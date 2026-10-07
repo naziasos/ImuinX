@@ -12,6 +12,7 @@ const {
 } = require("../controllers/inHouseController");
 
 const authMiddleware = require("../middleware/authMiddleware");
+const workerMiddleware = require("../middleware/workerMiddleware");
 
 // Citizen creates an in-house request
 router
@@ -29,7 +30,7 @@ router
 // Health Worker views pending requests
 router
   .route("/pending")
-  .get(authMiddleware, getPendingRequests);
+  .get(authMiddleware, workerMiddleware, getPendingRequests);
 
 // Health Worker accepts a request
 router
