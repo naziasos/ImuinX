@@ -7,6 +7,7 @@ const {
   createRequest,
   getMyRequests,
   getPendingRequests,
+  getAssignedRequests,
   acceptRequest,
   completeVisit,
 } = require("../controllers/inHouseController");
@@ -32,15 +33,20 @@ router
   .route("/pending")
   .get(authMiddleware, workerMiddleware, getPendingRequests);
 
+// Health Worker views accepted requests assigned to them
+router
+  .route("/assigned")
+  .get(authMiddleware, workerMiddleware, getAssignedRequests);
+
 // Health Worker accepts a request
 router
   .route("/:id/accept")
-  .patch(authMiddleware, acceptRequest);
+  .patch(authMiddleware,workerMiddleware, acceptRequest);
 
 // Health Worker completes a visit
 router
   .route("/:id/complete")
-  .patch(authMiddleware, completeVisit);
+  .patch(authMiddleware,workerMiddleware, completeVisit);
 
 module.exports = router;
 

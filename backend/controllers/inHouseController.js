@@ -165,6 +165,33 @@ const getPendingRequests = async (req, res) => {
     });
   }
 };
+// @desc    Get accepted in-house requests assigned to logged-in worker
+// @route   GET /api/in-house-requests/assigned
+// @access  Private (Health Worker)
+const getAssignedRequests = async (req, res) => {
+  try {
+    const requests = await InHouseRequest.find({
+      assignedWorker: req.user._id,
+      status: "Accepted",
+    })
+      .populate("citizen", "name phone email")
+      .populate("familyMember", "name relation age")
+      .sort({ preferredDate: 1 });
+
+    res.status(200).json({
+      success: true,
+      count: requests.length,
+      data: requests,
+    });
+  } catch (error) {
+    console.error("Get assigned in-house requests error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 // @desc    Accept an in-house request (Health Worker)
 // @route   PATCH /api/in-house-requests/:id/accept
@@ -248,6 +275,7 @@ module.exports = {
   createRequest,
   getMyRequests,
   getPendingRequests,
+  getAssignedRequests,
   acceptRequest,
   completeVisit,
 };

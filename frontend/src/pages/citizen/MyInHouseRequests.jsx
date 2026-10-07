@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../../services/api";
 
-const MyInHouseRequests = ({ onBack}) => {
+const MyInHouseRequests = ({ onBack }) => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -20,7 +20,7 @@ const MyInHouseRequests = ({ onBack}) => {
 
       setError(
         err.response?.data?.message ||
-          "Failed to load your in-house requests."
+        "Failed to load your in-house requests."
       );
     } finally {
       setLoading(false);
@@ -29,8 +29,13 @@ const MyInHouseRequests = ({ onBack}) => {
 
   useEffect(() => {
     fetchRequests();
-  }, []);
 
+    const interval = setInterval(() => {
+      fetchRequests();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
   const formatDate = (date) => {
     return new Date(date).toLocaleString();
   };
@@ -54,17 +59,17 @@ const MyInHouseRequests = ({ onBack}) => {
         type="button"
         onClick={onBack}
         style={{
-            marginBottom: "20px",
-            padding: "10px 16px",
-            borderRadius: "6px",
-            border: "none",
-            background: "#2563eb",
-            color: "#fff",
-            cursor: "pointer",
+          marginBottom: "20px",
+          padding: "10px 16px",
+          borderRadius: "6px",
+          border: "none",
+          background: "#2563eb",
+          color: "#fff",
+          cursor: "pointer",
         }}
-        >
+      >
         ← Back to Dashboard
-        </button>
+      </button>
 
 
       {error && (
@@ -90,6 +95,24 @@ const MyInHouseRequests = ({ onBack}) => {
           <p>
             <strong>Status:</strong> {request.status}
           </p>
+
+          {request.status === "Pending" && (
+            <p style={{ color: "#d97706" }}>
+              Waiting for a health worker to accept your request.
+            </p>
+          )}
+
+          {request.status === "Accepted" && (
+            <p style={{ color: "#2563eb" }}>
+              Your request has been accepted by a health worker.
+            </p>
+          )}
+
+          {request.status === "Completed" && (
+            <p style={{ color: "#16a34a" }}>
+              Your in-house visit has been completed successfully.
+            </p>
+          )}
 
           <p>
             <strong>For:</strong>{" "}
@@ -122,10 +145,26 @@ const MyInHouseRequests = ({ onBack}) => {
           </p>
 
           {request.assignedWorker && (
-            <p>
-              <strong>Assigned Worker:</strong>{" "}
-              {request.assignedWorker.name}
-            </p>
+            <>
+              <p>
+                <strong>Assigned Worker:</strong>{" "}
+                {request.assignedWorker.name}
+              </p>
+
+              {request.assignedWorker.phone && (
+                <p>
+                  <strong>Worker Phone:</strong>{" "}
+                  {request.assignedWorker.phone}
+                </p>
+              )}
+
+              {request.assignedWorker.email && (
+                <p>
+                  <strong>Worker Email:</strong>{" "}
+                  {request.assignedWorker.email}
+                </p>
+              )}
+            </>
           )}
         </div>
       ))}
