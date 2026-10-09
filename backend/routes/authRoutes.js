@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
+const authMiddleware = require("../middleware/authMiddleware");
 const jwt = require("jsonwebtoken");
 const OTP = require("../models/OTP");
 const { sendOTPEmail } = require("../utils/email");
@@ -442,6 +443,78 @@ router.get("/citizen-test", async (req, res) => {
 
     res.status(500).json({
       message: "Failed to find citizen",
+    });
+  }
+});
+
+
+router.post("/change-password", authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Check required fields
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: "Current and new passwords are required",
+      });
+    }
+
+    // Check new password strength
+    const strongPassword =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{8,}$/;
+
+    if (!strongPassword.test(newPassword)) {
+      return res.status(400).json({
+        message:
+          "Password must contain at least 8 characters, uppercase, lowercase, a number, and a special character",
+      });
+    }
+
+    // Find the logged-in user
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Current password is incorrect",
+      });
+    }
+
+    // Prevent using the same password again
+    const samePassword = await bcrypt.compare(
+      newPassword,
+      user.password
+    );
+
+    if (samePassword) {
+      return res.status(400).json({
+        message: "New password must be different",
+      });
+    }
+
+    // Hash and save the new password
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password changed successfully. Please log in again.",
+    });
+  } catch (error) {
+    console.error("Change password error:", error);
+
+    return res.status(500).json({
+      message: "Server error while changing password",
     });
   }
 });
