@@ -344,3 +344,374 @@
     gap: 15px;
   }
 }
+
+.family-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #edf1f5;
+}
+
+.family-add-button:disabled,
+.family-cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 700px) {
+  .family-profile-actions .family-add-button {
+    width: 100%;
+  }
+}
+
+/* ===== Family Member Profile Page ===== */
+
+.family-profile-page {
+  min-height: 100vh;
+  padding: 40px 24px 50px;
+  background: linear-gradient(
+    135deg,
+    #f0fdfa 0%,
+    #f8fafc 48%,
+    #eef2ff 100%
+  );
+  font-family: inherit;
+  color: #1e293b;
+}
+
+.family-profile-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Back button */
+
+.family-profile-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  margin-bottom: 32px;
+  border: 1px solid #dbe7e7;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #0f766e;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.family-profile-back:hover {
+  background: #ccfbf1;
+  border-color: #99f6e4;
+  transform: translateX(-3px);
+}
+
+/* Page heading */
+
+.family-profile-heading {
+  margin-bottom: 28px;
+}
+
+.family-profile-eyebrow {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #0d9488;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.family-profile-heading h1 {
+  margin: 0 0 10px;
+  color: #0f172a;
+  font-size: clamp(27px, 4vw, 36px);
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.family-profile-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* Main profile card */
+
+.family-profile-card {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 15px 45px rgba(15, 118, 110, 0.08);
+}
+
+/* Profile header */
+
+.family-profile-top {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 36px;
+  background: linear-gradient(
+    115deg,
+    #ffffff 0%,
+    #f0fdfa 100%
+  );
+}
+
+.family-profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 94px;
+  height: 94px;
+  border: 5px solid #ffffff;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  box-shadow: 0 8px 20px rgba(13, 148, 136, 0.22);
+  color: #ffffff;
+  font-size: 36px;
+  font-weight: 800;
+}
+
+.family-profile-name {
+  min-width: 0;
+}
+
+.family-profile-label {
+  color: #0d9488;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+}
+
+.family-profile-name h2 {
+  margin: 8px 0 12px;
+  overflow-wrap: anywhere;
+  color: #0f172a;
+  font-size: clamp(23px, 4vw, 30px);
+  font-weight: 750;
+  letter-spacing: -0.5px;
+}
+
+.family-profile-relationship {
+  display: inline-block;
+  padding: 7px 14px;
+  border: 1px solid #99f6e4;
+  border-radius: 30px;
+  background: #ccfbf1;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Divider */
+
+.family-profile-divider {
+  height: 1px;
+  margin: 0 36px;
+  background: #e9f0f2;
+}
+
+/* Personal information */
+
+.family-profile-section-title {
+  padding: 28px 36px 18px;
+}
+
+.family-profile-section-title h3 {
+  margin: 0 0 7px;
+  color: #1e293b;
+  font-size: 19px;
+  font-weight: 750;
+}
+
+.family-profile-section-title p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.family-profile-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 0 36px 32px;
+}
+
+.family-profile-detail {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #e8eff1;
+  border-radius: 16px;
+  background: #fbfefe;
+  transition: all 0.25s ease;
+}
+
+.family-profile-detail:hover {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+  transform: translateY(-2px);
+}
+
+.family-detail-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #ccfbf1;
+  font-size: 21px;
+}
+
+.family-profile-detail > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.family-profile-detail span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.family-profile-detail strong {
+  overflow-wrap: anywhere;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Footer and edit button */
+
+.family-profile-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 36px;
+  border-top: 1px solid #e8eff1;
+  background: #f8fafc;
+}
+
+.family-profile-footer > div {
+  min-width: 0;
+}
+
+.family-profile-footer > div > strong {
+  color: #334155;
+  font-size: 14px;
+}
+
+.family-profile-footer p {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.family-profile-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-height: 46px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0f766e, #0d9488);
+  box-shadow: 0 6px 15px rgba(13, 148, 136, 0.2);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.family-profile-edit:hover {
+  background: linear-gradient(135deg, #115e59, #0f766e);
+  box-shadow: 0 9px 20px rgba(13, 148, 136, 0.28);
+  transform: translateY(-2px);
+}
+
+.family-profile-edit span {
+  font-size: 19px;
+}
+
+/* Bottom note */
+
+.family-profile-note {
+  margin-top: 24px;
+  color: #94a3b8;
+  font-size: 12px;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+/* Responsive design */
+
+@media (max-width: 600px) {
+  .family-profile-page {
+    padding: 24px 14px 35px;
+  }
+
+  .family-profile-back {
+    margin-bottom: 25px;
+  }
+
+  .family-profile-top {
+    align-items: flex-start;
+    gap: 17px;
+    padding: 25px 20px;
+  }
+
+  .family-profile-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 21px;
+    font-size: 28px;
+  }
+
+  .family-profile-divider {
+    margin: 0 20px;
+  }
+
+  .family-profile-section-title {
+    padding: 24px 20px 16px;
+  }
+
+  .family-profile-details {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 0 20px 24px;
+  }
+
+  .family-profile-detail {
+    padding: 16px;
+  }
+
+  .family-profile-footer {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 22px 20px;
+  }
+
+  .family-profile-edit {
+    width: 100%;
+  }
+}
