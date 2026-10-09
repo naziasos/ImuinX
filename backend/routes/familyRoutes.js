@@ -121,5 +121,155 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 
+/**
+ * PATCH /api/family/:id
+ * Update a family member linked to the logged-in guardian.
+ */
+router.patch("/:id", authMiddleware, async (req, res) => {
+  try {
+    const mongoose = require("mongoose");
+
+    const { id } = req.params;
+
+    // 1. Validate the family member ID.
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        message: "Invalid family member ID",
+      });
+    }
+
+    // 2. Allow only fields that belong to a family profile.
+    const allowedFields = [
+      "name",
+      "dateOfBirth",
+      "gender",
+      "relationship",
+    ];
+
+    const requestedFields = Object.keys(req.body);
+
+    // 3. Reject an empty request.
+    if (requestedFields.length === 0) {
+      return res.status(400).json({
+        message: "At least one field is required to update",
+      });
+    }
+
+    // 4. Reject fields that are not editable.
+    const invalidFields = requestedFields.filter(
+      (field) => !allowedFields.includes(field)
+    );
+
+    if (invalidFields.length > 0) {
+      return res.status(400).json({
+        message: "Invalid field(s) provided",
+        invalidFields,
+      });
+    }
+
+    const updates = {};
+
+    // 5. Validate and prepare the name.
+    if (Object.hasOwn(req.body, "name")) {
+      if (
+        typeof req.body.name !== "string" ||
+        !req.body.name.trim()
+      ) {
+        return res.status(400).json({
+          message: "Name cannot be empty",
+        });
+      }
+
+      updates.name = req.body.name.trim();
+    }
+
+    // 6. Validate the date of birth.
+    if (Object.hasOwn(req.body, "dateOfBirth")) {
+      const dob = req.body.dateOfBirth;
+
+      if (
+        typeof dob !== "string" ||
+        dob.trim() === "" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(dob) ||
+        Number.isNaN(Date.parse(dob)) ||
+        new Date(dob).toISOString().slice(0, 10) !== dob
+      ) {
+        return res.status(400).json({
+          message: "A valid date of birth is required (YYYY-MM-DD)",
+        });
+      }
+
+      updates.dateOfBirth = new Date(`${dob}T00:00:00.000Z`);
+    }
+
+    // 7. Validate gender against the existing model enum.
+    if (Object.hasOwn(req.body, "gender")) {
+      const validGenders = ["Male", "Female", "Other"];
+
+      if (!validGenders.includes(req.body.gender)) {
+        return res.status(400).json({
+          message: "Invalid gender",
+        });
+      }
+
+      updates.gender = req.body.gender;
+    }
+
+    // 8. Validate relationship against the existing model enum.
+    if (Object.hasOwn(req.body, "relationship")) {
+      const validRelationships = [
+        "Child",
+        "Spouse",
+        "Parent",
+        "Sibling",
+        "Other",
+      ];
+
+      if (!validRelationships.includes(req.body.relationship)) {
+        return res.status(400).json({
+          message: "Invalid relationship",
+        });
+      }
+
+      updates.relationship = req.body.relationship;
+    }
+
+    // 9. Find and update ONLY a profile owned by this guardian.
+    // The ownership check happens inside the database query.
+    const familyMember = await FamilyProfile.findOneAndUpdate(
+      {
+        _id: id,
+        guardianId: req.user.id,
+      },
+      {
+        $set: updates,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    // 10. Same response if the profile doesn't exist or
+    // belongs to another guardian.
+    if (!familyMember) {
+      return res.status(404).json({
+        message: "Family member not found in your account",
+      });
+    }
+
+    // 11. Return the updated database document.
+    return res.status(200).json({
+      message: "Family member profile updated successfully",
+      familyMember,
+    });
+  } catch (error) {
+    console.error("Update family profile error:", error);
+
+    return res.status(500).json({
+      message: "Failed to update family member profile",
+    });
+  }
+});
 
 module.exports = router;
