@@ -518,5 +518,223 @@ router.post("/change-password", authMiddleware, async (req, res) => {
     });
   }
 });
+
+
+
+/**
+ * GET /api/auth/profile
+ * Get the logged-in user's own profile.
+ */
+router.get("/profile", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .select(
+        "name email role phoneNumber address dateOfBirth createdAt updatedAt"
+      );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Profile retrieved successfully",
+      profile: user,
+    });
+  } catch (error) {
+    console.error("Get profile error:", error);
+
+    return res.status(500).json({
+      message: "Failed to retrieve profile",
+    });
+  }
+});
+
+
+/**
+ * PATCH /api/auth/profile
+ * Update the logged-in user's own profile.
+ */
+router.patch("/profile", authMiddleware, async (req, res) => {
+  try {
+    const allowedFields = [
+      "name",
+      "phoneNumber",
+      "address",
+      "dateOfBirth",
+    ];
+
+    const requestedFields = Object.keys(req.body);
+
+    if (requestedFields.length === 0) {
+      return res.status(400).json({
+        message: "At least one field is required to update",
+      });
+    }
+
+    const invalidFields = requestedFields.filter(
+      (field) => !allowedFields.includes(field)
+    );
+
+    if (invalidFields.length > 0) {
+      return res.status(400).json({
+        message: "Invalid field(s) provided",
+        invalidFields,
+      });
+    }
+
+    // Always find the user using the authenticated token.
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    // Update name.
+    if (Object.hasOwn(req.body, "name")) {
+      const value = req.body.name;
+
+      if (typeof value !== "string" || !value.trim()) {
+        return res.status(400).json({
+          message: "Name cannot be empty",
+        });
+      }
+
+      user.name = value.trim();
+    }
+
+    // Update phone number.
+    if (Object.hasOwn(req.body, "phoneNumber")) {
+      const value = req.body.phoneNumber;
+
+      if (
+        value !== null &&
+        (typeof value !== "string" || !value.trim())
+      ) {
+        return res.status(400).json({
+          message: "Phone number must be a non-empty string or null",
+        });
+      }
+
+      user.phoneNumber =
+        typeof value === "string" ? value.trim() : null;
+    }
+
+    // Update date of birth.
+    if (Object.hasOwn(req.body, "dateOfBirth")) {
+      const dob = req.body.dateOfBirth;
+
+      if (dob === null) {
+        user.dateOfBirth = null;
+      } else {
+        if (
+          typeof dob !== "string" ||
+          !/^\d{4}-\d{2}-\d{2}$/.test(dob) ||
+          Number.isNaN(Date.parse(dob)) ||
+          new Date(dob).toISOString().slice(0, 10) !== dob ||
+          new Date(`${dob}T00:00:00.000Z`) > new Date()
+        ) {
+          return res.status(400).json({
+            message: "A valid date of birth is required (YYYY-MM-DD)",
+          });
+        }
+
+        user.dateOfBirth = new Date(`${dob}T00:00:00.000Z`);
+      }
+    }
+
+    // Update address without removing other existing address fields.
+    if (Object.hasOwn(req.body, "address")) {
+      const address = req.body.address;
+
+      if (address === null) {
+        user.address = null;
+      } else {
+        if (
+          typeof address !== "object" ||
+          Array.isArray(address)
+        ) {
+          return res.status(400).json({
+            message: "Address must be an object or null",
+          });
+        }
+
+        const allowedAddressFields = [
+          "street",
+          "area",
+          "city",
+          "district",
+          "postalCode",
+          "country",
+        ];
+
+        const invalidAddressFields = Object.keys(address).filter(
+          (field) => !allowedAddressFields.includes(field)
+        );
+
+        if (invalidAddressFields.length > 0) {
+          return res.status(400).json({
+            message: "Invalid address field(s)",
+            invalidFields: invalidAddressFields,
+          });
+        }
+
+        const currentAddress = user.address
+          ? user.address.toObject
+            ? user.address.toObject()
+            : { ...user.address }
+          : {};
+
+        for (const [field, value] of Object.entries(address)) {
+          if (
+            value !== null &&
+            typeof value !== "string"
+          ) {
+            return res.status(400).json({
+              message: `Address ${field} must be a string or null`,
+            });
+          }
+
+          currentAddress[field] =
+            typeof value === "string" ? value.trim() : null;
+        }
+
+        user.address = currentAddress;
+      }
+    }
+
+    // Mongoose updates updatedAt automatically when saving.
+    await user.save();
+
+    // Never return the password or other private fields.
+    const updatedProfile = await User.findById(user._id)
+      .select(
+        "name email role phoneNumber address dateOfBirth createdAt updatedAt"
+      );
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      profile: updatedProfile,
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+
+    if (
+      error.name === "ValidationError" ||
+      error.name === "CastError"
+    ) {
+      return res.status(400).json({
+        message: "Invalid profile data",
+      });
+    }
+
+    return res.status(500).json({
+      message: "Failed to update profile",
+    });
+  }
+});
 module.exports = router;
 

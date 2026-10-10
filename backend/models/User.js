@@ -89,6 +89,11 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+        dateOfBirth: {
+      type: Date,
+      default: null,
+    },
+
     // New optional health details
     bloodType: {
       type: String,
