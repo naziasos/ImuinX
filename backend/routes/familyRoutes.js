@@ -73,9 +73,22 @@ router.get("/search", authMiddleware, async (req, res) => {
 });
 
 // Add a family member
+
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { name, dateOfBirth, gender, relationship } = req.body;
+    const {
+      name,
+      dateOfBirth,
+      gender,
+      relationship,
+      phoneNumber,
+      address,
+      bloodType,
+      allergies,
+      medicalNotes,
+      emergencyContactName,
+      emergencyContactPhone,
+    } = req.body;
 
     const familyMember = await FamilyProfile.create({
       guardianId: req.user.id,
@@ -83,20 +96,38 @@ router.post("/", authMiddleware, async (req, res) => {
       dateOfBirth,
       gender,
       relationship,
+      phoneNumber,
+      address,
+      bloodType,
+      allergies,
+      medicalNotes,
+      emergencyContactName,
+      emergencyContactPhone,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Family member added successfully",
       familyMember,
     });
   } catch (error) {
     console.error("Add family member error:", error);
 
-    res.status(500).json({
+    if (
+      error.name === "ValidationError" ||
+      error.name === "CastError"
+    ) {
+      return res.status(400).json({
+        message: "Invalid family member data",
+        error: error.message,
+      });
+    }
+
+    return res.status(500).json({
       message: "Failed to add family member",
     });
   }
 });
+
 
 
 
@@ -139,12 +170,21 @@ router.patch("/:id", authMiddleware, async (req, res) => {
     }
 
     // 2. Allow only fields that belong to a family profile.
+    
     const allowedFields = [
       "name",
       "dateOfBirth",
       "gender",
       "relationship",
+      "phoneNumber",
+      "address",
+      "bloodType",
+      "allergies",
+      "medicalNotes",
+      "emergencyContactName",
+      "emergencyContactPhone",
     ];
+
 
     const requestedFields = Object.keys(req.body);
 
@@ -234,6 +274,128 @@ router.patch("/:id", authMiddleware, async (req, res) => {
       updates.relationship = req.body.relationship;
     }
 
+
+
+
+    
+    // 9. Validate optional contact and health fields.
+    const optionalStringFields = [
+      "phoneNumber",
+      "medicalNotes",
+      "emergencyContactName",
+      "emergencyContactPhone",
+    ];
+
+    for (const field of optionalStringFields) {
+      if (Object.hasOwn(req.body, field)) {
+        const value = req.body[field];
+
+        if (value !== null && typeof value !== "string") {
+          return res.status(400).json({
+            message: `${field} must be a string or null`,
+          });
+        }
+
+        updates[field] =
+          typeof value === "string" ? value.trim() || null : null;
+      }
+    }
+
+    // 10. Validate blood type.
+    if (Object.hasOwn(req.body, "bloodType")) {
+      const validBloodTypes = [
+        "A+", "A-", "B+", "B-",
+        "AB+", "AB-", "O+", "O-",
+      ];
+
+      const value = req.body.bloodType;
+
+      if (value !== null && !validBloodTypes.includes(value)) {
+        return res.status(400).json({
+          message: "Invalid blood type",
+        });
+      }
+
+      updates.bloodType = value;
+    }
+
+    // 11. Validate allergies.
+    if (Object.hasOwn(req.body, "allergies")) {
+      const value = req.body.allergies;
+
+      if (
+        value !== null &&
+        (!Array.isArray(value) ||
+          !value.every(
+            (item) => typeof item === "string"
+          ))
+      ) {
+        return res.status(400).json({
+          message: "Allergies must be an array of strings or null",
+        });
+      }
+
+      updates.allergies =
+        value === null
+          ? null
+          : value.map((item) => item.trim()).filter(Boolean);
+    }
+
+    // 12. Validate address.
+    if (Object.hasOwn(req.body, "address")) {
+      const value = req.body.address;
+
+      if (
+        value !== null &&
+        (typeof value !== "object" || Array.isArray(value))
+      ) {
+        return res.status(400).json({
+          message: "Address must be an object or null",
+        });
+      }
+
+      if (value === null) {
+        updates.address = null;
+      } else {
+        const addressFields = [
+          "street",
+          "area",
+          "city",
+          "district",
+          "postalCode",
+          "country",
+        ];
+
+        const invalidAddressFields = Object.keys(value).filter(
+          (field) => !addressFields.includes(field)
+        );
+
+        if (invalidAddressFields.length > 0) {
+          return res.status(400).json({
+            message: "Invalid address field(s)",
+            invalidFields: invalidAddressFields,
+          });
+        }
+
+        for (const field of Object.keys(value)) {
+          if (
+            value[field] !== null &&
+            typeof value[field] !== "string"
+          ) {
+            return res.status(400).json({
+              message: `Address ${field} must be a string or null`,
+            });
+          }
+        }
+
+        for (const field of Object.keys(value)) {
+          updates[`address.${field}`] = value[field];
+        }
+      }
+    }
+
+
+
     // 9. Find and update ONLY a profile owned by this guardian.
     // The ownership check happens inside the database query.
     const familyMember = await FamilyProfile.findOneAndUpdate(
@@ -263,13 +425,25 @@ router.patch("/:id", authMiddleware, async (req, res) => {
       message: "Family member profile updated successfully",
       familyMember,
     });
+  
   } catch (error) {
     console.error("Update family profile error:", error);
+
+    if (
+      error.name === "ValidationError" ||
+      error.name === "CastError"
+    ) {
+      return res.status(400).json({
+        message: "Invalid family member data",
+        error: error.message,
+      });
+    }
 
     return res.status(500).json({
       message: "Failed to update family member profile",
     });
   }
 });
+
 
 module.exports = router;
