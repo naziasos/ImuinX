@@ -23,6 +23,7 @@ import ShowWork from "./pages/worker/ShowWork";
 import WorkerAppointments from "./pages/worker/WorkerAppointments";
 import VaccineInventory from "./pages/VaccineInventory";
 import FamilyAccount from "./pages/citizen/FamilyAccount";
+import EditProfile from "./pages/citizen/EditProfile";
 import MyCertificate from "./pages/citizen/MyCertificate";
 import MyVaccinationRecord from "./pages/citizen/MyVaccinationRecord";
 import Verify from "./pages/Verify";
@@ -94,6 +95,7 @@ function App() {
             page !== "workerDashboard" &&
             page !== "logDose" &&
             page !== "familyAccount" &&
+            page !== "editProfile" &&
             page !== "bookAppointment" &&
             page !== "myCertificate" &&
             page !== "myVaccinations" &&
@@ -185,6 +187,7 @@ function App() {
           {/* Citizen Dashboard */}
           {page === "citizenDashboard" && (
             <CitizenDashboard
+            onEditProfile={() => setPage("editProfile")}
               onFamilyAccount={() => setPage("familyAccount")}
               onAppointments={() => setPage("bookAppointment")}
               onCertificate={() => setPage("myCertificate")}
@@ -200,6 +203,14 @@ function App() {
               }}
             />
           )}
+
+
+          {/* Edit Citizen Profile */}
+{page === "editProfile" && (
+  <EditProfile
+    onBack={() => setPage("citizenDashboard")}
+  />
+)}
 
           {/* Feedback Page */}
           {page === "feedback" && (
@@ -384,6 +395,7 @@ function App() {
       {page !== "dashboard" &&
         page !== "clinicDashboard" &&
         page !== "citizenDashboard" &&
+        page !== "editProfile" &&
         page !== "workerDashboard" &&
         page !== "logDose" &&
         page !== "bookAppointment" &&

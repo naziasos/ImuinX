@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { api } from "../../services/api";
 import "../clinicAdmin/ClinicAdminDashboard.css";
 
-function CitizenDashboard({onFamilyAccount,onAppointments,onCertificate,onVaccinations, onFeedback, onInHouseVisit, onMyInHouseRequests, onLogout}) {
+function CitizenDashboard({ onEditProfile,onFamilyAccount,onAppointments,onCertificate,onVaccinations, onFeedback, onInHouseVisit, onMyInHouseRequests, onLogout}) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const [pendingFeedback, setPendingFeedback] = useState(0);
 
@@ -194,6 +194,14 @@ function CitizenDashboard({onFamilyAccount,onAppointments,onCertificate,onVaccin
               <strong>{user?.name || "Citizen"}</strong>
               <span>Citizen</span>
             </div>
+
+            <button
+    type="button"
+    className="citizen-edit-profile-button"
+    onClick={onEditProfile}
+  >
+    ✎ Edit Profile
+  </button>
           </div>
 
         </header>

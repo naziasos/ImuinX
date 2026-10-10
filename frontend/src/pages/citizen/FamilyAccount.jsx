@@ -1,19 +1,46 @@
 import React, { useEffect, useState } from "react";
 import "./FamilyAccount.css";
 
+const emptyAddress = {
+  street: "",
+  area: "",
+  city: "",
+  district: "",
+  postalCode: "",
+  country: "",
+};
+
+const createEmptyFormData = () => ({
+  name: "",
+  dateOfBirth: "",
+  gender: "",
+  relationship: "",
+  phoneNumber: "",
+  address: { ...emptyAddress },
+});
+
+const formatAddress = (address) => {
+  if (!address) return "Not available";
+
+  const parts = [
+    address.street,
+    address.area,
+    address.city,
+    address.district,
+    address.postalCode,
+    address.country,
+  ].filter((part) => typeof part === "string" && part.trim());
+
+  return parts.length ? parts.join(", ") : "Not available";
+};
+
 const FamilyAccount = ({ onLogout, onBack }) => {
   const [familyMembers, setFamilyMembers] = useState([]);
   const [selectedMember, setSelectedMember] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [saving, setSaving] = useState(false);
-
-  const [formData, setFormData] = useState({
-    name: "",
-    dateOfBirth: "",
-    gender: "",
-    relationship: "",
-  });
+  const [formData, setFormData] = useState(createEmptyFormData);
 
   useEffect(() => {
     const fetchFamilyMembers = async () => {
@@ -45,13 +72,27 @@ const FamilyAccount = ({ onLogout, onBack }) => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
-  // Add Family Member
+  const handleAddressChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      address: {
+        ...previous.address,
+        [name]: value,
+      },
+    }));
+  };
+
+  // Add Family Member — unchanged
   const handleAddMember = async (e) => {
     e.preventDefault();
 
@@ -82,13 +123,7 @@ const FamilyAccount = ({ onLogout, onBack }) => {
           newMember,
         ]);
 
-        setFormData({
-          name: "",
-          dateOfBirth: "",
-          gender: "",
-          relationship: "",
-        });
-
+        setFormData(createEmptyFormData());
         setShowForm(false);
         setEditingMember(null);
 
@@ -111,12 +146,15 @@ const FamilyAccount = ({ onLogout, onBack }) => {
     setFormData({
       name: selectedMember.name || "",
       dateOfBirth: selectedMember.dateOfBirth
-        ? new Date(selectedMember.dateOfBirth)
-            .toISOString()
-            .slice(0, 10)
+        ? selectedMember.dateOfBirth.slice(0, 10)
         : "",
       gender: selectedMember.gender || "",
       relationship: selectedMember.relationship || "",
+      phoneNumber: selectedMember.phoneNumber || "",
+      address: {
+        ...emptyAddress,
+        ...(selectedMember.address || {}),
+      },
     });
 
     setEditingMember(selectedMember);
@@ -124,6 +162,7 @@ const FamilyAccount = ({ onLogout, onBack }) => {
     setShowForm(true);
   };
 
+  
   // Update Family Member
   const handleUpdateMember = async (e) => {
     e.preventDefault();
@@ -138,6 +177,22 @@ const FamilyAccount = ({ onLogout, onBack }) => {
 
       const token = localStorage.getItem("token");
 
+      const payload = {
+        name: formData.name.trim(),
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        relationship: formData.relationship,
+        phoneNumber: formData.phoneNumber.trim(),
+        address: {
+          street: formData.address.street.trim(),
+          area: formData.address.area.trim(),
+          city: formData.address.city.trim(),
+          district: formData.address.district.trim(),
+          postalCode: formData.address.postalCode.trim(),
+          country: formData.address.country.trim(),
+        },
+      };
+
       const response = await fetch(
         `http://localhost:5000/api/family/${editingMember._id}`,
         {
@@ -146,63 +201,66 @@ const FamilyAccount = ({ onLogout, onBack }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(payload),
         }
       );
 
       const data = await response.json();
 
-      if (response.ok) {
-        const updatedMember =
-          data.familyMember ||
-          data.updatedMember ||
-          data;
+      if (!response.ok) {
+        console.log("Status:", response.status);
+  console.log("Response:", data);
 
-        setFamilyMembers((previous) =>
-          previous.map((member) =>
-            member._id === editingMember._id
-              ? { ...member, ...updatedMember }
-              : member
-          )
-        );
-
-        setSelectedMember({
-          ...editingMember,
-          ...updatedMember,
-        });
-
-        setFormData({
-          name: "",
-          dateOfBirth: "",
-          gender: "",
-          relationship: "",
-        });
-
-        setEditingMember(null);
-        setShowForm(false);
-
-        alert("Family member updated successfully!");
-      } else {
-        alert(
-          data.message || "Failed to update family member."
-        );
+  alert(
+    `Status: ${response.status}\n` +
+    (data.message || data.error || JSON.stringify(data))
+  );
+  return;
       }
+
+      const updatedMember =
+        data.familyMember ||
+        data.updatedMember ||
+        data.member ||
+        data;
+
+      const mergedMember = {
+        ...editingMember,
+        ...updatedMember,
+        ...payload,
+        _id: editingMember._id,
+        address: {
+          ...emptyAddress,
+          ...(editingMember.address || {}),
+          ...payload.address,
+          ...(updatedMember.address || {}),
+        },
+      };
+
+      setFamilyMembers((previous) =>
+        previous.map((member) =>
+          member._id === editingMember._id
+            ? mergedMember
+            : member
+        )
+      );
+
+      setSelectedMember(mergedMember);
+      setFormData(createEmptyFormData());
+      setEditingMember(null);
+      setShowForm(false);
+
+      alert("Family member updated successfully!");
     } catch (error) {
       console.error("Error updating family member:", error);
-      alert("Something went wrong.");
+      alert("Could not connect to the server. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleCancelForm = () => {
-    setFormData({
-      name: "",
-      dateOfBirth: "",
-      gender: "",
-      relationship: "",
-    });
-
+    setFormData(createEmptyFormData());
     setEditingMember(null);
     setShowForm(false);
   };
@@ -212,9 +270,8 @@ const FamilyAccount = ({ onLogout, onBack }) => {
     return name.charAt(0).toUpperCase();
   };
 
-
-
-    if (selectedMember && !showForm) {
+  // Family Member View Profile
+  if (selectedMember && !showForm) {
     return (
       <div className="family-profile-page">
         <main className="family-profile-container">
@@ -293,6 +350,26 @@ const FamilyAccount = ({ onLogout, onBack }) => {
                   </strong>
                 </div>
               </div>
+
+              <div className="family-profile-detail">
+                <div className="family-detail-icon">📞</div>
+                <div>
+                  <span>Phone Number</span>
+                  <strong>
+                    {selectedMember.phoneNumber || "Not available"}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="family-profile-detail">
+                <div className="family-detail-icon">📍</div>
+                <div>
+                  <span>Address</span>
+                  <strong>
+                    {formatAddress(selectedMember.address)}
+                  </strong>
+                </div>
+              </div>
             </div>
 
             <div className="family-profile-footer">
@@ -321,9 +398,8 @@ const FamilyAccount = ({ onLogout, onBack }) => {
     );
   }
 
-
-
-    if (showForm && editingMember) {
+  // Edit Family Member Form
+  if (showForm && editingMember) {
     return (
       <div className="family-page">
         <main className="family-container">
@@ -400,6 +476,83 @@ const FamilyAccount = ({ onLogout, onBack }) => {
                     <option value="Other">Other</option>
                   </select>
                 </div>
+
+                <div className="family-form-group">
+                  <label>Phone Number</label>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+
+                <div className="family-form-group">
+                  <label>Street / House</label>
+                  <input
+                    type="text"
+                    name="street"
+                    value={formData.address.street}
+                    onChange={handleAddressChange}
+                    placeholder="House number, street"
+                  />
+                </div>
+
+                <div className="family-form-group">
+                  <label>Area</label>
+                  <input
+                    type="text"
+                    name="area"
+                    value={formData.address.area}
+                    onChange={handleAddressChange}
+                    placeholder="Enter area"
+                  />
+                </div>
+
+                <div className="family-form-group">
+                  <label>City</label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.address.city}
+                    onChange={handleAddressChange}
+                    placeholder="Enter city"
+                  />
+                </div>
+
+                <div className="family-form-group">
+                  <label>District</label>
+                  <input
+                    type="text"
+                    name="district"
+                    value={formData.address.district}
+                    onChange={handleAddressChange}
+                    placeholder="Enter district"
+                  />
+                </div>
+
+                <div className="family-form-group">
+                  <label>Postal Code</label>
+                  <input
+                    type="text"
+                    name="postalCode"
+                    value={formData.address.postalCode}
+                    onChange={handleAddressChange}
+                    placeholder="Enter postal code"
+                  />
+                </div>
+
+                <div className="family-form-group">
+                  <label>Country</label>
+                  <input
+                    type="text"
+                    name="country"
+                    value={formData.address.country}
+                    onChange={handleAddressChange}
+                    placeholder="Enter country"
+                  />
+                </div>
               </div>
 
               <div className="family-form-actions">
@@ -427,21 +580,13 @@ const FamilyAccount = ({ onLogout, onBack }) => {
     );
   }
 
-
- 
   return (
     <div className="family-page">
       <main className="family-container">
-
-        {/* Back to Dashboard */}
-        <button
-          className="family-back"
-          onClick={onBack}
-        >
+        <button className="family-back" onClick={onBack}>
           ← Back to Dashboard
         </button>
 
-        {/* Page Heading */}
         <div className="family-heading">
           <h1>Family Account</h1>
           <p>
@@ -449,7 +594,6 @@ const FamilyAccount = ({ onLogout, onBack }) => {
           </p>
         </div>
 
-        {/* Family Members */}
         <section className="family-section">
           <div className="family-section-header">
             <h2>Family Members</h2>
@@ -462,14 +606,7 @@ const FamilyAccount = ({ onLogout, onBack }) => {
                 } else {
                   setSelectedMember(null);
                   setEditingMember(null);
-
-                  setFormData({
-                    name: "",
-                    dateOfBirth: "",
-                    gender: "",
-                    relationship: "",
-                  });
-
+                  setFormData(createEmptyFormData());
                   setShowForm(true);
                 }
               }}
@@ -479,24 +616,13 @@ const FamilyAccount = ({ onLogout, onBack }) => {
             </button>
           </div>
 
-          {/* Add / Edit Form */}
+          {/* Add Family Member form remains unchanged */}
           {showForm && (
             <div className="family-form-card">
-              <h3>
-                {editingMember
-                  ? "Edit Family Member"
-                  : "Add Family Member"}
-              </h3>
+              <h3>Add Family Member</h3>
 
-              <form
-                onSubmit={
-                  editingMember
-                    ? handleUpdateMember
-                    : handleAddMember
-                }
-              >
+              <form onSubmit={handleAddMember}>
                 <div className="family-form-grid">
-
                   <div className="family-form-group">
                     <label>Name</label>
                     <input
@@ -543,9 +669,7 @@ const FamilyAccount = ({ onLogout, onBack }) => {
                       onChange={handleChange}
                       required
                     >
-                      <option value="">
-                        Select relationship
-                      </option>
+                      <option value="">Select relationship</option>
                       <option value="Child">Child</option>
                       <option value="Spouse">Spouse</option>
                       <option value="Parent">Parent</option>
@@ -553,7 +677,6 @@ const FamilyAccount = ({ onLogout, onBack }) => {
                       <option value="Other">Other</option>
                     </select>
                   </div>
-
                 </div>
 
                 <div className="family-form-actions">
@@ -571,25 +694,17 @@ const FamilyAccount = ({ onLogout, onBack }) => {
                     className="family-add-button"
                     disabled={saving}
                   >
-                    {saving
-                      ? "Saving..."
-                      : editingMember
-                        ? "Save Changes"
-                        : "Add Member"}
+                    {saving ? "Saving..." : "Add Member"}
                   </button>
                 </div>
               </form>
             </div>
           )}
 
-          {/* Family Members List */}
           {familyMembers.length > 0 ? (
             <div className="family-members-grid">
               {familyMembers.map((member) => (
-                <div
-                  className="family-member-card"
-                  key={member._id}
-                >
+                <div className="family-member-card" key={member._id}>
                   <div className="family-member-top">
                     <div className="family-avatar">
                       {getInitial(member.name)}
@@ -626,77 +741,6 @@ const FamilyAccount = ({ onLogout, onBack }) => {
             )
           )}
         </section>
-
-        {/* Selected Member Profile */}
-        {selectedMember && (
-          <section className="family-section">
-            <div className="family-section-header">
-              <h2>Profile Details</h2>
-
-              <button
-                className="family-close-button"
-                onClick={() => setSelectedMember(null)}
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="family-profile-card">
-              <div className="family-profile-header">
-                <div className="family-avatar">
-                  {getInitial(selectedMember.name)}
-                </div>
-
-                <div className="family-member-info">
-                  <h3>{selectedMember.name}</h3>
-                  <p>{selectedMember.relationship}</p>
-                </div>
-              </div>
-
-              <div className="family-profile-details">
-
-                <div className="family-detail">
-                  <span>Date of Birth</span>
-                  <strong>
-                    {selectedMember.dateOfBirth
-                      ? new Date(
-                          selectedMember.dateOfBirth
-                        ).toLocaleDateString()
-                      : "Not available"}
-                  </strong>
-                </div>
-
-                <div className="family-detail">
-                  <span>Gender</span>
-                  <strong>
-                    {selectedMember.gender || "Not available"}
-                  </strong>
-                </div>
-
-                <div className="family-detail">
-                  <span>Relationship</span>
-                  <strong>
-                    {selectedMember.relationship ||
-                      "Not available"}
-                  </strong>
-                </div>
-
-              </div>
-
-              {/* Edit Profile Button */}
-              <div className="family-profile-actions">
-                <button
-                  type="button"
-                  className="family-add-button"
-                  onClick={handleEditMember}
-                >
-                  Edit Profile
-                </button>
-              </div>
-            </div>
-          </section>
-        )}
-
       </main>
     </div>
   );
