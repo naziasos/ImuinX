@@ -15,10 +15,7 @@ const certificateRoutes = require("./routes/certificateRoutes");
 const feedbackRoutes = require("./routes/feedbackRoutes");
 const clinicFeedbackRoutes = require("./routes/clinicFeedbackRoutes");
 const inHouseRoutes = require("./routes/inHouseRoutes");
-
-
-
-
+const notificationRoutes = require("./routes/notificationRoutes");
 
 const app = express();
 
@@ -39,7 +36,7 @@ app.use(
 app.use("/api/certificates", certificateRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/clinic-feedback", clinicFeedbackRoutes);
-
+app.use("/api/notifications", notificationRoutes);
 
 const familyRoutes = require("./routes/familyRoutes");
 app.use("/api/family", familyRoutes);
