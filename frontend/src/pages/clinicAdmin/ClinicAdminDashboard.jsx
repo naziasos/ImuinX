@@ -2,13 +2,22 @@ import React, { useEffect, useState } from "react";
 import { api } from "../../services/api";
 import "./ClinicAdminDashboard.css";
 
-function ClinicAdminDashboard({ onLogout, onAddWorker, onOpenInventory, onAssignDuty, onFeedback}) {
+function ClinicAdminDashboard({
+  onLogout,
+  onAddWorker,
+  onOpenInventory,
+  onAssignDuty,
+  onFeedback,
+  onEditProfile,
+}) {
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+
   const [clinic, setClinic] = useState(null);
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [appointments, setAppointments] = useState([]);
-const [appointmentLoading, setAppointmentLoading] = useState(false);
+  const [appointmentLoading, setAppointmentLoading] = useState(false);
   const [feedbackSummary, setFeedbackSummary] = useState(null);
 
   const loadDashboard = async () => {
@@ -42,18 +51,18 @@ const [appointmentLoading, setAppointmentLoading] = useState(false);
       }
 
       setClinic(data.clinic);
-setWorkers(data.workers || []);
+      setWorkers(data.workers || []);
 
-const clinicId = data.clinic?._id || data.clinic?.id;
+      const clinicId = data.clinic?._id || data.clinic?.id;
 
-if (!clinicId) {
-  throw new Error("Clinic ID not found");
-}
+      if (!clinicId) {
+        throw new Error("Clinic ID not found");
+      }
 
-// Load confirmed appointments for this clinic
-const appointmentResponse = await fetch(
-  `http://localhost:5000/api/appointments/clinic/${clinicId}`
-);
+      // Load confirmed appointments for this clinic
+      const appointmentResponse = await fetch(
+        `http://localhost:5000/api/appointments/clinic/${clinicId}`
+      );
 
       const appointmentData = await appointmentResponse.json();
 
@@ -79,7 +88,7 @@ const appointmentResponse = await fetch(
     api
       .get("/feedback/clinic/summary")
       .then((res) => setFeedbackSummary(res.data.summary))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -129,6 +138,15 @@ const appointmentResponse = await fetch(
               <span>📊</span>
               Dashboard
             </button>
+
+            <button
+              className="clinic-nav-item"
+              onClick={onEditProfile}
+            >
+              <span>👤</span>
+              Edit Profile
+            </button>
+
 
             <button className="clinic-nav-item">
               <span>👥</span>
@@ -238,8 +256,10 @@ const appointmentResponse = await fetch(
             </div>
 
             <div>
-              <strong>Clinic Admin</strong>
-              <span>Administrator</span>
+
+              <strong>{user?.name || "Clinic Admin"}</strong>
+              <span>Clinic Administrator</span>
+
             </div>
           </div>
 
@@ -330,121 +350,119 @@ const appointmentResponse = await fetch(
               <h2>{feedbackSummary ? feedbackSummary.total : "—"}</h2>
               <span>
                 {feedbackSummary
-                  ? `${
-                      feedbackSummary.total
-                        ? `★ ${feedbackSummary.averageRating.toFixed(1)} avg · `
-                        : ""
-                    }${feedbackSummary.newCount} new · ${
-                      feedbackSummary.awaitingCitizen
-                    } awaiting patient`
+                  ? `${feedbackSummary.total
+                    ? `★ ${feedbackSummary.averageRating.toFixed(1)} avg · `
+                    : ""
+                  }${feedbackSummary.newCount} new · ${feedbackSummary.awaitingCitizen
+                  } awaiting patient`
                   : "Loading…"}
               </span>
             </div>
           </div>
 
         </section>
-{/* Confirmed Appointments */}
-<section className="workers-section">
+        {/* Confirmed Appointments */}
+        <section className="workers-section">
 
-  <div className="workers-header">
+          <div className="workers-header">
 
-    <div>
-      <p className="section-label">
-        APPOINTMENTS
-      </p>
+            <div>
+              <p className="section-label">
+                APPOINTMENTS
+              </p>
 
-      <h2>
-        Confirmed Appointments
-      </h2>
+              <h2>
+                Confirmed Appointments
+              </h2>
 
-      <p>
-        Appointments are confirmed automatically when citizens book.
-      </p>
-    </div>
+              <p>
+                Appointments are confirmed automatically when citizens book.
+              </p>
+            </div>
 
-    <div className="worker-count">
-      {appointments.length} Appointment
-      {appointments.length !== 1 ? "s" : ""}
-    </div>
-
-  </div>
-
-  {appointmentLoading ? (
-
-    <div className="empty-workers">
-      <p>Loading appointments...</p>
-    </div>
-
-  ) : appointments.length === 0 ? (
-
-    <div className="empty-workers">
-
-      <div className="empty-icon">
-        📅
-      </div>
-
-      <h3>
-        No confirmed appointments
-      </h3>
-
-      <p>
-        Confirmed appointments for this clinic will appear here.
-      </p>
-
-    </div>
-
-  ) : (
-
-    <div className="workers-grid">
-
-      {appointments.map((appointment) => (
-
-        <div
-          className="worker-card"
-          key={appointment._id}
-        >
-
-          <div className="worker-avatar">
-            {appointment.citizenId?.name
-              ?.charAt(0)
-              ?.toUpperCase()}
-          </div>
-
-          <div className="worker-info">
-
-            <h3>
-              {appointment.citizenId?.name || "Unknown Citizen"}
-            </h3>
-
-            <p>
-              {appointment.citizenId?.email || "No email"}
-            </p>
-
-            <span className="worker-role">
-              {new Date(appointment.dateTime).toLocaleDateString()}
-              {" • "}
-              {new Date(appointment.dateTime).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
-
+            <div className="worker-count">
+              {appointments.length} Appointment
+              {appointments.length !== 1 ? "s" : ""}
+            </div>
 
           </div>
 
-          <span className="worker-role">
-            Confirmed
-          </span>
+          {appointmentLoading ? (
 
-        </div>
+            <div className="empty-workers">
+              <p>Loading appointments...</p>
+            </div>
 
-      ))}
+          ) : appointments.length === 0 ? (
 
-    </div>
+            <div className="empty-workers">
 
-  )}
+              <div className="empty-icon">
+                📅
+              </div>
 
-</section>
+              <h3>
+                No confirmed appointments
+              </h3>
+
+              <p>
+                Confirmed appointments for this clinic will appear here.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="workers-grid">
+
+              {appointments.map((appointment) => (
+
+                <div
+                  className="worker-card"
+                  key={appointment._id}
+                >
+
+                  <div className="worker-avatar">
+                    {appointment.citizenId?.name
+                      ?.charAt(0)
+                      ?.toUpperCase()}
+                  </div>
+
+                  <div className="worker-info">
+
+                    <h3>
+                      {appointment.citizenId?.name || "Unknown Citizen"}
+                    </h3>
+
+                    <p>
+                      {appointment.citizenId?.email || "No email"}
+                    </p>
+
+                    <span className="worker-role">
+                      {new Date(appointment.dateTime).toLocaleDateString()}
+                      {" • "}
+                      {new Date(appointment.dateTime).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+
+
+                  </div>
+
+                  <span className="worker-role">
+                    Confirmed
+                  </span>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
+
+        </section>
         {/* Workers */}
         <section className="workers-section">
 

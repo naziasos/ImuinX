@@ -85,7 +85,7 @@ function App() {
           )}
           {/* Page Card */}
           {page !== "home" &&
-          
+
             page !== "about" &&
             page !== "services" &&
             page !== "dashboard" &&
@@ -168,6 +168,7 @@ function App() {
               onAssignDuty={() => setPage("assignDuty")}
               onOpenInventory={() => setPage("inventory")}
               onFeedback={() => setPage("clinicFeedback")}
+              onEditProfile={() => setPage("editProfile")}
               onLogout={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
@@ -187,7 +188,7 @@ function App() {
           {/* Citizen Dashboard */}
           {page === "citizenDashboard" && (
             <CitizenDashboard
-            onEditProfile={() => setPage("editProfile")}
+              onEditProfile={() => setPage("editProfile")}
               onFamilyAccount={() => setPage("familyAccount")}
               onAppointments={() => setPage("bookAppointment")}
               onCertificate={() => setPage("myCertificate")}
@@ -205,12 +206,25 @@ function App() {
           )}
 
 
-          {/* Edit Citizen Profile */}
-{page === "editProfile" && (
-  <EditProfile
-    onBack={() => setPage("citizenDashboard")}
-  />
-)}
+
+          {/* Edit Profile */}
+          {page === "editProfile" && (
+            <EditProfile
+              onBack={() => {
+                if (
+                  currentUser?.role === "clinicAdmin" ||
+                  currentUser?.role === "clinic_admin"
+                ) {
+                  setPage("clinicDashboard");
+                } else if (currentUser?.role === "worker") {
+                  setPage("workerDashboard");
+                } else {
+                  setPage("citizenDashboard");
+                }
+              }}
+            />
+          )}
+
 
           {/* Feedback Page */}
           {page === "feedback" && (
@@ -235,8 +249,8 @@ function App() {
 
           {/* Request In-House Visit */}
           {page === "requestInHouseVisit" && (
-            <RequestInHouseVisit 
-            onBack={() => setPage("citizenDashboard")}
+            <RequestInHouseVisit
+              onBack={() => setPage("citizenDashboard")}
             />
           )}
           {page === "myInHouseRequests" && (
@@ -296,6 +310,7 @@ function App() {
               onLogDose={() => setPage("logDose")}
               onShowWork={() => setPage("showWork")}
               onAppointments={() => setPage("workerAppointments")}
+              onEditProfile={() => setPage("editProfile")}
               onLogout={() => {
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
@@ -375,9 +390,9 @@ function App() {
             <ClinicFeedback
               onBack={() => setPage("clinicDashboard")}
               onWorkers={() => setPage("addWorker")}
-    onDailyDuties={() => setPage("assignDuty")}
-    onInventory={() => setPage("inventory")}
-    onFeedback={() => setPage("clinicFeedback")}
+              onDailyDuties={() => setPage("assignDuty")}
+              onInventory={() => setPage("inventory")}
+              onFeedback={() => setPage("clinicFeedback")}
             />
           )}
 

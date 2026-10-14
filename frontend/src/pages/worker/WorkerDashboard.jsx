@@ -2,22 +2,30 @@ import React, { useEffect, useState } from "react";
 import "../clinicAdmin/ClinicAdminDashboard.css";
 import { api, errorMessage } from "../../services/api";
 
-function WorkerDashboard({ onLogout, onLogDose, onShowWork,onAppointments, }) {
-    const [pendingRequests, setPendingRequests] = useState([]);
+
+function WorkerDashboard({
+  onLogout,
+  onLogDose,
+  onShowWork,
+  onAppointments,
+  onEditProfile,
+}) {
+
+  const [pendingRequests, setPendingRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [requestError, setRequestError] = useState("");
 
   const handleAcceptRequest = async (requestId) => {
-  try {
-    await api.patch(`/in-house-requests/${requestId}/accept`);
+    try {
+      await api.patch(`/in-house-requests/${requestId}/accept`);
 
-    setPendingRequests((prevRequests) =>
-      prevRequests.filter((request) => request._id !== requestId)
-    );
-  } catch (error) {
-    alert(errorMessage(error));
-  }
-};
+      setPendingRequests((prevRequests) =>
+        prevRequests.filter((request) => request._id !== requestId)
+      );
+    } catch (error) {
+      alert(errorMessage(error));
+    }
+  };
 
   useEffect(() => {
     const fetchPendingRequests = async () => {
@@ -27,7 +35,7 @@ function WorkerDashboard({ onLogout, onLogDose, onShowWork,onAppointments, }) {
 
         const response = await api.get("/in-house-requests/pending");
 
-      setPendingRequests(response.data?.data || []);
+        setPendingRequests(response.data?.data || []);
       } catch (error) {
         setRequestError(errorMessage(error));
       } finally {
@@ -79,6 +87,15 @@ function WorkerDashboard({ onLogout, onLogDose, onShowWork,onAppointments, }) {
               Dashboard
             </button>
 
+            <button
+              className="clinic-nav-item"
+              onClick={onEditProfile}
+            >
+              <span>👤</span>
+              Edit Profile
+            </button>
+
+
             <button className="clinic-nav-item" onClick={onAppointments}>
               <span>📅</span>
               Appointments
@@ -91,12 +108,12 @@ function WorkerDashboard({ onLogout, onLogDose, onShowWork,onAppointments, }) {
 
 
             <button
-  className="clinic-nav-item"
-  onClick={onShowWork}
->
-  <span>📋</span>
-  Show Work
-</button>
+              className="clinic-nav-item"
+              onClick={onShowWork}
+            >
+              <span>📋</span>
+              Show Work
+            </button>
 
 
 
@@ -195,7 +212,7 @@ function WorkerDashboard({ onLogout, onLogDose, onShowWork,onAppointments, }) {
           </div>
 
         </section>
-                {/* Pending In-House Requests */}
+        {/* Pending In-House Requests */}
         <section className="workers-section">
 
           <div className="workers-header">
@@ -328,17 +345,17 @@ function WorkerDashboard({ onLogout, onLogDose, onShowWork,onAppointments, }) {
                   </div>
 
                   <div style={{ marginTop: "16px" }}>
-                  <button
-                    className="clinic-nav-item"
-                    style={{
-                      width: "auto",
-                      padding: "10px 18px",
-                      borderRadius: "8px",
-                    }}
-                    onClick={() => handleAcceptRequest(request._id)}
-                  >
-                    Accept Request
-                  </button>
+                    <button
+                      className="clinic-nav-item"
+                      style={{
+                        width: "auto",
+                        padding: "10px 18px",
+                        borderRadius: "8px",
+                      }}
+                      onClick={() => handleAcceptRequest(request._id)}
+                    >
+                      Accept Request
+                    </button>
                   </div>
 
                 </div>
