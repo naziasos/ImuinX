@@ -37,6 +37,7 @@ const addressSchema = new mongoose.Schema(
   { _id: false }
 );
 
+
 const userSchema = new mongoose.Schema(
   {
     // Existing fields

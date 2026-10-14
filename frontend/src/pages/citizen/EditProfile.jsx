@@ -17,6 +17,7 @@ function EditProfile({ onBack }) {
     name: "",
     phoneNumber: "",
     dateOfBirth: "",
+    bloodType: "",
     address: { ...emptyAddress },
   });
 
@@ -24,6 +25,54 @@ function EditProfile({ onBack }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+
+  const handlePasswordInputChange = (e) => {
+    setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+    setPasswordError("");
+    setPasswordSuccess("");
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      setPasswordError("Both current and new passwords are required.");
+      return;
+    }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError("New password and confirm password do not match.");
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+      const res = await api.post("/auth/change-password", {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+      setPasswordSuccess(res.data.message || "Password changed successfully!");
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (err) {
+      setPasswordError(err.response?.data?.message || "Failed to change password.");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -41,6 +90,7 @@ function EditProfile({ onBack }) {
           dateOfBirth: profile.dateOfBirth
             ? new Date(profile.dateOfBirth).toISOString().slice(0, 10)
             : "",
+            bloodType: profile.bloodType || "",
           address: {
             ...emptyAddress,
             ...(profile.address || {}),
@@ -50,7 +100,7 @@ function EditProfile({ onBack }) {
         if (active) {
           setError(
             err.response?.data?.message ||
-              "Could not load your profile. Please try again."
+            "Could not load your profile. Please try again."
           );
         }
       } finally {
@@ -108,7 +158,8 @@ function EditProfile({ onBack }) {
       const payload = {
         name: formData.name.trim(),
         phoneNumber: formData.phoneNumber.trim() || null,
-        dateOfBirth: formData.dateOfBirth || null,
+        dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.slice(0, 10) : null,
+        bloodType: formData.bloodType || null,
         address: Object.fromEntries(
           Object.entries(formData.address).map(([key, value]) => [
             key,
@@ -118,21 +169,25 @@ function EditProfile({ onBack }) {
       };
 
       const response = await api.patch("/auth/profile", payload);
-      const updatedProfile = response.data.profile;
+      const updatedProfile = response.data?.profile || {};
 
       // Keep the displayed name in sync with the saved profile.
-      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          ...savedUser,
-          name: updatedProfile.name,
-          phoneNumber: updatedProfile.phoneNumber,
-          dateOfBirth: updatedProfile.dateOfBirth,
-          address: updatedProfile.address,
-        })
-      );
+      try {
+        const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...savedUser,
+            name: updatedProfile.name || savedUser.name,
+            phoneNumber: updatedProfile.phoneNumber,
+            dateOfBirth: updatedProfile.dateOfBirth,
+            bloodType: updatedProfile.bloodType,
+            address: updatedProfile.address,
+          })
+        );
+      } catch (storageErr) {
+        console.warn("Storage sync failed:", storageErr);
+      }
 
       setFormData({
         name: updatedProfile.name || "",
@@ -140,17 +195,17 @@ function EditProfile({ onBack }) {
         dateOfBirth: updatedProfile.dateOfBirth
           ? new Date(updatedProfile.dateOfBirth).toISOString().slice(0, 10)
           : "",
+        bloodType: updatedProfile.bloodType || "",
         address: {
           ...emptyAddress,
-          ...(updatedProfile.address || {}),
+          ...((typeof updatedProfile.address === "object" && updatedProfile.address) || {}),
         },
       });
-
       setSuccess("Your profile has been updated successfully.");
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          "Could not save your profile. Please try again."
+        "Could not save your profile. Please try again."
       );
     } finally {
       setSaving(false);
@@ -253,6 +308,25 @@ function EditProfile({ onBack }) {
                 onChange={handleChange}
               />
             </div>
+            <div className="edit-profile-field">
+              <label htmlFor="profile-blood-type">Blood Group</label>
+              <select
+                id="profile-blood-type"
+                name="bloodType"
+                value={formData.bloodType}
+                onChange={handleChange}
+              >
+                <option value="">Select Blood Group</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+              </select>
+            </div>
           </div>
 
           <div className="edit-profile-divider" />
@@ -349,6 +423,180 @@ function EditProfile({ onBack }) {
               disabled={saving}
             >
               {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </form>
+        {/* Change Password Card */}
+        <form
+          className="edit-profile-card"
+          style={{ marginTop: "2rem" }}
+          onSubmit={handlePasswordSubmit}
+        >
+          <div className="edit-profile-section-heading">
+            <div className="edit-profile-icon">🔒</div>
+            <div>
+              <h2>Change Password</h2>
+              <p>Update your password to keep your account secure.</p>
+            </div>
+          </div>
+
+          {passwordError && (
+            <div className="edit-profile-alert edit-profile-error">
+              {passwordError}
+            </div>
+          )}
+          {passwordSuccess && (
+            <div className="edit-profile-alert edit-profile-success">
+              {passwordSuccess}
+            </div>
+          )}
+
+          <div className="edit-profile-grid">
+            <div className="edit-profile-field edit-profile-full">
+              <label htmlFor="current-password">Current Password</label>
+              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <input
+                  id="current-password"
+                  name="currentPassword"
+                  type={showPassword.current ? "text" : "password"}
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordInputChange}
+                  placeholder="Enter current password"
+                  required
+                  style={{ width: "100%", paddingRight: "40px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => ({ ...prev, current: !prev.current }))}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    color: "#6b7280",
+                    padding: 0,
+                  }}
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword.current ? (
+                    /* Eye Off (লুকানো অবস্থা) */
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    /* Eye Open (দেখানোর অবস্থা) */
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="edit-profile-field">
+              <label htmlFor="new-password">New Password</label>
+              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <input
+                  id="new-password"
+                  name="newPassword"
+                  type={showPassword.new ? "text" : "password"}
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordInputChange}
+                  placeholder="Enter new password"
+                  required
+                  style={{ width: "100%", paddingRight: "40px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => ({ ...prev, new: !prev.new }))}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    color: "#6b7280",
+                    padding: 0,
+                  }}
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword.new ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              <small>
+                Min 8 chars (uppercase, lowercase, number, special char).
+              </small>
+            </div>
+
+            <div className="edit-profile-field">
+              <label htmlFor="confirm-password">Confirm New Password</label>
+              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <input
+                  id="confirm-password"
+                  name="confirmPassword"
+                  type={showPassword.confirm ? "text" : "password"}
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordInputChange}
+                  placeholder="Confirm new password"
+                  required
+                  style={{ width: "100%", paddingRight: "40px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => ({ ...prev, confirm: !prev.confirm }))}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    color: "#6b7280",
+                    padding: 0,
+                  }}
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword.confirm ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="edit-profile-actions">
+            <button
+              type="submit"
+              className="edit-profile-save"
+              disabled={changingPassword}
+            >
+              {changingPassword ? "Updating..." : "Update Password"}
             </button>
           </div>
         </form>

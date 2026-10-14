@@ -529,7 +529,7 @@ router.get("/profile", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
       .select(
-        "name email role phoneNumber address dateOfBirth createdAt updatedAt"
+        "name email role phoneNumber address dateOfBirth bloodType createdAt updatedAt"
       );
 
     if (!user) {
@@ -563,6 +563,7 @@ router.patch("/profile", authMiddleware, async (req, res) => {
       "phoneNumber",
       "address",
       "dateOfBirth",
+      "bloodType",
     ];
 
     const requestedFields = Object.keys(req.body);
@@ -645,7 +646,22 @@ router.patch("/profile", authMiddleware, async (req, res) => {
         user.dateOfBirth = new Date(`${dob}T00:00:00.000Z`);
       }
     }
+    // Update blood type
+    if (Object.hasOwn(req.body, "bloodType")) {
+      const validBloodTypes = [
+        "A+", "A-", "B+", "B-",
+        "AB+", "AB-", "O+", "O-",
+      ];
+      const value = req.body.bloodType;
 
+      if (value !== null && !validBloodTypes.includes(value)) {
+        return res.status(400).json({
+          message: "Invalid blood type provided",
+        });
+      }
+
+      user.bloodType = value;
+    }
     // Update address without removing other existing address fields.
     if (Object.hasOwn(req.body, "address")) {
       const address = req.body.address;
@@ -712,7 +728,7 @@ router.patch("/profile", authMiddleware, async (req, res) => {
     // Never return the password or other private fields.
     const updatedProfile = await User.findById(user._id)
       .select(
-        "name email role phoneNumber address dateOfBirth createdAt updatedAt"
+        "name email role phoneNumber address dateOfBirth bloodType createdAt updatedAt"
       );
 
     return res.status(200).json({
