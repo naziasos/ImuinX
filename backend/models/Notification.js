@@ -15,6 +15,7 @@ const notificationSchema = new mongoose.Schema(
       required: true,
       enum: [
         "appointment",
+        "appointment_reminder",
         "dose",
         "certificate",
         "general",

@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const cron = require("node-cron");
 require("dotenv").config();
 
 
@@ -16,7 +17,7 @@ const feedbackRoutes = require("./routes/feedbackRoutes");
 const clinicFeedbackRoutes = require("./routes/clinicFeedbackRoutes");
 const inHouseRoutes = require("./routes/inHouseRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
-
+const createppointmentReminders = require("./jobs/appointmentReminder");
 const app = express();
 
 
@@ -55,9 +56,13 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected successfully");
-
+    
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
+    });
+    cron.schedule("0 * * * *", async () => {
+      console.log("Checking appointment reminders...");
+      await createAppointmentReminders();
     });
   })
   .catch((error) => {
