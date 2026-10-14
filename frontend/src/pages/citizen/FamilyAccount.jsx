@@ -16,6 +16,7 @@ const createEmptyFormData = () => ({
   gender: "",
   relationship: "",
   phoneNumber: "",
+  bloodType: "",
   address: { ...emptyAddress },
 });
 
@@ -151,6 +152,7 @@ const FamilyAccount = ({ onLogout, onBack }) => {
       gender: selectedMember.gender || "",
       relationship: selectedMember.relationship || "",
       phoneNumber: selectedMember.phoneNumber || "",
+      bloodType: selectedMember.bloodType || "",
       address: {
         ...emptyAddress,
         ...(selectedMember.address || {}),
@@ -183,6 +185,7 @@ const FamilyAccount = ({ onLogout, onBack }) => {
         gender: formData.gender,
         relationship: formData.relationship,
         phoneNumber: formData.phoneNumber.trim(),
+        bloodType: formData.bloodType || null,
         address: {
           street: formData.address.street.trim(),
           area: formData.address.area.trim(),
@@ -350,6 +353,15 @@ const FamilyAccount = ({ onLogout, onBack }) => {
                   </strong>
                 </div>
               </div>
+              <div className="family-profile-detail">
+                <div className="family-detail-icon">🩸</div>
+                <div>
+                  <span>Blood Group</span>
+                  <strong>
+                    {selectedMember.bloodType || "Not available"}
+                  </strong>
+                </div>
+              </div>
 
               <div className="family-profile-detail">
                 <div className="family-detail-icon">📞</div>
@@ -443,6 +455,24 @@ const FamilyAccount = ({ onLogout, onBack }) => {
                     onChange={handleChange}
                     required
                   />
+                </div>
+                <div className="family-form-group">
+                  <label>Blood Group</label>
+                  <select
+                    name="bloodType"
+                    value={formData.bloodType}
+                    onChange={handleChange}
+                  >
+                    <option value="">Select blood group</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
                 </div>
 
                 <div className="family-form-group">
@@ -675,6 +705,24 @@ const FamilyAccount = ({ onLogout, onBack }) => {
                       <option value="Parent">Parent</option>
                       <option value="Sibling">Sibling</option>
                       <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="family-form-group">
+                    <label>Blood Group</label>
+                    <select
+                      name="bloodType"
+                      value={formData.bloodType}
+                      onChange={handleChange}
+                    >
+                      <option value="">Select blood group</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
                     </select>
                   </div>
                 </div>
