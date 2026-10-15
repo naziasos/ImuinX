@@ -1,0 +1,77 @@
+
+.vaccine-insert-page {
+  max-width: 650px;
+  margin: 30px auto;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.vaccine-insert-page h2 {
+  margin-bottom: 8px;
+  color: #1f2937;
+}
+
+.vaccine-insert-page p {
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.vaccine-insert-page .form-group {
+  margin-bottom: 20px;
+}
+
+.vaccine-insert-page label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.vaccine-insert-page input,
+.vaccine-insert-page textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  font: inherit;
+}
+
+.vaccine-insert-page input:focus,
+.vaccine-insert-page textarea:focus {
+  outline: 2px solid #99f6e4;
+  border-color: #0d9488;
+}
+
+.vaccine-insert-page button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 7px;
+  background: #0f766e;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vaccine-insert-page button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.vaccine-insert-page .success-message {
+  padding: 12px;
+  margin-bottom: 16px;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 7px;
+}
+
+.vaccine-insert-page .error-message {
+  padding: 12px;
+  margin-bottom: 16px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 7px;
+}

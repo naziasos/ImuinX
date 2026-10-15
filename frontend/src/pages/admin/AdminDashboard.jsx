@@ -28,7 +28,7 @@ const clinics = [
   },
 ];
 
-function AdminDashboard({ onAddClinic }) {
+function AdminDashboard({ onAddClinic, onManageVaccines }) {
   return (
     <div className="dashboard">
 
@@ -61,6 +61,18 @@ function AdminDashboard({ onAddClinic }) {
               <span>🏥</span>
               Clinics
             </a>
+
+
+
+            <button
+              className="worker-list-add"
+              onClick={onManageVaccines}
+            >
+              <span>💉</span>
+              Add Vaccine
+            </button>
+
+            
 
             <a href="#" className="nav-item">
               <span>👥</span>
@@ -258,18 +270,23 @@ function AdminDashboard({ onAddClinic }) {
             </button>
 
 
-            <button className="quick-card">
-              <div className="quick-icon cyan-bg">
-                💉
-              </div>
+            
+          <button
+            className="quick-card"
+            onClick={onManageVaccines}
+          >
+            <div className="quick-icon cyan-bg">
+              💉
+            </div>
 
-              <div>
-                <strong>Manage Vaccines</strong>
-                <span>Manage vaccine information</span>
-              </div>
+            <div>
+              <strong>Manage Vaccines</strong>
+              <span>Add a new vaccine to the catalogue</span>
+            </div>
 
-              <span className="quick-arrow">→</span>
-            </button>
+            <span className="quick-arrow">→</span>
+          </button>
+
 
           </div>
 

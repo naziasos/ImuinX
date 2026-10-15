@@ -164,10 +164,7 @@ function ClinicAdminDashboard({
               Workers List
             </button>
 
-            <button className="clinic-nav-item">
-              <span>📅</span>
-              Appointments
-            </button>
+            
 
 
 

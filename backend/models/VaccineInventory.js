@@ -3,10 +3,16 @@ const mongoose = require("mongoose");
 
 const vaccineInventorySchema = new mongoose.Schema(
   {
-    vaccineType: {
-      type: String,
+    vaccineId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Vaccine",
       required: true,
-      trim: true,
+    },
+
+    clinicId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Clinic",
+      required: true,
     },
 
     batchNumber: {
@@ -19,16 +25,11 @@ const vaccineInventorySchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
+      default: 0,
     },
 
     expiryDate: {
       type: Date,
-      required: true,
-    },
-
-    clinicId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Clinic",
       required: true,
     },
   },
@@ -41,4 +42,3 @@ module.exports = mongoose.model(
   "VaccineInventory",
   vaccineInventorySchema
 );
-

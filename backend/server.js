@@ -18,6 +18,9 @@ const clinicFeedbackRoutes = require("./routes/clinicFeedbackRoutes");
 const inHouseRoutes = require("./routes/inHouseRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const createAppointmentReminders = require("./jobs/appointmentReminder");
+
+const vaccineRoutes = require("./routes/vaccineRoutes");
+
 const app = express();
 
 
@@ -42,6 +45,8 @@ app.use("/api/notifications", notificationRoutes);
 const familyRoutes = require("./routes/familyRoutes");
 app.use("/api/family", familyRoutes);
 app.use("/api/in-house-requests", inHouseRoutes);
+
+app.use("/api/vaccines", vaccineRoutes);
 
 
 
