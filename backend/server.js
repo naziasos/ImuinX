@@ -17,7 +17,7 @@ const feedbackRoutes = require("./routes/feedbackRoutes");
 const clinicFeedbackRoutes = require("./routes/clinicFeedbackRoutes");
 const inHouseRoutes = require("./routes/inHouseRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
-const createppointmentReminders = require("./jobs/appointmentReminder");
+const createAppointmentReminders = require("./jobs/appointmentReminder");
 const app = express();
 
 
