@@ -1,4 +1,5 @@
 import AddWorker from "./pages/AddWorker.jsx";
+import WorkerList from "./pages/clinicAdmin/WorkerList.jsx";
 import BookAppointment from "./pages/citizen/BookAppointment";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -115,6 +116,7 @@ function App() {
             page !== "showWork" &&
             page !== "feedback" &&
             page !== "clinicFeedback" &&
+            page !== "workerList" &&
             page !== "requestInHouseVisit" && (
               <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
 
@@ -177,6 +179,7 @@ function App() {
           {page === "clinicDashboard" && (
             <ClinicAdminDashboard
               onAddWorker={() => setPage("addWorker")}
+              onWorkers={() => setPage("workerList")}
               onAssignDuty={() => setPage("assignDuty")}
               onOpenInventory={() => setPage("inventory")}
               onFeedback={() => setPage("clinicFeedback")}
@@ -388,7 +391,15 @@ function App() {
           {page === "addWorker" && (
             <AddWorker
               onBack={() => setPage("clinicDashboard")}
-              onWorkerCreated={() => setPage("clinicDashboard")}
+              onWorkerCreated={() => setPage("workerList")}
+            />
+          )}
+
+          {/* Clinic Worker Management */}
+          {page === "workerList" && (
+            <WorkerList
+              onBack={() => setPage("clinicDashboard")}
+              onAddWorker={() => setPage("addWorker")}
             />
           )}
 

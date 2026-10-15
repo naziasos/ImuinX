@@ -201,6 +201,36 @@
   margin-top: 2px;
 }
 
+
+.clinic-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-add-worker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.dashboard-add-worker-btn span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.clinic-stat-card-clickable {
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.clinic-stat-card-clickable:hover {
+  transform: translateY(-2px);
+  border-color: #bfdbfe;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, .08);
+}
+
 /* Error */
 
 .clinic-error {

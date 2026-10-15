@@ -1,0 +1,152 @@
+.worker-list-page{
+    min-height:100vh;
+    background:#f5f7fb;
+    padding:36px 48px;
+    color:#172554;
+    box-sizing:border-box}
+.worker-list-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:24px;
+    margin-bottom:26px
+}
+.worker-list-back{
+    border:0;
+    background:transparent;
+    color:#2563eb;
+    font-weight:700;
+    cursor:pointer;
+    padding:0;
+    margin-bottom:20px}.worker-list-eyebrow{margin:0 0 6px;color:#94a3b8;font-size:11px;font-weight:800;letter-spacing:1.4px}.worker-list-header h1{margin:0;font-size:34px}.worker-list-header p{margin:8px 0 0;color:#64748b}.worker-list-add,.dashboard-add-worker-btn{border:0;border-radius:12px;background:#2563eb;color:#fff;font-weight:800;padding:12px 18px;cursor:pointer;box-shadow:0 8px 18px rgba(37,99,235,.18)}.worker-list-add:hover,.dashboard-add-worker-btn:hover{background:#1d4ed8}.worker-list-clinic-bar{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:17px 20px;display:flex;align-items:center;gap:14px;margin-bottom:18px}.worker-list-clinic-bar>span{font-size:25px}.worker-list-clinic-bar div{flex:1}.worker-list-clinic-bar strong{display:block}.worker-list-clinic-bar small{display:block;color:#94a3b8;margin-top:3px}.worker-list-clinic-bar b{color:#2563eb}.worker-list-error{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;padding:13px 16px;border-radius:12px;margin-bottom:18px}.worker-list-toolbar{display:flex;gap:12px;margin-bottom:18px}.worker-search{flex:1;background:#fff;border:1px solid #e5e7eb;border-radius:12px;display:flex;align-items:center;padding:0 14px}.worker-search span{font-size:23px;color:#94a3b8}.worker-search input{width:100%;border:0;outline:0;padding:13px;background:transparent;font-size:14px}.worker-sort{border:1px solid #dbe3ef;background:#fff;color:#475569;border-radius:12px;padding:0 16px;font-weight:700;cursor:pointer}.worker-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}.worker-management-card{background:#fff;border:1px solid #e5e7eb;border-radius:17px;padding:20px;box-shadow:0 4px 14px rgba(15,23,42,.03)}.worker-management-top{display:flex;gap:13px}.worker-management-avatar,.worker-profile-avatar-large{flex:0 0 auto;border-radius:15px;background:#e0ecff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-weight:900}.worker-management-avatar{width:50px;height:50px;font-size:19px}.worker-management-main{min-width:0}.worker-name-line{display:flex;align-items:center;gap:8px}.worker-management-main h3{margin:0;font-size:17px}.worker-management-main p{margin:5px 0 0;color:#64748b;font-size:13px;overflow:hidden;text-overflow:ellipsis}.new-worker-badge{font-size:9px;background:#dcfce7;color:#15803d;padding:3px 6px;border-radius:999px;font-weight:900}.worker-management-meta{display:flex;justify-content:space-between;gap:8px;border-top:1px solid #eef2f7;border-bottom:1px solid #eef2f7;margin:18px 0;padding:12px 0;color:#64748b;font-size:11px}.worker-management-actions{display:flex;gap:9px}.worker-management-actions button{flex:1;border:1px solid #dbe3ef;background:#fff;color:#2563eb;border-radius:10px;padding:10px;font-weight:800;cursor:pointer}.worker-management-actions .worker-delete-btn{color:#dc2626;border-color:#fecaca;background:#fff7f7}.worker-management-actions button:hover{background:#f1f5ff}.worker-management-actions .worker-delete-btn:hover{background:#fee2e2}.worker-management-actions button:disabled{opacity:.6;cursor:not-allowed}.worker-list-empty{background:#fff;border:1px dashed #cbd5e1;border-radius:18px;padding:60px 20px;text-align:center;color:#64748b}.worker-empty-icon{font-size:42px}.worker-list-empty h2{color:#172554;margin:12px 0 5px}.worker-list-spinner{width:28px;height:28px;border:3px solid #dbeafe;border-top-color:#2563eb;border-radius:50%;margin:0 auto 12px;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.worker-profile-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000}.worker-profile-modal{position:relative;background:#fff;border-radius:20px;width:min(680px,100%);max-height:90vh;overflow:auto;padding:28px;box-shadow:0 25px 70px rgba(15,23,42,.25)}.worker-modal-close{position:absolute;right:18px;top:15px;border:0;background:#f1f5f9;width:35px;height:35px;border-radius:50%;font-size:23px;cursor:pointer}.worker-profile-hero{display:flex;gap:15px;align-items:center;padding-right:45px;margin-bottom:25px}.worker-profile-avatar-large{width:70px;height:70px;font-size:27px}.worker-profile-hero span{font-size:10px;font-weight:900;letter-spacing:1.2px;color:#94a3b8}.worker-profile-hero h2{margin:3px 0;font-size:26px}.worker-profile-hero p{margin:0;color:#64748b;font-size:13px}.worker-profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.worker-profile-grid>div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px}.worker-profile-grid label{display:block;color:#94a3b8;font-size:10px;text-transform:uppercase;font-weight:800;letter-spacing:.7px;margin-bottom:5px}.worker-profile-grid strong{font-size:14px;color:#334155;word-break:break-word}.worker-readonly-note{margin-top:16px;background:#eff6ff;color:#475569;border-radius:12px;padding:12px 14px;font-size:12px}.worker-profile-footer{display:flex;justify-content:space-between;gap:10px;margin-top:22px}.worker-profile-footer button{border:1px solid #dbe3ef;background:#fff;border-radius:10px;padding:11px 15px;font-weight:800;cursor:pointer}.worker-profile-delete{color:#dc2626!important;border-color:#fecaca!important;background:#fff7f7!important}.worker-profile-loading{position:fixed;right:24px;bottom:24px;background:#172554;color:#fff;padding:10px 15px;border-radius:10px;font-size:13px;z-index:1100}@media(max-width:700px){.worker-list-page{padding:25px 18px}.worker-list-header{align-items:flex-start;flex-direction:column}.worker-list-toolbar{flex-direction:column}.worker-sort{padding:12px}.worker-profile-grid{grid-template-columns:1fr}.worker-profile-footer{flex-direction:column}}
+
+/* =========================================
+   DELETE CONFIRMATION POPUP
+   ========================================= */
+
+.delete-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 9999;
+  backdrop-filter: blur(3px);
+}
+
+.delete-confirm-modal {
+  width: min(430px, 100%);
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 32px;
+  text-align: center;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
+  animation: deletePopupIn 0.2s ease-out;
+}
+
+.delete-warning-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: #fff4e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+}
+
+.delete-confirm-modal h2 {
+  margin: 0 0 12px;
+  color: #1f2937;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.delete-confirm-modal p {
+  margin: 0 auto 10px;
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.delete-warning-text {
+  font-size: 13px !important;
+  color: #6b7280 !important;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 15px !important;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.delete-cancel-btn,
+.delete-confirm-btn {
+  min-width: 120px;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.delete-cancel-btn {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.delete-cancel-btn:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.delete-confirm-btn {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.delete-confirm-btn:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.delete-cancel-btn:disabled,
+.delete-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes deletePopupIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .delete-confirm-modal {
+    padding: 25px 20px;
+  }
+
+  .delete-confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .delete-cancel-btn,
+  .delete-confirm-btn {
+    width: 100%;
+  }
+}

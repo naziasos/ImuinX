@@ -257,6 +257,101 @@ router.get("/my-clinic/test", (req, res) => {
   res.json({ message: "My clinic route works!" });
 });
 
+// Get a single worker profile for the logged-in Clinic Admin (read-only)
+router.get(
+  "/my-clinic/workers/:workerId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      if (req.user.role !== "clinicAdmin") {
+        return res.status(403).json({ message: "Clinic Admin access required" });
+      }
+
+      const clinicAdmin = await User.findById(req.user.id);
+      if (!clinicAdmin?.clinicId) {
+        return res.status(404).json({ message: "No clinic is assigned to this Clinic Admin" });
+      }
+
+      const worker = await User.findOne({
+        _id: req.params.workerId,
+        clinicId: clinicAdmin.clinicId,
+        role: "worker",
+      }).select("-password");
+
+      if (!worker) {
+        return res.status(404).json({ message: "Worker not found in your clinic" });
+      }
+
+      res.json({ worker });
+    } catch (error) {
+      console.error("Worker profile error:", error.message);
+      res.status(500).json({ message: "Server error while loading worker profile" });
+    }
+  }
+);
+
+// Permanently remove a worker while preserving historical duties/vaccination records.
+router.delete(
+  "/my-clinic/workers/:workerId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      if (req.user.role !== "clinicAdmin") {
+        return res.status(403).json({ message: "Clinic Admin access required" });
+      }
+
+      const clinicAdmin = await User.findById(req.user.id);
+      if (!clinicAdmin?.clinicId) {
+        return res.status(404).json({ message: "No clinic is assigned to this Clinic Admin" });
+      }
+
+      const worker = await User.findOne({
+        _id: req.params.workerId,
+        clinicId: clinicAdmin.clinicId,
+        role: "worker",
+      });
+
+      if (!worker) {
+        return res.status(404).json({ message: "Worker not found in your clinic" });
+      }
+
+      // Keep historical records readable after the User document is deleted.
+      await DutyAssignment.updateMany(
+        { workerId: worker._id, clinicId: clinicAdmin.clinicId },
+        {
+          $set: {
+            workerName: worker.name,
+            workerEmail: worker.email,
+            workerId: null,
+          },
+        }
+      );
+
+      const DoseRecord = require("../models/DoseRecord");
+      await DoseRecord.updateMany(
+        { healthWorkerId: worker._id, clinicId: clinicAdmin.clinicId },
+        {
+          $set: {
+            healthWorkerName: worker.name,
+            healthWorkerEmail: worker.email,
+            healthWorkerId: null,
+          },
+        }
+      );
+
+      await User.deleteOne({ _id: worker._id });
+
+      res.json({
+        message: "Worker permanently removed. Historical work records were preserved.",
+        workerId: worker._id,
+      });
+    } catch (error) {
+      console.error("Worker deletion error:", error.message);
+      res.status(500).json({ message: "Server error while deleting worker" });
+    }
+  }
+);
+
 router.post(
   "/my-clinic/workers",
   authMiddleware,

@@ -166,7 +166,7 @@ function ClinicFeedback({
               onClick={onWorkers}
             >
               <span>👥</span>
-              Workers
+              Workers List
             </button>
 
             <button

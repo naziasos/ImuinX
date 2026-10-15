@@ -5,7 +5,18 @@ const dutyAssignmentSchema = new mongoose.Schema(
     workerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
+      default: null,
+    },
+
+    workerName: {
+      type: String,
+      default: null,
+    },
+
+    workerEmail: {
+      type: String,
+      default: null,
     },
 
     clinicId: {

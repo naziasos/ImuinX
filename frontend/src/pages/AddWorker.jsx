@@ -32,10 +32,13 @@ function AddWorker({ onBack, onWorkerCreated }) {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage("Worker created successfully. Login credentials have been sent to the email.");
-
+        setMessage("Worker created successfully. Opening worker list...");
         setName("");
         setEmail("");
+
+        setTimeout(() => {
+          if (onWorkerCreated) onWorkerCreated(data.worker);
+        }, 350);
       } else {
         setMessage(data.message || "Failed to create worker.");
       }

@@ -53,7 +53,18 @@ const doseRecordSchema = new mongoose.Schema(
     healthWorkerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
+      default: null,
+    },
+
+    healthWorkerName: {
+      type: String,
+      default: null,
+    },
+
+    healthWorkerEmail: {
+      type: String,
+      default: null,
     },
 
     clinicId: {

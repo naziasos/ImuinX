@@ -5,6 +5,7 @@ import "./ClinicAdminDashboard.css";
 function ClinicAdminDashboard({
   onLogout,
   onAddWorker,
+  onWorkers,
   onOpenInventory,
   onAssignDuty,
   onFeedback,
@@ -146,11 +147,21 @@ function ClinicAdminDashboard({
               <span>👤</span>
               Edit Profile
             </button>
-
-
-            <button className="clinic-nav-item">
+            
+            <button
+              className="worker-list-add"
+              onClick={onAddWorker}
+            >
               <span>👥</span>
-              Workers
+              Add Worker
+            </button>
+
+            <button
+              className="clinic-nav-item"
+              onClick={onWorkers}
+            >
+              <span>👥</span>
+              Workers List
             </button>
 
             <button className="clinic-nav-item">
@@ -250,7 +261,9 @@ function ClinicAdminDashboard({
             </p>
           </div>
 
-          <div className="clinic-profile">
+          <div className="clinic-header-actions">
+
+            <div className="clinic-profile">
             <div className="clinic-profile-avatar">
               C
             </div>
@@ -260,6 +273,7 @@ function ClinicAdminDashboard({
               <strong>{user?.name || "Clinic Admin"}</strong>
               <span>Clinic Administrator</span>
 
+            </div>
             </div>
           </div>
 
@@ -306,7 +320,15 @@ function ClinicAdminDashboard({
         {/* Statistics */}
         <section className="clinic-stats">
 
-          <div className="clinic-stat-card">
+          <div
+            className="clinic-stat-card clinic-stat-card-clickable"
+            onClick={onWorkers}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") onWorkers();
+            }}
+          >
             <div className="clinic-stat-icon">
               👥
             </div>
@@ -453,110 +475,6 @@ function ClinicAdminDashboard({
                   <span className="worker-role">
                     Confirmed
                   </span>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          )}
-
-        </section>
-        {/* Workers */}
-        <section className="workers-section">
-
-          <div className="workers-header">
-
-            <div>
-              <p className="section-label">
-                CLINIC TEAM
-              </p>
-
-              <h2>
-                Workers
-              </h2>
-
-              <p>
-                Workers currently assigned to your clinic.
-              </p>
-            </div>
-
-            <div>
-              {/* YOUR ADDITION: Add Worker button */}
-              <button
-                onClick={onAddWorker}
-                className="add-worker-btn"
-              >
-                + Add Worker
-              </button>
-
-              <div className="worker-count">
-                {workers.length} Worker
-                {workers.length !== 1 ? "s" : ""}
-              </div>
-            </div>
-
-          </div>
-
-          {workers.length === 0 ? (
-
-            <div className="empty-workers">
-
-              <div className="empty-icon">
-                👥
-              </div>
-
-              <h3>
-                No workers assigned yet
-              </h3>
-
-              <p>
-                Workers assigned to this clinic will
-                appear here.
-              </p>
-
-            </div>
-
-          ) : (
-
-            <div className="workers-grid">
-
-              {workers.map((worker) => (
-
-                <div
-                  className="worker-card"
-                  key={worker._id}
-                >
-
-                  <div className="worker-avatar">
-                    {worker.name
-                      ?.charAt(0)
-                      ?.toUpperCase()}
-                  </div>
-
-                  <div className="worker-info">
-
-                    <h3>
-                      {worker.name}
-                    </h3>
-
-                    <p>
-                      {worker.email}
-                    </p>
-
-                    <span className="worker-role">
-                      Health Worker
-                    </span>
-
-                  </div>
-
-                  <button
-                    className="worker-more"
-                    type="button"
-                  >
-                    ⋮
-                  </button>
 
                 </div>
 

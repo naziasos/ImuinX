@@ -171,7 +171,6 @@ function Login({ onBack, onLoginSuccess, onSignUp, onForgotPassword }) {
 
           <button type="submit" style={styles.button} disabled={loading}>
             {loading ? "Signing in..." : "Sign in"}
-            
           </button>
         </form>
 
@@ -365,9 +364,9 @@ const styles = {
   signupButton: {
     width: "100%",
     height: "46px",
-    border: "1px solid #eeeff1",
+    border: "1px solid #cbd7ec",
     borderRadius: "10px",
-    background: "#cfd0e1",
+    background: "#ffffff",
     color: "#1f3c88",
     fontSize: "14px",
     fontWeight: "700",
@@ -379,7 +378,7 @@ const styles = {
     padding: "5px 10px",
     border: "none",
     background: "transparent",
-    color: "#61748f",
+    color: "#64748b",
     fontSize: "13px",
     cursor: "pointer",
   },
