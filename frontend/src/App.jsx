@@ -35,6 +35,9 @@ import MyInHouseRequests from "./pages/citizen/MyInHouseRequests";
 
 
 import VaccineInsert from "./pages/admin/VaccineInsert";
+import VaccineScheduleInsert from "./pages/admin/VaccineScheduleInsert";
+
+
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -104,7 +107,6 @@ function App() {
 
             page !== "about" &&
             page !== "services" &&
-            page !== "dashboard" &&
             page !== "dashboard" &&
             page !== "clinicDashboard" &&
             page !== "citizenDashboard" &&
@@ -199,12 +201,15 @@ function App() {
 
 
 
-          {page === "dashboard" && (
-            <AdminDashboard
-              onAddClinic={() => setPage("addClinic")}
-              onManageVaccines={() => setPage("addVaccine")}
-            />
-          )}
+          
+            {page === "dashboard" && (
+              <AdminDashboard
+                onAddClinic={() => setPage("addClinic")}
+                onManageVaccines={() => setPage("addVaccine")}
+                onManageSchedules={() => setPage("addVaccineSchedule")}
+              />
+            )}
+
 
 
 
@@ -407,6 +412,21 @@ function App() {
               onVaccineCreated={() => setPage("dashboard")}
             />
           )}
+
+
+
+
+
+
+
+
+          
+        {page === "addVaccineSchedule" && (
+        <VaccineScheduleInsert
+          onBack={() => setPage("dashboard")}
+        />
+      )}
+
 
 
 

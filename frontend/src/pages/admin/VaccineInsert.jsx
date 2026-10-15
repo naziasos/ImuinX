@@ -36,20 +36,28 @@ const VaccineInsert = ({ onBack, onVaccineCreated }) => {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        "http://localhost:5000/api/vaccines",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: formData.name.trim(),
-            code: formData.code.trim().toUpperCase(),
-            description: formData.description.trim(),
-          }),
-        }
-      );
+      
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+    throw new Error("Please log in again. Authentication token not found.");
+    }
+
+    const response = await fetch(
+    "http://localhost:5000/api/vaccines",
+    {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+        name: formData.name.trim(),
+        code: formData.code.trim().toUpperCase(),
+        description: formData.description.trim(),
+        }),
+    }
+    );
 
       const result = await response.json();
 

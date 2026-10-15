@@ -51,4 +51,33 @@ const createVaccine = async (req, res) => {
   }
 };
 
-module.exports = { createVaccine };
+
+
+
+
+
+
+
+const getVaccines = async (req, res) => {
+  try {
+    const vaccines = await Vaccine.find({
+      isActive: true,
+    }).sort({ name: 1 });
+
+    return res.status(200).json({
+      success: true,
+      vaccines,
+    });
+  } catch (error) {
+    console.error("Get vaccines error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching vaccines.",
+    });
+  }
+};
+
+
+
+module.exports = { createVaccine, getVaccines };

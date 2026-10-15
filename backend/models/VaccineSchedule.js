@@ -19,6 +19,15 @@ const vaccineScheduleSchema = new mongoose.Schema(
       type: Number,
       default: null,
       min: 0,
+      validate: {
+        validator: function (value) {
+          return (
+            value === null ||
+            value >= this.minAgeDays
+          );
+        },
+        message: "Maximum age must be greater than or equal to minimum age.",
+      },
     },
 
     doses: [
