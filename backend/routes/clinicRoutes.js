@@ -722,4 +722,73 @@ router.get(
 
 
 
+
+
+
+/* =====================================================
+   DELETE DUTY ASSIGNMENT PERMANENTLY
+   ===================================================== */
+
+router.delete(
+  "/my-clinic/duties/:dutyId",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      // Only Clinic Admin can delete duties
+      if (req.user.role !== "clinicAdmin") {
+        return res.status(403).json({
+          message: "Clinic Admin access required",
+        });
+      }
+
+      // Validate the duty ID
+      if (!require("mongoose").Types.ObjectId.isValid(req.params.dutyId)) {
+        return res.status(400).json({
+          message: "Invalid duty ID",
+        });
+      }
+
+      // Find the logged-in Clinic Admin
+      const clinicAdmin = await User.findById(req.user.id);
+
+      if (!clinicAdmin) {
+        return res.status(404).json({
+          message: "Clinic Admin not found",
+        });
+      }
+
+      if (!clinicAdmin.clinicId) {
+        return res.status(404).json({
+          message: "No clinic is assigned to this Clinic Admin",
+        });
+      }
+
+      // Delete only a duty belonging to this clinic
+      const deletedDuty = await DutyAssignment.findOneAndDelete({
+        _id: req.params.dutyId,
+        clinicId: clinicAdmin.clinicId,
+      });
+
+      if (!deletedDuty) {
+        return res.status(404).json({
+          message: "Duty not found in your clinic",
+        });
+      }
+
+      res.status(200).json({
+        message: "Duty permanently deleted from the database",
+        dutyId: deletedDuty._id,
+      });
+    } catch (error) {
+      console.error("Duty deletion error:", error.message);
+
+      res.status(500).json({
+        message: "Server error while deleting duty",
+      });
+    }
+  }
+);
+
+
+
 module.exports = router;
