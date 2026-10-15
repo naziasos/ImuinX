@@ -55,7 +55,19 @@ function App() {
       {showSplash && <Loader onDone={handleSplashDone} />}
 
       {/* Navbar */}
-      <Navbar page={page} setPage={setPage} />
+      <Navbar
+        page={page}
+        setPage={setPage}
+        currentUser={currentUser}
+        onLogout={() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("jwt");
+          localStorage.removeItem("user");
+          setCurrentUser(null);
+          setPage("home");
+        }}
+      />
 
       {/* Main Content */}
       <main className="flex-1">

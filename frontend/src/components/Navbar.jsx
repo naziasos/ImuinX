@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const API_BASE_URL = "http://localhost:5000";
 
-function Navbar({ page, setPage }) {
+function Navbar({ page, setPage, currentUser, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Notification states
@@ -229,25 +229,36 @@ function Navbar({ page, setPage }) {
 
             <div className="h-7 w-px bg-slate-200 mx-3" />
 
-            {/* Register */}
-            <button
-              onClick={() => handleNavigation("register")}
-              className={`px-5 py-2.5 rounded-full border text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 ${
-                page === "register"
-                  ? "text-blue-600 bg-blue-50 border-blue-200"
-                  : "text-slate-700 border-slate-200 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
-              }`}
-            >
-              Register
-            </button>
-
-            {/* Login */}
-            <button
-              onClick={() => handleNavigation("login")}
-              className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold shadow-md shadow-blue-500/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/40 active:translate-y-0 active:scale-95 transition-all duration-200"
-            >
-              Login
-            </button>
+            {currentUser ? (
+              <div className="flex items-center gap-3 ml-2">
+                <div className="hidden lg:flex items-center gap-2 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2">
+                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                    {(currentUser.name || currentUser.email || "U").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="leading-tight">
+                    <p className="text-sm font-semibold text-slate-800 max-w-36 truncate">{currentUser.name || currentUser.email || "User"}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-blue-600">{currentUser.role || "User"}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={onLogout}
+                  className="px-4 py-2.5 rounded-full border border-rose-200 text-rose-600 text-sm font-semibold hover:bg-rose-50 transition"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => handleNavigation("register")}
+                  className={`px-5 py-2.5 rounded-full border text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 ${page === "register" ? "text-blue-600 bg-blue-50 border-blue-200" : "text-slate-700 border-slate-200 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"}`}
+                >Register</button>
+                <button
+                  onClick={() => handleNavigation("login")}
+                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold shadow-md shadow-blue-500/30 hover:-translate-y-0.5 transition-all duration-200"
+                >Login</button>
+              </>
+            )}
 
             {/* ================= NOTIFICATION ================= */}
             <div className="relative ml-2">
@@ -462,19 +473,25 @@ function Navbar({ page, setPage }) {
                 </button>
               ))}
 
-              <button
-                onClick={() => handleNavigation("register")}
-                className="text-left px-4 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50"
-              >
-                Register
-              </button>
-
-              <button
-                onClick={() => handleNavigation("login")}
-                className="mt-2 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold shadow-md shadow-blue-500/30 active:scale-95 transition"
-              >
-                Login
-              </button>
+              {currentUser ? (
+                <div className="mt-3 border-t border-slate-100 pt-4 px-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                      {(currentUser.name || currentUser.email || "U").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{currentUser.name || currentUser.email || "User"}</p>
+                      <p className="text-xs text-blue-600 capitalize">{currentUser.role || "User"}</p>
+                    </div>
+                  </div>
+                  <button onClick={onLogout} className="w-full px-4 py-3 rounded-xl border border-rose-200 text-rose-600 text-sm font-semibold hover:bg-rose-50 transition">Logout</button>
+                </div>
+              ) : (
+                <>
+                  <button onClick={() => handleNavigation("register")} className="text-left px-4 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50">Register</button>
+                  <button onClick={() => handleNavigation("login")} className="mt-2 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold shadow-md shadow-blue-500/30 active:scale-95 transition">Login</button>
+                </>
+              )}
 
             </div>
           </div>
