@@ -1,306 +1,545 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import "../clinicAdmin/ClinicAdminDashboard.css";
+
+const API = "http://localhost:5000/api";
+
+function getLocalDateString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateTime(value) {
+  if (!value) return "Date unavailable";
+
+  return new Date(value).toLocaleString("en-GB", {
+    timeZone: "Asia/Dhaka",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
 
 function BookAppointment({ onBack }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
-
-  // =========================
-  // States
-  // =========================
-  const [clinic, setClinic] = useState("");
-  const [date, setDate] = useState("");
-  const [selectedSlot, setSelectedSlot] = useState("");
-
-  const [clinics, setClinics] = useState([]);
-  const [timeSlots, setTimeSlots] = useState([]);
-
-  const [myAppointments, setMyAppointments] = useState([]);
-  const [appointmentLoading, setAppointmentLoading] = useState(true);
-
-  const [familyMembers, setFamilyMembers] = useState([]);
-  const [selectedPerson, setSelectedPerson] = useState("self");
-
-  // =========================
-  // Get Citizen ID & Token
-  // =========================
   const citizenId = user?.id || user?._id;
   const token = localStorage.getItem("token");
 
-  // =========================
-  // Fetch Clinics
-  // =========================
-  useEffect(() => {
-    fetch("http://localhost:5000/api/clinics", {
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setClinics(data.clinics || []);
-      })
-      .catch((error) => {
-        console.error("Error fetching clinics:", error);
-      });
-  }, [token]);
+  // Booking form
+  const [selectedPerson, setSelectedPerson] = useState("self");
+  const [clinic, setClinic] = useState("");
+  const [vaccine, setVaccine] = useState("");
+  const [doseNumber, setDoseNumber] = useState("");
+  const [date, setDate] = useState("");
+  const [selectedSlot, setSelectedSlot] = useState("");
 
-  // =========================
-  // Fetch My Appointments
-  // =========================
+  // Data
+  const [clinics, setClinics] = useState([]);
+  const [vaccines, setVaccines] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [familyMembers, setFamilyMembers] = useState([]);
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [myAppointments, setMyAppointments] = useState([]);
+
+  // Loading and feedback
+  const [appointmentLoading, setAppointmentLoading] = useState(true);
+  const [slotLoading, setSlotLoading] = useState(false);
+  const [booking, setBooking] = useState(false);
+  const [pageError, setPageError] = useState("");
+  const [formError, setFormError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const authHeaders = useMemo(
+    () => ({
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    }),
+    [token]
+  );
+
+  // Fetch JSON and report HTTP errors consistently.
+  const fetchJson = useCallback(
+    async (url, options = {}) => {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...authHeaders,
+          ...(options.headers || {}),
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.message || "Request failed.");
+      }
+
+      return data;
+    },
+    [authHeaders]
+  );
+
+  // Fetch clinics, vaccines, schedules and family profiles.
   useEffect(() => {
-    if (!citizenId) {
+    let cancelled = false;
+
+    async function loadBookingData() {
+      setPageError("");
+
+      try {
+        const requests = [
+          fetchJson(`${API}/clinics`),
+          fetchJson(`${API}/vaccines`),
+          fetchJson(`${API}/vaccine-schedules`),
+          fetchJson(`${API}/family`),
+        ];
+
+        const results = await Promise.allSettled(requests);
+
+        if (cancelled) return;
+
+        const [clinicResult, vaccineResult, scheduleResult, familyResult] =
+          results;
+
+        if (clinicResult.status === "fulfilled") {
+          const data = clinicResult.value;
+          setClinics(Array.isArray(data.clinics) ? data.clinics : []);
+        } else {
+          setPageError(
+            `Could not load clinics: ${clinicResult.reason.message}`
+          );
+        }
+
+        if (vaccineResult.status === "fulfilled") {
+          const data = vaccineResult.value;
+          const list = Array.isArray(data)
+            ? data
+            : data.vaccines || data.data || [];
+
+          setVaccines(list.filter((item) => item.isActive !== false));
+        } else {
+          setPageError((previous) =>
+            [
+              previous,
+              `Could not load vaccines: ${vaccineResult.reason.message}`,
+            ]
+              .filter(Boolean)
+              .join(" ")
+          );
+        }
+
+        if (scheduleResult.status === "fulfilled") {
+          const data = scheduleResult.value;
+          const list = Array.isArray(data)
+            ? data
+            : data.schedules || data.vaccineSchedules || data.data || [];
+
+          setSchedules(list);
+        } else {
+          setPageError((previous) =>
+            [
+              previous,
+              `Could not load vaccine schedules: ${scheduleResult.reason.message}`,
+            ]
+              .filter(Boolean)
+              .join(" ")
+          );
+        }
+
+        if (familyResult.status === "fulfilled") {
+          const data = familyResult.value;
+          setFamilyMembers(
+            Array.isArray(data.familyMembers)
+              ? data.familyMembers
+              : Array.isArray(data.familyProfiles)
+              ? data.familyProfiles
+              : []
+          );
+        } else {
+          setPageError((previous) =>
+            [
+              previous,
+              `Could not load family profiles: ${familyResult.reason.message}`,
+            ]
+              .filter(Boolean)
+              .join(" ")
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setPageError(error.message || "Could not load booking information.");
+        }
+      }
+    }
+
+    loadBookingData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchJson]);
+
+  // Fetch appointments for the logged-in account.
+  const loadAppointments = useCallback(async () => {
+    if (!citizenId || !token) {
       setAppointmentLoading(false);
       return;
     }
 
-    fetch(`http://localhost:5000/api/appointments/citizen/${citizenId}`, {
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setMyAppointments(data.appointments || []);
-        setAppointmentLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching appointments:", error);
-        setAppointmentLoading(false);
-      });
-  }, [citizenId, token]);
-
-  // =========================
-  // Fetch Family Members
-  // =========================
-  useEffect(() => {
-    if (!token) {
-      return;
-    }
-
-    fetch("http://localhost:5000/api/family", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setFamilyMembers(data.familyMembers || []);
-      })
-      .catch((error) => {
-        console.error("Error fetching family members:", error);
-        setFamilyMembers([]);
-      });
-  }, [token]);
-
-  // =========================
-  // Fetch Available Time Slots
-  // =========================
-  useEffect(() => {
-    if (!clinic || !date) {
-      setTimeSlots([]);
-      return;
-    }
-
-    fetch(
-      `http://localhost:5000/api/appointments/slots?clinicId=${clinic}&date=${date}`,
-      {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      }
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        const formattedSlots = (data.availableSlots || []).map(
-          (time, index) => ({
-            id: index + 1,
-            time: time,
-            available: true,
-          })
-        );
-
-        setTimeSlots(formattedSlots);
-      })
-      .catch((error) => {
-        console.error("Error fetching available slots:", error);
-        setTimeSlots([]);
-      });
-  }, [clinic, date, token]);
-
-  // =========================
-  // Book Appointment
-  // =========================
-  const handleConfirm = async () => {
-    if (!clinic || !date || !selectedSlot) {
-      alert("Please select clinic, date and time slot.");
-      return;
-    }
-
-    if (!citizenId) {
-      alert("User information not found. Please login again.");
-      return;
-    }
+    setAppointmentLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/appointments", {
+      const data = await fetchJson(
+        `${API}/appointments/citizen/${citizenId}`
+      );
+      setMyAppointments(data.appointments || []);
+    } catch (error) {
+      setPageError(error.message || "Could not load appointments.");
+    } finally {
+      setAppointmentLoading(false);
+    }
+  }, [citizenId, token, fetchJson]);
+
+  useEffect(() => {
+    loadAppointments();
+  }, [loadAppointments]);
+
+  // Get the dose numbers belonging to the selected vaccine.
+  const availableDoses = useMemo(() => {
+    if (!vaccine) return [];
+
+    const matchingSchedules = schedules.filter((schedule) => {
+      const scheduleVaccineId =
+        schedule.vaccineId?._id || schedule.vaccineId;
+      return String(scheduleVaccineId) === String(vaccine);
+    });
+
+    const doseMap = new Map();
+
+    matchingSchedules.forEach((schedule) => {
+      (schedule.doses || []).forEach((dose) => {
+        const number = Number(dose.doseNumber);
+
+        if (Number.isInteger(number) && number >= 1) {
+          doseMap.set(number, number);
+        }
+      });
+    });
+
+    return [...doseMap.values()].sort((a, b) => a - b);
+  }, [vaccine, schedules]);
+
+  // Fetch available clinic slots for the selected date.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSlots() {
+      if (!clinic || !date) {
+        setTimeSlots([]);
+        return;
+      }
+
+      setSlotLoading(true);
+      setTimeSlots([]);
+      setSelectedSlot("");
+
+      try {
+        const query = new URLSearchParams({ clinicId: clinic, date });
+        const data = await fetchJson(
+          `${API}/appointments/slots?${query.toString()}`
+        );
+
+        if (!cancelled) {
+          setTimeSlots(
+            (data.availableSlots || []).map((time) => ({
+              time,
+              available: true,
+            }))
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setFormError(error.message || "Could not load available time slots.");
+        }
+      } finally {
+        if (!cancelled) setSlotLoading(false);
+      }
+    }
+
+    loadSlots();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [clinic, date, fetchJson]);
+
+  const resetForm = () => {
+    setSelectedPerson("self");
+    setClinic("");
+    setVaccine("");
+    setDoseNumber("");
+    setDate("");
+    setSelectedSlot("");
+    setTimeSlots([]);
+  };
+
+  // Create an appointment.
+  const handleConfirm = async (event) => {
+    event.preventDefault();
+    setFormError("");
+    setSuccessMessage("");
+
+    if (!citizenId || !token) {
+      setFormError("Please log in again before booking an appointment.");
+      return;
+    }
+
+    if (
+      !clinic ||
+      !vaccine ||
+      !doseNumber ||
+      !date ||
+      !selectedSlot
+    ) {
+      setFormError("Please complete all fields and select a time slot.");
+      return;
+    }
+
+    if (date < getLocalDateString()) {
+      setFormError("Please select today or a future date.");
+      return;
+    }
+
+    setBooking(true);
+
+    try {
+      const data = await fetchJson(`${API}/appointments`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          citizenId: citizenId,
           familyProfileId: selectedPerson === "self" ? null : selectedPerson,
           clinicId: clinic,
-          date: date,
+          vaccineId: vaccine,
+          doseNumber: Number(doseNumber),
+          date,
           time: selectedSlot,
         }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || "Failed to book appointment.");
-        return;
-      }
-
-      const selectedClinic = clinics.find((item) => item._id === clinic);
-
-      alert(
-        `Appointment Booked Successfully!\n\n` +
-          `Clinic: ${selectedClinic?.name || "Selected Clinic"}\n` +
-          `Date: ${date}\n` +
-          `Time: ${selectedSlot}\n\n` +
-          `Appointment ID: ${data.appointmentId || "N/A"}\n` +
-          `Status: ${data.status || "Confirmed"}`
+      const selectedClinic = clinics.find(
+        (item) => String(item._id) === String(clinic)
+      );
+      const selectedVaccine = vaccines.find(
+        (item) => String(item._id) === String(vaccine)
       );
 
-      // Refresh appointment list
-      const refreshResponse = await fetch(
-        `http://localhost:5000/api/appointments/citizen/${citizenId}`,
-        {
-          headers: {
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        }
+      setSuccessMessage(
+        `Appointment booked successfully at ${selectedClinic?.name || "the selected clinic"} for ${selectedVaccine?.name || "the selected vaccine"}, dose ${doseNumber}, on ${date} at ${selectedSlot}.`
       );
 
-      const refreshData = await refreshResponse.json();
-      setMyAppointments(refreshData.appointments || []);
-
-      // Reset booking form
-      setClinic("");
-      setDate("");
-      setSelectedSlot("");
-      setSelectedPerson("self");
-      setTimeSlots([]);
+      resetForm();
+      await loadAppointments();
     } catch (error) {
-      console.error("Booking error:", error);
-      alert("Something went wrong while booking the appointment.");
+      setFormError(error.message || "Failed to book the appointment.");
+    } finally {
+      setBooking(false);
     }
   };
 
-  // =========================
-  // Cancel Appointment
-  // =========================
+  // Cancel an appointment.
   const handleCancelAppointment = async (appointmentId) => {
-    const confirmCancel = window.confirm(
-      "Are you sure you want to cancel this appointment?"
-    );
-
-    if (!confirmCancel) {
+    if (!window.confirm("Are you sure you want to cancel this appointment?")) {
       return;
     }
 
+    setPageError("");
+
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/appointments/${appointmentId}/cancel`,
-        {
-          method: "PATCH",
-          headers: {
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        }
-      );
+      await fetchJson(`${API}/appointments/${appointmentId}/cancel`, {
+        method: "PATCH",
+      });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || "Failed to cancel appointment.");
-        return;
-      }
-
-      alert("Appointment cancelled successfully.");
-
-      // Update appointment list
-      setMyAppointments((previousAppointments) =>
-        previousAppointments.map((appointment) =>
+      setMyAppointments((previous) =>
+        previous.map((appointment) =>
           appointment._id === appointmentId
-            ? {
-                ...appointment,
-                status: "Cancelled",
-              }
+            ? { ...appointment, status: "Cancelled" }
             : appointment
         )
       );
     } catch (error) {
-      console.error("Cancel appointment error:", error);
-      alert("Something went wrong while cancelling the appointment.");
+      setPageError(error.message || "Failed to cancel the appointment.");
     }
   };
 
-  // =========================
-  // Separate Upcoming / Past
-  // =========================
   const now = new Date();
 
   const upcomingAppointments = myAppointments.filter(
     (appointment) =>
       new Date(appointment.dateTime) >= now &&
-      appointment.status !== "Cancelled"
+      !["Cancelled", "Completed"].includes(appointment.status)
   );
 
   const pastAppointments = myAppointments.filter(
     (appointment) =>
       new Date(appointment.dateTime) < now ||
-      appointment.status === "Cancelled"
+      ["Cancelled", "Completed"].includes(appointment.status)
   );
 
-  // =========================
-  // Render
-  // =========================
-  return (
-    <div className="clinic-dashboard" style={{ display: "block", padding: "20px" }}>
-      {/* Main Content (Full Width) */}
-      <main className="clinic-main" style={{ marginLeft: 0, width: "100%" }}>
-        {/* Back Button Navigation Header */}
-        <div style={{ marginBottom: "20px" }}>
-          <button
-            onClick={onBack}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "10px 16px",
-              background: "#f1f5f9",
-              border: "1px solid #cbd5e1",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontWeight: "600",
-              color: "#334155",
-            }}
-          >
-            ← Back to Dashboard
-          </button>
+  const selectedClinic = clinics.find(
+    (item) => String(item._id) === String(clinic)
+  );
+  const selectedVaccine = vaccines.find(
+    (item) => String(item._id) === String(vaccine)
+  );
+
+  const inputStyle = {
+    width: "100%",
+    padding: "11px 12px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "9px",
+    background: "#fff",
+    color: "#334155",
+    boxSizing: "border-box",
+  };
+
+  const labelStyle = {
+    display: "block",
+    marginBottom: "7px",
+    fontWeight: 600,
+    color: "#334155",
+  };
+
+  const renderAppointmentCard = (appointment) => (
+    <article
+      key={appointment._id}
+      style={{
+        border: "1px solid #e2e8f0",
+        borderRadius: "12px",
+        padding: "16px",
+        background: "#fff",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: "12px",
+        }}
+      >
+        <div>
+          <h3 style={{ margin: "0 0 5px", color: "#1e293b" }}>
+            {appointment.clinicId?.name || "Clinic"}
+          </h3>
+          <p style={{ margin: "0 0 12px", color: "#64748b", fontSize: "14px" }}>
+            {appointment.clinicId?.location || "Location unavailable"}
+          </p>
         </div>
 
-        {/* Header */}
+        <span
+          style={{
+            flexShrink: 0,
+            borderRadius: "20px",
+            padding: "5px 9px",
+            fontSize: "12px",
+            fontWeight: 700,
+            background:
+              appointment.status === "Confirmed"
+                ? "#dcfce7"
+                : appointment.status === "Cancelled"
+                ? "#fee2e2"
+                : appointment.status === "Completed"
+                ? "#dbeafe"
+                : "#fef3c7",
+            color:
+              appointment.status === "Confirmed"
+                ? "#166534"
+                : appointment.status === "Cancelled"
+                ? "#b91c1c"
+                : appointment.status === "Completed"
+                ? "#1d4ed8"
+                : "#92400e",
+          }}
+        >
+          {appointment.status}
+        </span>
+      </div>
+
+      <div style={{ color: "#475569", fontSize: "14px", lineHeight: 1.8 }}>
+        <p style={{ margin: 0 }}>
+          <strong>For:</strong>{" "}
+          {appointment.familyProfileId?.name || user?.name || "Myself"}
+        </p>
+        <p style={{ margin: 0 }}>
+          <strong>Vaccine:</strong>{" "}
+          {appointment.vaccineId?.name || "Vaccine details unavailable"}
+        </p>
+        <p style={{ margin: 0 }}>
+          <strong>Dose:</strong>{" "}
+          {appointment.doseNumber ? `Dose ${appointment.doseNumber}` : "Not specified"}
+        </p>
+        <p style={{ margin: 0 }}>
+          <strong>Date & time:</strong> {formatDateTime(appointment.dateTime)}
+        </p>
+      </div>
+
+      {appointment.status !== "Cancelled" &&
+        appointment.status !== "Completed" &&
+        new Date(appointment.dateTime) >= now && (
+          <button
+            type="button"
+            onClick={() => handleCancelAppointment(appointment._id)}
+            style={{
+              marginTop: "12px",
+              padding: "8px 12px",
+              border: "none",
+              borderRadius: "8px",
+              background: "#fee2e2",
+              color: "#b91c1c",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Cancel appointment
+          </button>
+        )}
+    </article>
+  );
+
+  return (
+    <div
+      className="clinic-dashboard"
+      style={{ display: "block", padding: "20px", minHeight: "100vh" }}
+    >
+      <main className="clinic-main" style={{ marginLeft: 0, width: "100%" }}>
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            marginBottom: "18px",
+            padding: "10px 15px",
+            border: "1px solid #cbd5e1",
+            borderRadius: "8px",
+            background: "#f1f5f9",
+            color: "#334155",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          ← Back to Dashboard
+        </button>
+
         <header className="clinic-header">
           <div>
             <p className="clinic-breadcrumb">Dashboard / Appointments</p>
-            <h1>Book Appointment</h1>
+            <h1>Vaccination Appointments</h1>
             <p className="clinic-description">
-              Select a clinic, date and available time slot for your vaccination.
+              Book a vaccination appointment and manage your upcoming visits.
             </p>
           </div>
 
@@ -315,341 +554,385 @@ function BookAppointment({ onBack }) {
           </div>
         </header>
 
-        {/* Appointment Booking */}
-        <section className="workers-section">
-          <div className="workers-header">
-            <div>
-              <p className="section-label">APPOINTMENT BOOKING</p>
-              <h2>Select Clinic & Time</h2>
-              <p>Choose your preferred clinic, date and available time slot.</p>
-            </div>
+        {pageError && (
+          <div
+            role="alert"
+            style={{
+              marginBottom: "16px",
+              padding: "12px 14px",
+              borderRadius: "9px",
+              background: "#fee2e2",
+              color: "#991b1b",
+            }}
+          >
+            {pageError}
           </div>
+        )}
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            {/* Appointment For */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Appointment For
-              </label>
-              <select
-                value={selectedPerson}
-                onChange={(e) => setSelectedPerson(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="self">
-                  Myself ({user?.name || "Citizen"})
-                </option>
-                {familyMembers.map((member) => (
-                  <option key={member._id} value={member._id}>
-                    {member.name} ({member.relationship})
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* Booking form on the left, appointment list on the right */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))",
+            alignItems: "start",
+            gap: "22px",
+          }}
+        >
+          <section
+            style={{
+              minWidth: 0,
+              padding: "22px",
+              borderRadius: "14px",
+              background: "#fff",
+              boxShadow: "0 2px 10px rgba(15, 23, 42, 0.06)",
+              border: "1px solid #e2e8f0",
+            }}
+          >
+            <p className="section-label">APPOINTMENT BOOKING</p>
+            <h2 style={{ marginTop: 0 }}>Book a vaccination</h2>
+            <p style={{ color: "#64748b", marginBottom: "22px" }}>
+              Select the recipient, vaccine, clinic and available time.
+            </p>
 
-            {/* Clinic */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Select Clinic
-              </label>
-              <select
-                value={clinic}
-                onChange={(e) => {
-                  setClinic(e.target.value);
-                  setSelectedSlot("");
-                  setTimeSlots([]);
+            {formError && (
+              <div
+                role="alert"
+                style={{
+                  marginBottom: "16px",
+                  padding: "11px",
+                  borderRadius: "8px",
+                  background: "#fee2e2",
+                  color: "#991b1b",
                 }}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select a clinic</option>
-                {clinics.map((item) => (
-                  <option key={item._id} value={item._id}>
-                    {item.name} - {item.location}
-                  </option>
-                ))}
-              </select>
-            </div>
+                {formError}
+              </div>
+            )}
 
-            {/* Date */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Select Date
-              </label>
-              <input
-                type="date"
-                value={date}
-                min={new Date().toISOString().split("T")[0]}
-                onChange={(e) => {
-                  setDate(e.target.value);
-                  setSelectedSlot("");
-                  setTimeSlots([]);
+            {successMessage && (
+              <div
+                role="status"
+                style={{
+                  marginBottom: "16px",
+                  padding: "11px",
+                  borderRadius: "8px",
+                  background: "#dcfce7",
+                  color: "#166534",
                 }}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+              >
+                {successMessage}
+              </div>
+            )}
 
-            {/* Time Slots */}
-            {clinic && date && (
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-slate-700 mb-3">
-                  Available Time Slots
+            <form onSubmit={handleConfirm}>
+              <div style={{ marginBottom: "17px" }}>
+                <label style={labelStyle} htmlFor="appointment-person">
+                  Appointment for
                 </label>
-                {timeSlots.length === 0 ? (
-                  <p className="text-slate-500">
+                <select
+                  id="appointment-person"
+                  value={selectedPerson}
+                  onChange={(event) => setSelectedPerson(event.target.value)}
+                  style={inputStyle}
+                >
+                  <option value="self">Myself ({user?.name || "Citizen"})</option>
+                  {familyMembers.map((member) => (
+                    <option key={member._id} value={member._id}>
+                      {member.name} ({member.relationship || "Family member"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ marginBottom: "17px" }}>
+                <label style={labelStyle} htmlFor="appointment-vaccine">
+                  Vaccine
+                </label>
+                <select
+                  id="appointment-vaccine"
+                  value={vaccine}
+                  onChange={(event) => {
+                    setVaccine(event.target.value);
+                    setDoseNumber("");
+                    setFormError("");
+                  }}
+                  style={inputStyle}
+                  required
+                >
+                  <option value="">Select a vaccine</option>
+                  {vaccines.map((item) => (
+                    <option key={item._id} value={item._id}>
+                      {item.name} ({item.code})
+                    </option>
+                  ))}
+                </select>
+                {vaccines.length === 0 && (
+                  <p style={{ color: "#b45309", fontSize: "13px" }}>
+                    No active vaccines loaded. Check the vaccine API response.
+                  </p>
+                )}
+              </div>
+
+              <div style={{ marginBottom: "17px" }}>
+                <label style={labelStyle} htmlFor="appointment-dose">
+                  Dose number
+                </label>
+                <select
+                  id="appointment-dose"
+                  value={doseNumber}
+                  onChange={(event) => setDoseNumber(event.target.value)}
+                  style={inputStyle}
+                  disabled={!vaccine || availableDoses.length === 0}
+                  required
+                >
+                  <option value="">Select a dose</option>
+                  {availableDoses.map((dose) => (
+                    <option key={dose} value={dose}>
+                      Dose {dose}
+                    </option>
+                  ))}
+                </select>
+                {vaccine && availableDoses.length === 0 && (
+                  <p style={{ color: "#b45309", fontSize: "13px" }}>
+                    No dose schedule found for this vaccine.
+                  </p>
+                )}
+              </div>
+
+              <div style={{ marginBottom: "17px" }}>
+                <label style={labelStyle} htmlFor="appointment-clinic">
+                  Clinic
+                </label>
+                <select
+                  id="appointment-clinic"
+                  value={clinic}
+                  onChange={(event) => {
+                    setClinic(event.target.value);
+                    setSelectedSlot("");
+                    setTimeSlots([]);
+                    setFormError("");
+                  }}
+                  style={inputStyle}
+                  required
+                >
+                  <option value="">Select a clinic</option>
+                  {clinics.map((item) => (
+                    <option key={item._id} value={item._id}>
+                      {item.name} {item.location ? `- ${item.location}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ marginBottom: "17px" }}>
+                <label style={labelStyle} htmlFor="appointment-date">
+                  Date
+                </label>
+                <input
+                  id="appointment-date"
+                  type="date"
+                  value={date}
+                  min={getLocalDateString()}
+                  onChange={(event) => {
+                    setDate(event.target.value);
+                    setSelectedSlot("");
+                    setTimeSlots([]);
+                    setFormError("");
+                  }}
+                  style={inputStyle}
+                  required
+                />
+              </div>
+
+              <div style={{ marginBottom: "18px" }}>
+                <label style={labelStyle}>Available time slots</label>
+
+                {!clinic || !date ? (
+                  <p style={{ color: "#64748b", fontSize: "14px" }}>
+                    Select a clinic and date to see available times.
+                  </p>
+                ) : slotLoading ? (
+                  <p style={{ color: "#64748b" }}>Loading time slots...</p>
+                ) : timeSlots.length === 0 ? (
+                  <p style={{ color: "#64748b", fontSize: "14px" }}>
                     No available time slots for this date.
                   </p>
                 ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(105px, 1fr))",
+                      gap: "8px",
+                    }}
+                  >
                     {timeSlots.map((slot) => {
-                      const isSelected = selectedSlot === slot.time;
+                      const selected = selectedSlot === slot.time;
+
                       return (
                         <button
-                          key={slot.id}
+                          key={slot.time}
                           type="button"
-                          disabled={!slot.available}
-                          onClick={() => {
-                            if (slot.available) {
-                              setSelectedSlot(slot.time);
-                            }
+                          onClick={() => setSelectedSlot(slot.time)}
+                          style={{
+                            padding: "10px 6px",
+                            border: selected
+                              ? "1px solid #2563eb"
+                              : "1px solid #cbd5e1",
+                            borderRadius: "8px",
+                            background: selected ? "#2563eb" : "#fff",
+                            color: selected ? "#fff" : "#334155",
+                            cursor: "pointer",
+                            fontWeight: selected ? 700 : 500,
                           }}
-                          className={`px-4 py-3 rounded-xl border font-medium transition ${
-                            !slot.available
-                              ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
-                              : isSelected
-                              ? "bg-blue-600 text-white border-blue-600"
-                              : "bg-white text-slate-700 border-slate-200 hover:border-blue-500 hover:text-blue-600"
-                          }`}
                         >
                           {slot.time}
-                          {!slot.available && (
-                            <span className="block text-xs mt-1">Unavailable</span>
-                          )}
                         </button>
                       );
                     })}
                   </div>
                 )}
               </div>
-            )}
 
-            {/* Selected Appointment Details */}
-            {selectedSlot && clinic && date && (
-              <div className="mt-6 p-5 bg-blue-50 rounded-xl border border-blue-100">
-                <p className="text-sm font-semibold text-blue-600 mb-3">
-                  SELECTED APPOINTMENT
-                </p>
-                <div className="space-y-2">
-                  <p className="text-slate-700">
-                    <strong>Clinic:</strong>{" "}
-                    {clinics.find((item) => item._id === clinic)?.name}
-                  </p>
-                  <p className="text-slate-700">
-                    <strong>Date:</strong> {date}
-                  </p>
-                  <p className="text-slate-700">
-                    <strong>Time:</strong> {selectedSlot}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Buttons */}
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={handleConfirm}
-                disabled={!clinic || !date || !selectedSlot}
-                className={`px-6 py-3 rounded-xl font-semibold transition ${
-                  !clinic || !date || !selectedSlot
-                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
-              >
-                Confirm Appointment
-              </button>
-
-              <button
-                type="button"
-                onClick={onBack}
-                className="px-6 py-3 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* My Appointments */}
-        <section className="workers-section">
-          <div className="workers-header">
-            <div>
-              <p className="section-label">MY APPOINTMENTS</p>
-              <h2>Appointment Status</h2>
-              <p>View your upcoming and past vaccination appointments.</p>
-            </div>
-            <div className="worker-count">
-              {myAppointments.length} Appointment
-              {myAppointments.length !== 1 ? "s" : ""}
-            </div>
-          </div>
-
-          {appointmentLoading ? (
-            <div className="empty-workers">
-              <p>Loading appointments...</p>
-            </div>
-          ) : myAppointments.length === 0 ? (
-            <div className="empty-workers">
-              <div className="empty-icon">📅</div>
-              <h3>No appointments yet</h3>
-              <p>Your booked appointments will appear here.</p>
-            </div>
-          ) : (
-            <div>
-              {/* Upcoming Appointments */}
-              <h3 style={{ marginBottom: "15px", color: "#334155" }}>
-                Upcoming Appointments
-              </h3>
-
-              {upcomingAppointments.length === 0 ? (
-                <div className="empty-workers">
-                  <p>No upcoming appointments.</p>
-                </div>
-              ) : (
-                <div className="workers-grid">
-                  {upcomingAppointments.map((appointment) => (
-                    <div className="worker-card" key={appointment._id}>
-                      <div className="worker-avatar">📅</div>
-                      <div className="worker-info">
-                        <h3>
-                          {appointment.clinicId?.name || "Unknown Clinic"}
-                        </h3>
-                        <p>
-                          {appointment.clinicId?.location ||
-                            "Location unavailable"}
-                        </p>
-
-                        {appointment.familyProfileId ? (
-                          <p>
-                            <strong>For:</strong>{" "}
-                            {appointment.familyProfileId.name}
-                          </p>
-                        ) : (
-                          <p>
-                            <strong>For:</strong> {user?.name || "Myself"}
-                          </p>
-                        )}
-
-                        <span className="worker-role">
-                          {new Date(
-                            appointment.dateTime
-                          ).toLocaleDateString()}
-                          {" • "}
-                          {new Date(
-                            appointment.dateTime
-                          ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
-
-                      <div>
-                        <span
-                          className={`worker-role ${
-                            appointment.status === "Confirmed"
-                              ? "status-confirmed"
-                              : "status-pending"
-                          }`}
-                        >
-                          {appointment.status}
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleCancelAppointment(appointment._id)
-                          }
-                          style={{
-                            display: "block",
-                            marginTop: "10px",
-                            padding: "7px 12px",
-                            border: "none",
-                            borderRadius: "8px",
-                            background: "#fee2e2",
-                            color: "#dc2626",
-                            fontWeight: "700",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+              {selectedSlot && (
+                <div
+                  style={{
+                    marginBottom: "18px",
+                    padding: "13px",
+                    borderRadius: "9px",
+                    background: "#eff6ff",
+                    color: "#1e40af",
+                    fontSize: "14px",
+                    lineHeight: 1.8,
+                  }}
+                >
+                  <strong>Booking summary</strong>
+                  <div>Recipient: {selectedPerson === "self"
+                    ? user?.name || "Myself"
+                    : familyMembers.find(
+                        (member) => member._id === selectedPerson
+                      )?.name || "Family member"}</div>
+                  <div>Vaccine: {selectedVaccine?.name || "—"}</div>
+                  <div>Dose: {doseNumber ? `Dose ${doseNumber}` : "—"}</div>
+                  <div>Clinic: {selectedClinic?.name || "—"}</div>
+                  <div>Date: {date}</div>
+                  <div>Time: {selectedSlot}</div>
                 </div>
               )}
 
-              {/* Past Appointments */}
-              <h3
+              <button
+                type="submit"
+                disabled={
+                  booking ||
+                  !clinic ||
+                  !vaccine ||
+                  !doseNumber ||
+                  !date ||
+                  !selectedSlot
+                }
                 style={{
-                  marginTop: "30px",
-                  marginBottom: "15px",
-                  color: "#334155",
+                  width: "100%",
+                  padding: "12px",
+                  border: "none",
+                  borderRadius: "9px",
+                  background:
+                    booking ||
+                    !clinic ||
+                    !vaccine ||
+                    !doseNumber ||
+                    !date ||
+                    !selectedSlot
+                      ? "#cbd5e1"
+                      : "#2563eb",
+                  color: "#fff",
+                  fontWeight: 700,
+                  cursor:
+                    booking ||
+                    !clinic ||
+                    !vaccine ||
+                    !doseNumber ||
+                    !date ||
+                    !selectedSlot
+                      ? "not-allowed"
+                      : "pointer",
                 }}
               >
-                Past Appointments
-              </h3>
+                {booking ? "Booking..." : "Confirm appointment"}
+              </button>
+            </form>
+          </section>
 
-              {pastAppointments.length === 0 ? (
-                <div className="empty-workers">
-                  <p>No past appointments.</p>
-                </div>
-              ) : (
-                <div className="workers-grid">
-                  {pastAppointments.map((appointment) => (
-                    <div className="worker-card" key={appointment._id}>
-                      <div className="worker-avatar">📅</div>
-                      <div className="worker-info">
-                        <h3>
-                          {appointment.clinicId?.name || "Unknown Clinic"}
-                        </h3>
-                        <p>
-                          {appointment.clinicId?.location ||
-                            "Location unavailable"}
-                        </p>
-
-                        <span className="worker-role">
-                          {new Date(
-                            appointment.dateTime
-                          ).toLocaleDateString()}
-                          {" • "}
-                          {new Date(
-                            appointment.dateTime
-                          ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
-
-                      <span
-                        className={`worker-role ${
-                          appointment.status === "Cancelled"
-                            ? "status-cancelled"
-                            : appointment.status === "Completed"
-                            ? "status-confirmed"
-                            : "status-pending"
-                        }`}
-                      >
-                        {appointment.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+          {/* Appointment list on the right */}
+          <section
+            style={{
+              minWidth: 0,
+              padding: "22px",
+              borderRadius: "14px",
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "12px",
+                flexWrap: "wrap",
+                marginBottom: "20px",
+              }}
+            >
+              <div>
+                <p className="section-label">MY APPOINTMENTS</p>
+                <h2 style={{ margin: 0 }}>Appointment status</h2>
+              </div>
+              <span className="worker-count">
+                {myAppointments.length} total
+              </span>
             </div>
-          )}
-        </section>
+
+            {appointmentLoading ? (
+              <div className="empty-workers">
+                <p>Loading appointments...</p>
+              </div>
+            ) : myAppointments.length === 0 ? (
+              <div className="empty-workers">
+                <div className="empty-icon">📅</div>
+                <h3>No appointments yet</h3>
+                <p>Your booked appointments will appear here.</p>
+              </div>
+            ) : (
+              <>
+                <h3 style={{ color: "#334155", margin: "0 0 12px" }}>
+                  Upcoming
+                </h3>
+
+                <div style={{ display: "grid", gap: "12px" }}>
+                  {upcomingAppointments.length > 0 ? (
+                    upcomingAppointments.map(renderAppointmentCard)
+                  ) : (
+                    <p style={{ color: "#64748b" }}>
+                      No upcoming appointments.
+                    </p>
+                  )}
+                </div>
+
+                <h3 style={{ color: "#334155", margin: "26px 0 12px" }}>
+                  Past and cancelled
+                </h3>
+
+                <div style={{ display: "grid", gap: "12px" }}>
+                  {pastAppointments.length > 0 ? (
+                    pastAppointments.map(renderAppointmentCard)
+                  ) : (
+                    <p style={{ color: "#64748b" }}>
+                      No past appointments.
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+          </section>
+        </div>
       </main>
     </div>
   );

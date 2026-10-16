@@ -177,13 +177,6 @@ function ClinicAdminDashboard({
             </button>
 
 
-
-
-            <button className="clinic-nav-item">
-              <span>💉</span>
-              Vaccinations
-            </button>
-
             <button
               className="clinic-nav-item"
               onClick={onOpenInventory}

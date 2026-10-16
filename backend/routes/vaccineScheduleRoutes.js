@@ -10,11 +10,10 @@ const {
   getVaccineSchedules,
 } = require("../controllers/vaccineScheduleController");
 
-// Only authenticated admins can view schedules
+// Authenticated users can view schedules for appointment booking
 router.get(
   "/",
   authMiddleware,
-  adminMiddleware,
   getVaccineSchedules
 );
 
