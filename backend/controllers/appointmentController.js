@@ -7,6 +7,7 @@ const User = require("../models/User");
 const Clinic = require("../models/Clinic");
 const Vaccine = require("../models/Vaccine");
 const VaccineSchedule = require("../models/VaccineSchedule");
+const DutyAssignment = require("../models/DutyAssignment");
 
 const TIME_ZONE = process.env.APP_TIMEZONE || "Asia/Dhaka";
 
@@ -68,20 +69,34 @@ function parseAppointmentDateTime(date, time) {
   if (period === "PM" && hour !== 12) hour += 12;
 
   // Bangladesh Standard Time is UTC+06:00.
-  const result = new Date(`${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00+06:00`);
+  const result = new Date(
+    `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00+06:00`
+  );
 
-  // Reject impossible calendar dates such as February 31.
+  // Reject impossible calendar dates.
   if (getLocalDateString(result) !== date) return null;
 
   return result;
 }
 
+// Bangladesh-local calendar day for appointment queries.
 function getDayRange(date) {
+  const start = new Date(`${date}T00:00:00+06:00`);
+
   return {
-    $gte: new Date(`${date}T00:00:00+06:00`),
-    $lt: new Date(
-      new Date(`${date}T00:00:00+06:00`).getTime() + 24 * 60 * 60 * 1000
-    ),
+    $gte: start,
+    $lt: new Date(start.getTime() + 24 * 60 * 60 * 1000),
+  };
+}
+
+// DutyAssignment records are created using the selected calendar date.
+// Query that calendar date using UTC boundaries.
+function getDutyDateRange(date) {
+  const start = new Date(`${date}T00:00:00.000Z`);
+
+  return {
+    $gte: start,
+    $lt: new Date(start.getTime() + 24 * 60 * 60 * 1000),
   };
 }
 
@@ -104,6 +119,80 @@ async function getRecipient(citizenId, familyProfileId, guardianId) {
   }
 
   return User.findById(citizenId);
+}
+
+// Automatically choose the eligible vaccination worker
+// with the fewest active appointments on the selected day.
+// This distributes appointments across the available workers.
+async function selectVaccinationWorker(clinicId, date) {
+  const duties = await DutyAssignment.find({
+    clinicId,
+    dutyType: "Vaccination",
+    dutyDate: getDutyDateRange(date),
+    workerId: { $ne: null },
+  }).sort({ _id: 1 });
+
+  // Remove duplicate worker IDs defensively.
+  const workerIds = [
+    ...new Set(
+      duties
+        .map((duty) => duty.workerId && String(duty.workerId))
+        .filter(Boolean)
+    ),
+  ];
+
+  if (workerIds.length === 0) {
+    return null;
+  }
+
+  // Only workers who still exist and have the worker role are eligible.
+  const workers = await User.find({
+    _id: { $in: workerIds },
+    role: "worker",
+    clinicId,
+  }).select("_id name email");
+
+  if (workers.length === 0) {
+    return null;
+  }
+
+  // Count each eligible worker's non-cancelled appointments for this day.
+  const workload = await Appointment.aggregate([
+    {
+      $match: {
+        clinicId: new mongoose.Types.ObjectId(String(clinicId)),
+        assignedWorkerId: {
+          $in: workers.map((worker) => worker._id),
+        },
+        dateTime: getDayRange(date),
+        status: { $ne: "Cancelled" },
+      },
+    },
+    {
+      $group: {
+        _id: "$assignedWorkerId",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const counts = new Map(
+    workload.map((item) => [String(item._id), item.count])
+  );
+
+  // Pick the worker with the smallest workload.
+  // Worker ID provides a stable tie-breaker.
+  workers.sort((a, b) => {
+    const countDifference =
+      (counts.get(String(a._id)) || 0) -
+      (counts.get(String(b._id)) || 0);
+
+    if (countDifference !== 0) return countDifference;
+
+    return String(a._id).localeCompare(String(b._id));
+  });
+
+  return workers[0];
 }
 
 // GET /slots?clinicId=...&date=YYYY-MM-DD
@@ -151,6 +240,7 @@ exports.getAvailableSlots = async (req, res) => {
     return res.json({ clinicId, date, availableSlots });
   } catch (error) {
     console.error("Get available slots error:", error);
+
     return res.status(500).json({
       message: "Failed to fetch available slots.",
     });
@@ -161,7 +251,15 @@ exports.getAvailableSlots = async (req, res) => {
 exports.createAppointment = async (req, res) => {
   try {
     const citizenId = String(req.user._id || req.user.id);
-    const { familyProfileId, clinicId, vaccineId, doseNumber, date, time } = req.body;
+
+    const {
+      familyProfileId,
+      clinicId,
+      vaccineId,
+      doseNumber,
+      date,
+      time,
+    } = req.body;
 
     if (
       !clinicId ||
@@ -201,8 +299,11 @@ exports.createAppointment = async (req, res) => {
     }
 
     const clinic = await Clinic.findById(clinicId);
+
     if (!clinic) {
-      return res.status(404).json({ message: "Clinic not found." });
+      return res.status(404).json({
+        message: "Clinic not found.",
+      });
     }
 
     const vaccine = await Vaccine.findOne({
@@ -223,7 +324,8 @@ exports.createAppointment = async (req, res) => {
 
     if (!schedules.length) {
       return res.status(400).json({
-        message: "This dose is not included in the selected vaccine schedule.",
+        message:
+          "This dose is not included in the selected vaccine schedule.",
       });
     }
 
@@ -239,8 +341,7 @@ exports.createAppointment = async (req, res) => {
       });
     }
 
-    // If a date of birth is available, require a schedule age range
-    // that matches the recipient's current age.
+    // Validate recipient age when a date of birth is available.
     if (recipient.dateOfBirth) {
       const ageDays = Math.floor(
         (Date.now() - new Date(recipient.dateOfBirth).getTime()) /
@@ -249,6 +350,7 @@ exports.createAppointment = async (req, res) => {
 
       const eligibleSchedule = schedules.some((schedule) => {
         const maxAge = schedule.maxAgeDays;
+
         return (
           ageDays >= schedule.minAgeDays &&
           (maxAge == null || ageDays <= maxAge)
@@ -257,7 +359,8 @@ exports.createAppointment = async (req, res) => {
 
       if (!eligibleSchedule) {
         return res.status(400).json({
-          message: "The selected dose is outside the recipient's scheduled age range.",
+          message:
+            "The selected dose is outside the recipient's scheduled age range.",
         });
       }
     }
@@ -289,15 +392,17 @@ exports.createAppointment = async (req, res) => {
       personQuery.familyProfileId = null;
     }
 
-    const existingPersonAppointment = await Appointment.findOne(personQuery);
+    const existingPersonAppointment =
+      await Appointment.findOne(personQuery);
 
     if (existingPersonAppointment) {
       return res.status(409).json({
-        message: "This person already has an appointment booked for this day. Only one appointment per person per day is allowed.",
+        message:
+          "This person already has an appointment booked for this day. Only one appointment per person per day is allowed.",
       });
     }
 
-    // Check that the clinic slot is still available.
+    // Preserve the existing clinic-wide slot rule.
     const existingSlot = await Appointment.findOne({
       clinicId,
       dateTime: appointmentDateTime,
@@ -310,6 +415,14 @@ exports.createAppointment = async (req, res) => {
       });
     }
 
+    // Automatically select an eligible worker for this clinic and date.
+    const selectedWorker = await selectVaccinationWorker(
+      clinicId,
+      date
+    );
+
+    // Preserve booking behavior if no worker has been assigned duty.
+    // The appointment can be booked but will remain unassigned.
     const appointment = await Appointment.create({
       citizenId,
       familyProfileId: familyProfileId || null,
@@ -317,19 +430,25 @@ exports.createAppointment = async (req, res) => {
       vaccineId,
       doseNumber: dose,
       dateTime: appointmentDateTime,
+      assignedWorkerId: selectedWorker?._id || null,
       status: "Confirmed",
     });
 
     return res.status(201).json({
-      message: "Appointment booked successfully.",
+      message: selectedWorker
+        ? "Appointment booked and worker assigned successfully."
+        : "Appointment booked successfully, but no vaccination worker is assigned for this date.",
       appointmentId: appointment._id,
       status: appointment.status,
+      assignedWorkerId: appointment.assignedWorkerId,
     });
   } catch (error) {
     console.error("Create appointment error:", error);
 
     if (error.name === "ValidationError") {
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({
+        message: error.message,
+      });
     }
 
     return res.status(500).json({
@@ -344,12 +463,17 @@ exports.getClinicAppointments = async (req, res) => {
     const { clinicId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(clinicId)) {
-      return res.status(400).json({ message: "Invalid clinic reference." });
+      return res.status(400).json({
+        message: "Invalid clinic reference.",
+      });
     }
 
     const user = await getLoggedInUser(req);
+
     if (!user) {
-      return res.status(401).json({ message: "User not found." });
+      return res.status(401).json({
+        message: "User not found.",
+      });
     }
 
     if (
@@ -366,13 +490,18 @@ exports.getClinicAppointments = async (req, res) => {
       status: { $ne: "Cancelled" },
     })
       .populate("citizenId", "name email")
-      .populate("familyProfileId", "name relationship gender dateOfBirth")
+      .populate(
+        "familyProfileId",
+        "name relationship gender dateOfBirth"
+      )
       .populate("vaccineId", "name code")
+      .populate("assignedWorkerId", "name email phone")
       .sort({ dateTime: 1 });
 
     return res.json({ appointments });
   } catch (error) {
     console.error("Get clinic appointments error:", error);
+
     return res.status(500).json({
       message: "Failed to fetch clinic appointments.",
     });
@@ -387,7 +516,9 @@ exports.getCitizenAppointments = async (req, res) => {
     const user = await getLoggedInUser(req);
 
     if (!mongoose.Types.ObjectId.isValid(citizenId)) {
-      return res.status(400).json({ message: "Invalid citizen reference." });
+      return res.status(400).json({
+        message: "Invalid citizen reference.",
+      });
     }
 
     const isAdmin = user?.role === "admin";
@@ -399,19 +530,20 @@ exports.getCitizenAppointments = async (req, res) => {
       });
     }
 
-    const filter = isStaff && citizenId !== loggedInId
-      ? { citizenId }
-      : { citizenId };
-
-    const appointments = await Appointment.find(filter)
+    const appointments = await Appointment.find({ citizenId })
       .populate("clinicId", "name location contact")
-      .populate("familyProfileId", "name relationship gender dateOfBirth")
+      .populate(
+        "familyProfileId",
+        "name relationship gender dateOfBirth"
+      )
       .populate("vaccineId", "name code")
+      .populate("assignedWorkerId", "name email phone")
       .sort({ dateTime: 1 });
 
     return res.json({ appointments });
   } catch (error) {
     console.error("Get citizen appointments error:", error);
+
     return res.status(500).json({
       message: "Failed to fetch citizen appointments.",
     });
@@ -424,7 +556,9 @@ exports.cancelAppointment = async (req, res) => {
     const { appointmentId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
-      return res.status(400).json({ message: "Invalid appointment reference." });
+      return res.status(400).json({
+        message: "Invalid appointment reference.",
+      });
     }
 
     const citizenId = String(req.user._id || req.user.id);
@@ -433,7 +567,9 @@ exports.cancelAppointment = async (req, res) => {
     const appointment = await Appointment.findById(appointmentId);
 
     if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found." });
+      return res.status(404).json({
+        message: "Appointment not found.",
+      });
     }
 
     const isOwner = String(appointment.citizenId) === citizenId;
@@ -467,6 +603,7 @@ exports.cancelAppointment = async (req, res) => {
     });
   } catch (error) {
     console.error("Cancel appointment error:", error);
+
     return res.status(500).json({
       message: "Failed to cancel appointment.",
     });
@@ -474,5 +611,7 @@ exports.cancelAppointment = async (req, res) => {
 };
 
 exports.testAppointmentApi = (req, res) => {
-  return res.json({ message: "Appointment API is working." });
+  return res.json({
+    message: "Appointment API is working.",
+  });
 };

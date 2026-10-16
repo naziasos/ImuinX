@@ -41,10 +41,18 @@ const appointmentSchema = new mongoose.Schema(
       },
     },
 
-    // Preserve the existing appointment date/time field
+    // Appointment date and time
     dateTime: {
       type: Date,
       required: true,
+    },
+
+    // Health worker assigned to this appointment
+    // null until automatic assignment takes place
+    assignedWorkerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
 
     status: {
@@ -68,6 +76,13 @@ appointmentSchema.index({
 // Useful for checking booked clinic slots
 appointmentSchema.index({
   clinicId: 1,
+  dateTime: 1,
+  status: 1,
+});
+
+// Useful for retrieving a worker's appointments
+appointmentSchema.index({
+  assignedWorkerId: 1,
   dateTime: 1,
   status: 1,
 });

@@ -191,7 +191,7 @@ test("PATCH /api/family/:id should update a linked family member", async () => {
       },
     },
     {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     }
   );
@@ -224,7 +224,7 @@ test("PATCH /api/family/:id should reject another guardian's profile", async () 
       },
     },
     {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     }
   );

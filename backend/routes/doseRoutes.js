@@ -302,7 +302,7 @@ router.post("/", authMiddleware, async (req, res) => {
           },
         },
         {
-          new: true,
+          returnDocument: "after",
         }
       );
 
@@ -446,7 +446,7 @@ router.post("/", authMiddleware, async (req, res) => {
             },
           },
           {
-            new: true,
+            returnDocument: "after",
             upsert: true,
             setDefaultsOnInsert: true,
           }

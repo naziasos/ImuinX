@@ -102,7 +102,7 @@ router.patch("/:id/read", authMiddleware, async (req, res) => {
         $set: { isRead: true },
       },
       {
-        new: true,
+        returnDocument: "after",
         runValidators: true,
       }
     );

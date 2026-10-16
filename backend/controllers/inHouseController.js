@@ -1,6 +1,7 @@
 
 const InHouseRequest = require("../models/InHouseRequest");
 const FamilyProfile = require("../models/FamilyProfile");
+const DutyAssignment = require("../models/DutyAssignment");
 const mongoose = require("mongoose");
 
 // @desc    Create a new in-house visit request (Citizen)
@@ -16,7 +17,6 @@ const createRequest = async (req, res) => {
       vaccineOrReason,
     } = req.body;
 
-    // Validate required fields
     if (!address || !address.trim()) {
       return res.status(400).json({
         success: false,
@@ -45,7 +45,6 @@ const createRequest = async (req, res) => {
       });
     }
 
-    // Validate preferred date
     const requestedDate = new Date(preferredDate);
 
     if (Number.isNaN(requestedDate.getTime())) {
@@ -62,8 +61,8 @@ const createRequest = async (req, res) => {
       });
     }
 
-    // If a family member is selected,
-    // make sure they belong to the logged-in citizen.
+    // Verify that the selected family member belongs
+    // to the logged-in citizen.
     if (familyMember) {
       if (!mongoose.Types.ObjectId.isValid(familyMember)) {
         return res.status(400).json({
@@ -85,7 +84,6 @@ const createRequest = async (req, res) => {
       }
     }
 
-    // Create the request
     const newRequest = await InHouseRequest.create({
       citizen: req.user._id,
       familyMember: familyMember || null,
@@ -96,7 +94,7 @@ const createRequest = async (req, res) => {
       status: "Pending",
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "In-house visit requested successfully",
       requestId: newRequest._id,
@@ -105,16 +103,12 @@ const createRequest = async (req, res) => {
   } catch (error) {
     console.error("Create in-house request error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to create in-house request",
     });
   }
 };
-
-
-
-
 
 // @desc    Get logged-in citizen's in-house requests
 // @route   GET /api/in-house-requests/my
@@ -128,7 +122,7 @@ const getMyRequests = async (req, res) => {
       .populate("assignedWorker", "name phone email")
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       count: requests.length,
       data: requests,
@@ -136,36 +130,44 @@ const getMyRequests = async (req, res) => {
   } catch (error) {
     console.error("Get my in-house requests error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to retrieve your in-house requests",
     });
   }
 };
 
-// @desc    Get all pending in-house requests (Health Worker)
+// @desc    Get all pending in-house requests
 // @route   GET /api/in-house-requests/pending
 // @access  Private (Health Worker)
 const getPendingRequests = async (req, res) => {
   try {
-    const requests = await InHouseRequest.find({ status: "Pending" })
+    // Shared pool: eligible workers can choose
+    // any pending request from this list.
+    const requests = await InHouseRequest.find({
+      status: "Pending",
+      assignedWorker: null,
+    })
       .populate("citizen", "name phone email")
       .populate("familyMember", "name relation age")
       .sort({ preferredDate: 1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       count: requests.length,
       data: requests,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Get pending in-house requests error:", error);
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to retrieve pending requests",
     });
   }
 };
-// @desc    Get accepted in-house requests assigned to logged-in worker
+
+// @desc    Get accepted requests assigned to logged-in worker
 // @route   GET /api/in-house-requests/assigned
 // @access  Private (Health Worker)
 const getAssignedRequests = async (req, res) => {
@@ -178,7 +180,7 @@ const getAssignedRequests = async (req, res) => {
       .populate("familyMember", "name relation age")
       .sort({ preferredDate: 1 });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       count: requests.length,
       data: requests,
@@ -186,19 +188,28 @@ const getAssignedRequests = async (req, res) => {
   } catch (error) {
     console.error("Get assigned in-house requests error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to retrieve assigned requests",
     });
   }
 };
 
-// @desc    Accept an in-house request (Health Worker)
+// @desc    Accept an in-house request
 // @route   PATCH /api/in-house-requests/:id/accept
 // @access  Private (Health Worker)
 const acceptRequest = async (req, res) => {
   try {
-    const request = await InHouseRequest.findById(req.params.id);
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid request ID",
+      });
+    }
+
+    const request = await InHouseRequest.findById(id);
 
     if (!request) {
       return res.status(404).json({
@@ -214,62 +225,131 @@ const acceptRequest = async (req, res) => {
       });
     }
 
-    request.status = "Accepted";
-    request.assignedWorker = req.user._id;
+    // Find the worker's in-house duty on the requested date.
+    // These UTC boundaries should match the existing duty routes.
+    const startOfDay = new Date(request.preferredDate);
+    startOfDay.setUTCHours(0, 0, 0, 0);
 
-    await request.save();
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
 
-    res.status(200).json({
+    const duty = await DutyAssignment.findOne({
+      workerId: req.user._id,
+      dutyType: "In-House Visit",
+      dutyDate: {
+        $gte: startOfDay,
+        $lt: endOfDay,
+      },
+    });
+
+    if (!duty) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "You are not assigned to in-house duty on this date",
+      });
+    }
+
+    // Atomic update: only one worker can accept a pending request.
+    // MongoDB matches assignedWorker: null when the field is null
+    // or absent, so existing pending records can still be accepted.
+    const acceptedRequest = await InHouseRequest.findOneAndUpdate(
+      {
+        _id: id,
+        status: "Pending",
+        assignedWorker: null,
+      },
+      {
+        $set: {
+          status: "Accepted",
+          assignedWorker: req.user._id,
+        },
+      },
+      {
+        returnDocument: "after",
+        runValidators: true,
+      }
+    )
+      .populate("citizen", "name phone email")
+      .populate("familyMember", "name relation age");
+
+    if (!acceptedRequest) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This request has already been accepted by another worker",
+      });
+    }
+
+    return res.status(200).json({
       success: true,
       message: "Request accepted successfully",
-      data: request,
+      data: acceptedRequest,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Accept in-house request error:", error);
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to accept in-house request",
     });
   }
 };
 
-// @desc    Mark an in-house request as completed (Health Worker)
+// @desc    Mark an assigned in-house visit as completed
 // @route   PATCH /api/in-house-requests/:id/complete
 // @access  Private (Health Worker)
 const completeVisit = async (req, res) => {
   try {
-    const request = await InHouseRequest.findById(req.params.id);
+    const { id } = req.params;
 
-    if (!request) {
-      return res.status(404).json({
-        success: false,
-        message: "Request not found",
-      });
-    }
-
-    if (request.status !== "Accepted") {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
-        message: "Only accepted visits can be marked as completed",
+        message: "Invalid request ID",
       });
     }
 
-    request.status = "Completed";
+    // Only the assigned worker can complete an accepted request.
+    const completedRequest = await InHouseRequest.findOneAndUpdate(
+      {
+        _id: id,
+        assignedWorker: req.user._id,
+        status: "Accepted",
+      },
+      {
+        $set: {
+          status: "Completed",
+        },
+      },
+      {
+        returnDocument: "after",
+        runValidators: true,
+      }
+    );
 
-    await request.save();
+    if (!completedRequest) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "No accepted request assigned to you was found",
+      });
+    }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Visit marked as completed successfully",
-      data: request,
+      data: completedRequest,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Complete in-house visit error:", error);
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to complete in-house visit",
     });
   }
 };
-
 
 module.exports = {
   createRequest,
@@ -279,4 +359,3 @@ module.exports = {
   acceptRequest,
   completeVisit,
 };
-
