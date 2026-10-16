@@ -4,6 +4,17 @@ const FamilyProfile = require("../models/FamilyProfile");
 const DutyAssignment = require("../models/DutyAssignment");
 const mongoose = require("mongoose");
 
+// Match duty and request dates using UTC calendar-day boundaries.
+const getUtcDayRange = (date) => {
+  const start = new Date(date);
+  start.setUTCHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+
+  return { start, end };
+};
+
 // @desc    Create a new in-house visit request (Citizen)
 // @route   POST /api/in-house-requests
 // @access  Private (Citizen)
@@ -61,8 +72,6 @@ const createRequest = async (req, res) => {
       });
     }
 
-    // Verify that the selected family member belongs
-    // to the logged-in citizen.
     if (familyMember) {
       if (!mongoose.Types.ObjectId.isValid(familyMember)) {
         return res.status(400).json({
@@ -137,16 +146,39 @@ const getMyRequests = async (req, res) => {
   }
 };
 
-// @desc    Get all pending in-house requests
+// @desc    Get pending requests matching the worker's In-House Visit duties
 // @route   GET /api/in-house-requests/pending
 // @access  Private (Health Worker)
 const getPendingRequests = async (req, res) => {
   try {
-    // Shared pool: eligible workers can choose
-    // any pending request from this list.
+    const duties = await DutyAssignment.find({
+      workerId: req.user._id,
+      dutyType: "In-House Visit",
+    }).select("dutyDate");
+
+    if (duties.length === 0) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        data: [],
+      });
+    }
+
+    const dutyDateRanges = duties.map((duty) => {
+      const { start, end } = getUtcDayRange(duty.dutyDate);
+
+      return {
+        preferredDate: {
+          $gte: start,
+          $lt: end,
+        },
+      };
+    });
+
     const requests = await InHouseRequest.find({
       status: "Pending",
       assignedWorker: null,
+      $or: dutyDateRanges,
     })
       .populate("citizen", "name phone email")
       .populate("familyMember", "name relation age")
@@ -167,18 +199,18 @@ const getPendingRequests = async (req, res) => {
   }
 };
 
-// @desc    Get accepted requests assigned to logged-in worker
+// @desc    Get accepted and completed visits assigned to the logged-in worker
 // @route   GET /api/in-house-requests/assigned
 // @access  Private (Health Worker)
 const getAssignedRequests = async (req, res) => {
   try {
     const requests = await InHouseRequest.find({
       assignedWorker: req.user._id,
-      status: "Accepted",
+      status: { $in: ["Accepted", "Completed"] },
     })
       .populate("citizen", "name phone email")
       .populate("familyMember", "name relation age")
-      .sort({ preferredDate: 1 });
+      .sort({ preferredDate: -1 });
 
     return res.status(200).json({
       success: true,
@@ -218,41 +250,32 @@ const acceptRequest = async (req, res) => {
       });
     }
 
-    if (request.status !== "Pending") {
+    if (request.status !== "Pending" || request.assignedWorker) {
       return res.status(400).json({
         success: false,
-        message: `Request is already ${request.status}`,
+        message: `Request is already ${request.status} or has been assigned`,
       });
     }
 
-    // Find the worker's in-house duty on the requested date.
-    // These UTC boundaries should match the existing duty routes.
-    const startOfDay = new Date(request.preferredDate);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(startOfDay);
-    endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
+    const { start, end } = getUtcDayRange(request.preferredDate);
 
     const duty = await DutyAssignment.findOne({
       workerId: req.user._id,
       dutyType: "In-House Visit",
       dutyDate: {
-        $gte: startOfDay,
-        $lt: endOfDay,
+        $gte: start,
+        $lt: end,
       },
     });
 
     if (!duty) {
       return res.status(403).json({
         success: false,
-        message:
-          "You are not assigned to in-house duty on this date",
+        message: "You are not assigned to in-house duty on this date",
       });
     }
 
-    // Atomic update: only one worker can accept a pending request.
-    // MongoDB matches assignedWorker: null when the field is null
-    // or absent, so existing pending records can still be accepted.
+    // Atomic update prevents two workers from accepting the same request.
     const acceptedRequest = await InHouseRequest.findOneAndUpdate(
       {
         _id: id,
@@ -310,7 +333,6 @@ const completeVisit = async (req, res) => {
       });
     }
 
-    // Only the assigned worker can complete an accepted request.
     const completedRequest = await InHouseRequest.findOneAndUpdate(
       {
         _id: id,
@@ -331,8 +353,7 @@ const completeVisit = async (req, res) => {
     if (!completedRequest) {
       return res.status(404).json({
         success: false,
-        message:
-          "No accepted request assigned to you was found",
+        message: "No accepted request assigned to you was found",
       });
     }
 
