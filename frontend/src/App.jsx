@@ -456,9 +456,13 @@ function App() {
             />
           )}
 
-          {/* Vaccine Inventory */}
+
+{/* Vaccines inventory */}
+
           {page === "inventory" && (
-            <VaccineInventory />
+            <VaccineInventory
+              onBack={() => setPage("clinicDashboard")}
+            />
           )}
 
           {/* Clinic Feedback (staff) */}
