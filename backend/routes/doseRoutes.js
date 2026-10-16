@@ -7,7 +7,7 @@ const FamilyProfile = require("../models/FamilyProfile");
 const User = require("../models/User");
 const Appointment = require("../models/Appointment");
 const Feedback = require("../models/Feedback");
-
+const Vaccine = require("../models/Vaccine");
 const authMiddleware = require("../middleware/authMiddleware");
 const certificateService = require("../services/certificateService");
 
@@ -56,6 +56,7 @@ router.post("/", authMiddleware, async (req, res) => {
       citizenId,
       citizenType,
       vaccineType,
+      vaccineId,
       batchNumber,
       dateAdministered,
       appointmentId,
@@ -68,12 +69,12 @@ router.post("/", authMiddleware, async (req, res) => {
     if (
       !citizenId ||
       !citizenType ||
-      !vaccineType ||
+      (!vaccineId && !vaccineType) ||
       !batchNumber
     ) {
       return res.status(400).json({
         message:
-          "Citizen, citizen type, vaccine type and batch number are required",
+          "Citizen, citizen type, vaccine type, vaccine ID and batch number are required",
       });
     }
 
@@ -93,6 +94,52 @@ router.post("/", authMiddleware, async (req, res) => {
       });
     }
 
+
+    // ------------------------------------------------------------
+    // Resolve vaccine
+    // ------------------------------------------------------------
+
+    let selectedVaccine = null;
+
+    if (vaccineId) {
+      if (!mongoose.Types.ObjectId.isValid(vaccineId)) {
+        return res.status(400).json({
+          message: "Invalid vaccine reference",
+        });
+      }
+
+      selectedVaccine = await Vaccine.findOne({
+        _id: vaccineId,
+        isActive: true,
+      });
+
+      if (!selectedVaccine) {
+        return res.status(404).json({
+          message: "Vaccine not found or inactive",
+        });
+      }
+    } else {
+      // Backward compatibility for old clients
+      const legacyVaccineType = vaccineType.trim();
+
+      selectedVaccine = await Vaccine.findOne({
+        $or: [
+          {
+            name: legacyVaccineType,
+          },
+          {
+            code: legacyVaccineType.toUpperCase(),
+          },
+        ],
+        isActive: true,
+      });
+
+      if (!selectedVaccine) {
+        return res.status(400).json({
+          message: "Vaccine not found",
+        });
+      }
+    }
     // ------------------------------------------------------------
     // Logged-in worker
     // ------------------------------------------------------------
@@ -185,6 +232,17 @@ router.post("/", authMiddleware, async (req, res) => {
         });
       }
 
+      // Appointment vaccine must match the selected vaccine
+      if (
+        linkedAppointment.vaccineId &&
+        String(linkedAppointment.vaccineId) !==
+          String(selectedVaccine._id)
+      ) {
+        return res.status(400).json({
+          message:
+            "Selected vaccine does not match the appointment vaccine",
+        });
+      }
       /*
        * IMPORTANT:
        *
@@ -271,9 +329,6 @@ router.post("/", authMiddleware, async (req, res) => {
     // Inventory
     // ------------------------------------------------------------
 
-    const trimmedVaccineType =
-      vaccineType.trim();
-
     const trimmedBatchNumber =
       batchNumber.trim();
 
@@ -283,15 +338,13 @@ router.post("/", authMiddleware, async (req, res) => {
       await VaccineInventory.findOneAndUpdate(
         {
           clinicId: user.clinicId,
-          vaccineType: trimmedVaccineType,
+          vaccineId: selectedVaccine._id,
           batchNumber: trimmedBatchNumber,
 
-          // Batch must not be expired
           expiryDate: {
             $gt: now,
           },
 
-          // At least one stock
           quantity: {
             $gte: 1,
           },
@@ -306,28 +359,22 @@ router.post("/", authMiddleware, async (req, res) => {
         }
       );
 
-    // ------------------------------------------------------------
-    // Inventory validation error
-    // ------------------------------------------------------------
-
     if (!reserved) {
       const existingBatch =
         await VaccineInventory.findOne({
           clinicId: user.clinicId,
-          vaccineType: trimmedVaccineType,
+          vaccineId: selectedVaccine._id,
           batchNumber: trimmedBatchNumber,
         });
 
       if (!existingBatch) {
         return res.status(400).json({
           message:
-            "Unknown batch number: no matching batch found in this clinic's inventory",
+            "Unknown batch number: no matching batch found for this vaccine in this clinic's inventory",
         });
       }
 
-      if (
-        existingBatch.expiryDate <= now
-      ) {
+      if (existingBatch.expiryDate <= now) {
         return res.status(400).json({
           message:
             "This batch has expired and cannot be administered",
@@ -349,19 +396,11 @@ router.post("/", authMiddleware, async (req, res) => {
     try {
       record = await DoseRecord.create({
         citizenId,
-
-        /*
-         * User:
-         *   "User"
-         *
-         * Family:
-         *   "FamilyProfile"
-         */
         citizenType:
           CITIZEN_TYPE_MAP[citizenType],
 
-        vaccineType:
-          trimmedVaccineType,
+       vaccineType:
+         selectedVaccine.name,
 
         batchNumber:
           trimmedBatchNumber,

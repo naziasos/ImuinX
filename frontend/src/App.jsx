@@ -48,6 +48,8 @@ function App() {
   const [page, setPage] = useState("home");
   const [authEmail, setAuthEmail] = useState("");
 
+  const [appointmentForDose, setAppointmentForDose] =
+  useState(null);
   const [currentUser, setCurrentUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
     return savedUser ? JSON.parse(savedUser) : null;
@@ -352,7 +354,10 @@ function App() {
           {page === "workerAppointments" && (
             <WorkerAppointments
               onBack={() => setPage("workerDashboard")}
-              onLogDose={() => setPage("logDose")}
+              onLogDose={(appointment = null) => {
+                setAppointmentForDose(appointment);
+                setPage("logDose");
+              }}
               onShowWork={() => setPage("showWork")}
               onLogout={() => {
                 localStorage.removeItem("token");
@@ -367,7 +372,10 @@ function App() {
           {page === "showWork" && (
             <ShowWork
               onBack={() => setPage("workerDashboard")}
-              onLogDose={() => setPage("logDose")}
+              onLogDose={(appointment = null) => {
+                setAppointmentForDose(appointment);
+                setPage("logDose");
+              }}
               onAppointments={() => setPage("workerAppointments")}
               onLogout={() => {
                 localStorage.removeItem("token");
@@ -381,7 +389,11 @@ function App() {
           {/* Log Dose */}
           {page === "logDose" && (
             <LogDose
-              onBack={() => setPage("workerDashboard")}
+              appointmentContext={appointmentForDose}
+              onBack={() => {
+                setAppointmentForDose(null);
+                setPage("workerDashboard");
+              }}
               onAppointments={() => setPage("workerAppointments")}
               onLogout={() => {
                 localStorage.removeItem("token");

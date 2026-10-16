@@ -28,7 +28,7 @@ router.get("/search", authMiddleware, async (req, res) => {
 
     const [registeredCitizens, familyMembers] = await Promise.all([
       User.find({ role: "citizen", name: nameRegex }).select(
-        "name email"
+        "name email dateOfBirth"
       ),
       FamilyProfile.find({ name: nameRegex }).populate(
         "guardianId",
@@ -43,7 +43,7 @@ router.get("/search", authMiddleware, async (req, res) => {
       type: "user",
       name: u.name,
       relationship: "Self (registered citizen)",
-      dateOfBirth: null,
+      dateOfBirth: u.dateOfBirth,
       gender: null,
       guardianId: null,
     }));

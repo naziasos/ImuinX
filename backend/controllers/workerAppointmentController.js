@@ -52,7 +52,6 @@ const isValidDate = (date) => {
 // Optional filter: ?date=YYYY-MM-DD
 // No date means all appointments from today onward.
 // =====================================================
-
 const getWorkerAppointments = async (req, res) => {
   try {
     if (req.user.role !== "worker") {
@@ -87,7 +86,6 @@ const getWorkerAppointments = async (req, res) => {
     let dateFilter;
 
     if (date) {
-      // Only appointments on the selected local date.
       const { start, end } = getDayRange(date);
 
       dateFilter = {
@@ -95,17 +93,14 @@ const getWorkerAppointments = async (req, res) => {
         $lt: end,
       };
     } else {
-      // All appointments from the start of today onward.
       const { start } = getDayRange(today);
-
       dateFilter = {
         $gte: start,
       };
     }
 
-    // Duty information is displayed separately.
-    // It must not hide an appointment already assigned to this worker.
-    const { start: todayStart, end: todayEnd } = getDayRange(today);
+    const { start: todayStart, end: todayEnd } =
+      getDayRange(today);
 
     const todayDuty = await DutyAssignment.findOne({
       workerId: worker._id,
@@ -123,14 +118,28 @@ const getWorkerAppointments = async (req, res) => {
       dateTime: dateFilter,
       status: { $ne: "Cancelled" },
     })
-      .populate("citizenId", "name email")
+      // IMPORTANT:
+      // dateOfBirth is needed for age-based Log Dose
+      .populate(
+        "citizenId",
+        "name email dateOfBirth"
+      )
       .populate(
         "familyProfileId",
         "name relationship gender dateOfBirth"
       )
-      .populate("clinicId", "name location contact")
-      .populate("vaccineId", "name code")
-      .populate("assignedWorkerId", "name email")
+      .populate(
+        "clinicId",
+        "name location contact"
+      )
+      .populate(
+        "vaccineId",
+        "name code"
+      )
+      .populate(
+        "assignedWorkerId",
+        "name email"
+      )
       .sort({ dateTime: 1 });
 
     return res.json({
@@ -140,10 +149,14 @@ const getWorkerAppointments = async (req, res) => {
       total: appointments.length,
     });
   } catch (error) {
-    console.error("Worker appointment fetch error:", error);
+    console.error(
+      "Worker appointment fetch error:",
+      error
+    );
 
     return res.status(500).json({
-      message: "Server error while loading appointments",
+      message:
+        "Server error while loading appointments",
     });
   }
 };
@@ -170,7 +183,8 @@ const getWorkerInventory = async (req, res) => {
 
     if (!worker.clinicId) {
       return res.status(400).json({
-        message: "Worker is not assigned to any clinic",
+        message:
+          "Worker is not assigned to any clinic",
       });
     }
 
@@ -178,17 +192,27 @@ const getWorkerInventory = async (req, res) => {
       clinicId: worker.clinicId,
       quantity: { $gt: 0 },
       expiryDate: { $gt: new Date() },
-    }).sort({
-      vaccineType: 1,
-      expiryDate: 1,
-    });
+    })
+      .populate(
+        "vaccineId",
+        "name code description"
+      )
+      .sort({
+        expiryDate: 1,
+      });
 
-    return res.json({ inventory });
+    return res.json({
+      inventory,
+    });
   } catch (error) {
-    console.error("Worker inventory fetch error:", error);
+    console.error(
+      "Worker inventory fetch error:",
+      error
+    );
 
     return res.status(500).json({
-      message: "Server error while loading inventory",
+      message:
+        "Server error while loading inventory",
     });
   }
 };
