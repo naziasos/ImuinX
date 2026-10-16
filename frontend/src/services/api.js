@@ -1,6 +1,3 @@
-// src/services/api.js
-// Thin axios wrapper. Points at the SAME backend the rest of the app already
-// uses (http://localhost:5000/api) — no backend routes or logic touched.
 import axios from 'axios';
 
 export const api = axios.create({

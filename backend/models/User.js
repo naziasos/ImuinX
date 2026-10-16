@@ -109,8 +109,9 @@ const userSchema = new mongoose.Schema(
     },
 
     allergies: {
-      type: [String],
-      default: null,
+      type: String,
+      default: "",
+      trim: true,
     },
 
     // New optional emergency contact details

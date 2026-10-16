@@ -55,7 +55,6 @@ app.use("/api/vaccine-schedules", vaccineScheduleRoutes);
 
 
 
-console.log("🔥 CLINIC ROUTER MOUNTED");
 
 const PORT = process.env.PORT || 5000;
 

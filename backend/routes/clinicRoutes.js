@@ -13,7 +13,6 @@ const { sendClinicAdminCredentials } = require("../utils/email");
 const { sendWorkerCredentials } = require("../utils/email");
 
 const router = express.Router();
-console.log("🔥 CLINIC ROUTES FILE LOADED");
 // Get all clinics
 router.get("/", async (req, res) => {
   try {

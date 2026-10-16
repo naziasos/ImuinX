@@ -1,4 +1,3 @@
-console.log("🔥 VACCINE INVENTORY ROUTES FILE LOADED");
 
 const express = require("express");
 const router = express.Router();

@@ -523,14 +523,13 @@ router.post("/change-password", authMiddleware, async (req, res) => {
 
 /**
  * GET /api/auth/profile
- * Get the logged-in user's own profile.
+ * Retrieve the logged-in user's profile.
  */
 router.get("/profile", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id)
-      .select(
-        "name email role phoneNumber address dateOfBirth bloodType createdAt updatedAt"
-      );
+    const user = await User.findById(req.user._id).select(
+      "name email role phoneNumber address dateOfBirth bloodType allergies createdAt updatedAt"
+    );
 
     if (!user) {
       return res.status(404).json({
@@ -554,7 +553,8 @@ router.get("/profile", authMiddleware, async (req, res) => {
 
 /**
  * PATCH /api/auth/profile
- * Update the logged-in user's own profile.
+ * Update allowed profile fields only.
+ * Email, password, role and clinicId cannot be changed here.
  */
 router.patch("/profile", authMiddleware, async (req, res) => {
   try {
@@ -564,6 +564,7 @@ router.patch("/profile", authMiddleware, async (req, res) => {
       "address",
       "dateOfBirth",
       "bloodType",
+      "allergies",
     ];
 
     const requestedFields = Object.keys(req.body);
@@ -585,7 +586,6 @@ router.patch("/profile", authMiddleware, async (req, res) => {
       });
     }
 
-    // Always find the user using the authenticated token.
     const user = await User.findById(req.user._id);
 
     if (!user) {
@@ -594,20 +594,21 @@ router.patch("/profile", authMiddleware, async (req, res) => {
       });
     }
 
-    // Update name.
+    // Name
     if (Object.hasOwn(req.body, "name")) {
-      const value = req.body.name;
-
-      if (typeof value !== "string" || !value.trim()) {
+      if (
+        typeof req.body.name !== "string" ||
+        !req.body.name.trim()
+      ) {
         return res.status(400).json({
           message: "Name cannot be empty",
         });
       }
 
-      user.name = value.trim();
+      user.name = req.body.name.trim();
     }
 
-    // Update phone number.
+    // Phone number
     if (Object.hasOwn(req.body, "phoneNumber")) {
       const value = req.body.phoneNumber;
 
@@ -624,11 +625,11 @@ router.patch("/profile", authMiddleware, async (req, res) => {
         typeof value === "string" ? value.trim() : null;
     }
 
-    // Update date of birth.
+    // Date of birth
     if (Object.hasOwn(req.body, "dateOfBirth")) {
       const dob = req.body.dateOfBirth;
 
-      if (dob === null) {
+      if (dob === null || dob === "") {
         user.dateOfBirth = null;
       } else {
         if (
@@ -646,90 +647,102 @@ router.patch("/profile", authMiddleware, async (req, res) => {
         user.dateOfBirth = new Date(`${dob}T00:00:00.000Z`);
       }
     }
-    // Update blood type
+
+    // Blood group
     if (Object.hasOwn(req.body, "bloodType")) {
       const validBloodTypes = [
         "A+", "A-", "B+", "B-",
         "AB+", "AB-", "O+", "O-",
       ];
+
       const value = req.body.bloodType;
 
-      if (value !== null && !validBloodTypes.includes(value)) {
+      if (
+        value !== null &&
+        value !== "" &&
+        !validBloodTypes.includes(value)
+      ) {
         return res.status(400).json({
           message: "Invalid blood type provided",
         });
       }
 
-      user.bloodType = value;
+      user.bloodType = value || null;
     }
-    // Update address without removing other existing address fields.
+
+    // Allergies
+    if (Object.hasOwn(req.body, "allergies")) {
+      const value = req.body.allergies;
+
+      if (typeof value !== "string") {
+        return res.status(400).json({
+          message: "Allergies must be a string",
+        });
+      }
+
+      user.allergies = value.trim();
+    }
+
+    // Address: preserve existing fields that were not submitted.
     if (Object.hasOwn(req.body, "address")) {
       const address = req.body.address;
 
-      if (address === null) {
-        user.address = null;
-      } else {
-        if (
-          typeof address !== "object" ||
-          Array.isArray(address)
-        ) {
-          return res.status(400).json({
-            message: "Address must be an object or null",
-          });
-        }
-
-        const allowedAddressFields = [
-          "street",
-          "area",
-          "city",
-          "district",
-          "postalCode",
-          "country",
-        ];
-
-        const invalidAddressFields = Object.keys(address).filter(
-          (field) => !allowedAddressFields.includes(field)
-        );
-
-        if (invalidAddressFields.length > 0) {
-          return res.status(400).json({
-            message: "Invalid address field(s)",
-            invalidFields: invalidAddressFields,
-          });
-        }
-
-        const currentAddress = user.address
-          ? user.address.toObject
-            ? user.address.toObject()
-            : { ...user.address }
-          : {};
-
-        for (const [field, value] of Object.entries(address)) {
-          if (
-            value !== null &&
-            typeof value !== "string"
-          ) {
-            return res.status(400).json({
-              message: `Address ${field} must be a string or null`,
-            });
-          }
-
-          currentAddress[field] =
-            typeof value === "string" ? value.trim() : null;
-        }
-
-        user.address = currentAddress;
+      if (
+        address === null ||
+        typeof address !== "object" ||
+        Array.isArray(address)
+      ) {
+        return res.status(400).json({
+          message: "Address must be an object",
+        });
       }
+
+      const allowedAddressFields = [
+        "street",
+        "area",
+        "city",
+        "district",
+        "postalCode",
+        "country",
+      ];
+
+      const invalidAddressFields = Object.keys(address).filter(
+        (field) => !allowedAddressFields.includes(field)
+      );
+
+      if (invalidAddressFields.length > 0) {
+        return res.status(400).json({
+          message: "Invalid address field(s)",
+          invalidFields: invalidAddressFields,
+        });
+      }
+
+      const currentAddress = user.address
+        ? user.address.toObject
+          ? user.address.toObject()
+          : { ...user.address }
+        : {};
+
+      for (const [field, value] of Object.entries(address)) {
+        if (value !== null && typeof value !== "string") {
+          return res.status(400).json({
+            message: `Address ${field} must be a string or null`,
+          });
+        }
+
+        currentAddress[field] =
+          typeof value === "string" ? value.trim() : null;
+      }
+
+      user.address = currentAddress;
     }
 
-    // Mongoose updates updatedAt automatically when saving.
     await user.save();
 
-    // Never return the password or other private fields.
-    const updatedProfile = await User.findById(user._id)
-      .select(
-        "name email role phoneNumber address dateOfBirth bloodType createdAt updatedAt"
-      );
+    // Return the complete updated profile, never the password.
+    const updatedProfile = await User.findById(user._id).select(
+      "name email role phoneNumber address dateOfBirth bloodType allergies createdAt updatedAt"
+    );
 
     return res.status(200).json({
       message: "Profile updated successfully",
@@ -752,5 +765,6 @@ router.patch("/profile", authMiddleware, async (req, res) => {
     });
   }
 });
+
 module.exports = router;
 
