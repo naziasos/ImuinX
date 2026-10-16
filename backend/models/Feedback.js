@@ -23,16 +23,35 @@ const responseSchema = new mongoose.Schema(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
+const FEEDBACK_TYPES = ["Vaccination", "Appointment", "InHouse"];
+
 const feedbackSchema = new mongoose.Schema(
   {
-    // ---- Links (all copied from the completed dose) ----
-    doseRecordId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "DoseRecord",
-      required: true,
+    // What this feedback is about:
+    //   Vaccination = a completed dose / new certificate (original flow)
+    //   Appointment = the citizen just booked an appointment
+    //   InHouse     = the citizen just requested an in-house visit
+    feedbackType: {
+      type: String,
+      enum: FEEDBACK_TYPES,
+      default: "Vaccination",
       immutable: true,
     },
 
+    // ---- Links ----
+    // Vaccination: copied from the completed dose
+    doseRecordId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DoseRecord",
+      default: null,
+      immutable: true,
+      required: function () {
+        return this.feedbackType === "Vaccination";
+      },
+    },
+
+    // Vaccination: appointment the dose came from (optional)
+    // Appointment: the booked appointment
     appointmentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Appointment",
@@ -40,11 +59,28 @@ const feedbackSchema = new mongoose.Schema(
       immutable: true,
     },
 
+    // InHouse only
+    inHouseRequestId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "InHouseRequest",
+      default: null,
+      immutable: true,
+      required: function () {
+        return this.feedbackType === "InHouse";
+      },
+    },
+
+    // An in-house request has no clinic until a worker accepts it, so
+    // clinicId is only required for the other two types. It is filled in
+    // by feedbackPromptService.attachClinicToInHouseFeedback().
     clinicId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Clinic",
-      required: true,
+      default: null,
       immutable: true,
+      required: function () {
+        return this.feedbackType !== "InHouse";
+      },
     },
 
     // The logged-in citizen/guardian who gives the feedback
@@ -167,8 +203,34 @@ const feedbackSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// One feedback per dose -> prevents duplicates / double submit
-feedbackSchema.index({ doseRecordId: 1 }, { unique: true });
+// One feedback per dose -> prevents duplicates / double submit.
+// Partial: Appointment / InHouse feedback has no dose, and a plain unique
+// index would treat all those missing values as duplicates of each other.
+feedbackSchema.index(
+  { doseRecordId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { doseRecordId: { $type: "objectId" } },
+  }
+);
+
+// One feedback per booked appointment
+feedbackSchema.index(
+  { appointmentId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { feedbackType: "Appointment" },
+  }
+);
+
+// One feedback per in-house request
+feedbackSchema.index(
+  { inHouseRequestId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { inHouseRequestId: { $type: "objectId" } },
+  }
+);
 
 // Citizen dashboard: "my pending feedback" for the Give Feedback button
 feedbackSchema.index({ userId: 1, promptStatus: 1, createdAt: -1 });
@@ -192,3 +254,4 @@ feedbackSchema.pre("validate", function () {
 });
 
 module.exports = mongoose.model("Feedback", feedbackSchema);
+module.exports.FEEDBACK_TYPES = FEEDBACK_TYPES;

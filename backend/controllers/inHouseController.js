@@ -2,6 +2,8 @@
 const InHouseRequest = require("../models/InHouseRequest");
 const FamilyProfile = require("../models/FamilyProfile");
 const DutyAssignment = require("../models/DutyAssignment");
+const User = require("../models/User");
+const feedbackPrompt = require("../services/feedbackPromptService");
 const mongoose = require("mongoose");
 
 // Match duty and request dates using UTC calendar-day boundaries.
@@ -103,11 +105,17 @@ const createRequest = async (req, res) => {
       status: "Pending",
     });
 
+    // Ask for feedback on the request (respects the cooldown; never throws)
+    const feedback = await feedbackPrompt.promptAfterInHouseRequest(
+      newRequest
+    );
+
     return res.status(201).json({
       success: true,
       message: "In-house visit requested successfully",
       requestId: newRequest._id,
       data: newRequest,
+      feedback: feedbackPrompt.toPromptSummary(feedback),
     });
   } catch (error) {
     console.error("Create in-house request error:", error);
@@ -303,6 +311,13 @@ const acceptRequest = async (req, res) => {
           "This request has already been accepted by another worker",
       });
     }
+
+    // Let the worker's clinic see this request's feedback
+    const worker = await User.findById(req.user._id).select("clinicId");
+    await feedbackPrompt.attachClinicToInHouseFeedback(
+      acceptedRequest._id,
+      worker?.clinicId
+    );
 
     return res.status(200).json({
       success: true,

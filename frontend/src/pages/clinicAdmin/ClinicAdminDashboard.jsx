@@ -61,19 +61,11 @@ function ClinicAdminDashboard({
       }
 
       // Load confirmed appointments for this clinic
-      const appointmentResponse = await fetch(
-        `http://localhost:5000/api/appointments/clinic/${clinicId}`
+      const appointmentResponse = await api.get(
+        `/appointments/clinic/${clinicId}`
       );
 
-      const appointmentData = await appointmentResponse.json();
-
-      if (!appointmentResponse.ok) {
-        throw new Error(
-          appointmentData.message || "Failed to load appointments"
-        );
-      }
-
-      setAppointments(appointmentData.appointments || []);
+      setAppointments(appointmentResponse.data.appointments || []);
     } catch (error) {
       console.error(error);
       setError(error.message);
@@ -149,7 +141,7 @@ function ClinicAdminDashboard({
             </button>
             
             <button
-              className="worker-list-add"
+              className="clinic-nav-item"
               onClick={onAddWorker}
             >
               <span>👥</span>
@@ -371,108 +363,6 @@ function ClinicAdminDashboard({
               </span>
             </div>
           </div>
-
-        </section>
-        {/* Confirmed Appointments */}
-        <section className="workers-section">
-
-          <div className="workers-header">
-
-            <div>
-              <p className="section-label">
-                APPOINTMENTS
-              </p>
-
-              <h2>
-                Confirmed Appointments
-              </h2>
-
-              <p>
-                Appointments are confirmed automatically when citizens book.
-              </p>
-            </div>
-
-            <div className="worker-count">
-              {appointments.length} Appointment
-              {appointments.length !== 1 ? "s" : ""}
-            </div>
-
-          </div>
-
-          {appointmentLoading ? (
-
-            <div className="empty-workers">
-              <p>Loading appointments...</p>
-            </div>
-
-          ) : appointments.length === 0 ? (
-
-            <div className="empty-workers">
-
-              <div className="empty-icon">
-                📅
-              </div>
-
-              <h3>
-                No confirmed appointments
-              </h3>
-
-              <p>
-                Confirmed appointments for this clinic will appear here.
-              </p>
-
-            </div>
-
-          ) : (
-
-            <div className="workers-grid">
-
-              {appointments.map((appointment) => (
-
-                <div
-                  className="worker-card"
-                  key={appointment._id}
-                >
-
-                  <div className="worker-avatar">
-                    {appointment.citizenId?.name
-                      ?.charAt(0)
-                      ?.toUpperCase()}
-                  </div>
-
-                  <div className="worker-info">
-
-                    <h3>
-                      {appointment.citizenId?.name || "Unknown Citizen"}
-                    </h3>
-
-                    <p>
-                      {appointment.citizenId?.email || "No email"}
-                    </p>
-
-                    <span className="worker-role">
-                      {new Date(appointment.dateTime).toLocaleDateString()}
-                      {" • "}
-                      {new Date(appointment.dateTime).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-
-
-                  </div>
-
-                  <span className="worker-role">
-                    Confirmed
-                  </span>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          )}
 
         </section>
 

@@ -43,7 +43,6 @@ const createAppointmentReminders = async () => {
       );
     }
 
-    console.log("Appointment reminder check completed");
   } catch (error) {
     console.error(
       "Appointment reminder error:",

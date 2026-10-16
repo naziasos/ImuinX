@@ -410,3 +410,49 @@ describe("Feedback Schema", () => {
     expect(Feedback.schema.path("updatedAt")).toBeDefined();
   });
 });
+
+describe("Feedback types (appointment / in-house)", () => {
+  test("defaults to Vaccination", () => {
+    expect(new Feedback(baseData()).feedbackType).toBe("Vaccination");
+  });
+
+  test("Appointment feedback needs no dose record", () => {
+    const feedback = new Feedback(
+      baseData({ feedbackType: "Appointment", doseRecordId: undefined })
+    );
+    expect(feedback.validateSync()).toBeUndefined();
+  });
+
+  test("InHouse feedback needs an in-house request but no dose or clinic yet", () => {
+    const ok = new Feedback({
+      feedbackType: "InHouse",
+      inHouseRequestId: oid(),
+      userId: oid(),
+      citizenId: oid(),
+      citizenType: "User",
+      vaccineType: "Flu shot",
+    });
+    expect(ok.validateSync()).toBeUndefined();
+
+    const missing = new Feedback({
+      feedbackType: "InHouse",
+      userId: oid(),
+      citizenId: oid(),
+      citizenType: "User",
+      vaccineType: "Flu shot",
+    });
+    expect(missing.validateSync().errors.inHouseRequestId).toBeDefined();
+  });
+
+  test("rejects an unknown feedbackType", () => {
+    const error = new Feedback(baseData({ feedbackType: "Other" })).validateSync();
+    expect(error.errors.feedbackType).toBeDefined();
+  });
+
+  test("doseRecordId unique index is partial so non-dose feedback does not collide", () => {
+    const index = Feedback.schema
+      .indexes()
+      .find(([spec]) => JSON.stringify(spec) === JSON.stringify({ doseRecordId: 1 }));
+    expect(index[1].partialFilterExpression).toBeDefined();
+  });
+});

@@ -12,6 +12,12 @@ const TAGS = [
   { value: "Other", icon: "💭" },
 ];
 
+const TYPE_LABELS = {
+  Vaccination: "Vaccination visit",
+  Appointment: "Appointment booking",
+  InHouse: "In-house request",
+};
+
 const RATING_LABELS = ["", "Very poor", "Poor", "Okay", "Good", "Excellent"];
 const MAX_COMMENT = 1000;
 
@@ -175,7 +181,7 @@ function Feedback({ onBack }) {
           </button>
           <div className="fb-title">
             <h1>Your feedback</h1>
-            <p>Tell us how your vaccination visit went and see how clinics respond.</p>
+            <p>Tell us about your visits, bookings and in-house requests and see how clinics respond.</p>
           </div>
         </header>
 
@@ -239,7 +245,10 @@ function Feedback({ onBack }) {
                       <span className="fb-visit-icon">💉</span>
                       <span className="fb-visit-body">
                         <strong>{item.vaccineType}</strong>
-                        <small>{whoFor(item)}</small>
+                        <small>
+                          {TYPE_LABELS[item.feedbackType] || "Visit"} ·{" "}
+                          {whoFor(item)}
+                        </small>
                         <small>
                           {item.clinicId?.name || "Clinic"} ·{" "}
                           {formatDate(item.doseRecordId?.dateAdministered || item.createdAt)}
@@ -273,7 +282,13 @@ function Feedback({ onBack }) {
                     </div>
 
                     <section>
-                      <h2>How was your visit?</h2>
+                      <h2>
+                        {active.feedbackType === "Appointment"
+                          ? "How was booking your appointment?"
+                          : active.feedbackType === "InHouse"
+                          ? "How was requesting your in-house visit?"
+                          : "How was your visit?"}
+                      </h2>
                       <div className="fb-rate" onMouseLeave={() => setHover(0)}>
                         {[1, 2, 3, 4, 5].map((n) => (
                           <button
@@ -388,6 +403,7 @@ function Feedback({ onBack }) {
                       <div>
                         <strong>{item.vaccineType}</strong>
                         <small>
+                          {TYPE_LABELS[item.feedbackType] || "Visit"} ·{" "}
                           {whoFor(item)} · {item.clinicId?.name || "Clinic"} ·{" "}
                           {formatDate(item.submittedAt)}
                         </small>

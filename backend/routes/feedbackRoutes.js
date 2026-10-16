@@ -19,6 +19,7 @@ const ALLOWED_TAGS = [
 ];
 
 const STAFF_ROLES = ["worker", "clinicAdmin"];
+const FEEDBACK_TYPES = ["Vaccination", "Appointment", "InHouse"];
 
 function isObjectId(value) {
   return mongoose.Types.ObjectId.isValid(value);
@@ -106,14 +107,27 @@ router.get("/my-pending", authMiddleware, async (req, res) => {
       });
     }
 
-    const feedback = await Feedback.find({
+    const filter = {
       userId: req.user.id,
       promptStatus: "Pending",
-    })
+    };
+
+    // Optional ?type=Vaccination|Appointment|InHouse so each page only
+    // pops up its own kind of prompt
+    if (req.query.type !== undefined) {
+      if (!FEEDBACK_TYPES.includes(req.query.type)) {
+        return res.status(400).json({ message: "Invalid feedback type" });
+      }
+      filter.feedbackType = req.query.type;
+    }
+
+    const feedback = await Feedback.find(filter)
       .sort({ createdAt: -1 })
       .populate("clinicId", "name location")
       .populate("citizenId", "name dateOfBirth relationship")
-      .populate("doseRecordId", "vaccineType batchNumber dateAdministered");
+      .populate("doseRecordId", "vaccineType batchNumber dateAdministered")
+      .populate("appointmentId", "dateTime doseNumber")
+      .populate("inHouseRequestId", "preferredDate vaccineOrReason");
 
     return res.json({ feedback });
   } catch (error) {
@@ -144,7 +158,9 @@ router.get("/my", authMiddleware, async (req, res) => {
       .sort({ createdAt: -1 })
       .populate("clinicId", "name location")
       .populate("citizenId", "name dateOfBirth relationship")
-      .populate("doseRecordId", "vaccineType batchNumber dateAdministered");
+      .populate("doseRecordId", "vaccineType batchNumber dateAdministered")
+      .populate("appointmentId", "dateTime doseNumber")
+      .populate("inHouseRequestId", "preferredDate vaccineOrReason");
 
     return res.json({ feedback });
   } catch (error) {

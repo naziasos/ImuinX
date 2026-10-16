@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../services/api";
+import FeedbackPopup from "../../components/FeedbackPopup";
 
-const RequestInHouseVisit = ({ onBack}) => {
+const RequestInHouseVisit = ({ onBack, onOpenFeedback }) => {
   const navigate = useNavigate();
 
   const [familyMembers, setFamilyMembers] = useState([]);
@@ -18,6 +19,10 @@ const RequestInHouseVisit = ({ onBack}) => {
   });
 
   const [errors, setErrors] = useState({});
+  // Bumped after a request that earned a feedback prompt
+  const [feedbackKey, setFeedbackKey] = useState(0);
+
+  const goToMyRequests = () => navigate("/citizen/my-requests");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -116,9 +121,12 @@ const RequestInHouseVisit = ({ onBack}) => {
           "In-house visit requested successfully!"
       );
 
-      setTimeout(() => {
-        navigate("/citizen/my-requests");
-      }, 1500);
+      if (response.data?.feedback) {
+        // The popup sends the citizen on when it closes
+        setFeedbackKey((key) => key + 1);
+      } else {
+        setTimeout(goToMyRequests, 1500);
+      }
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -313,6 +321,15 @@ const RequestInHouseVisit = ({ onBack}) => {
             : "Submit In-House Request"}
         </button>
       </form>
+
+      <FeedbackPopup
+        type="InHouse"
+        delay={0}
+        enabled={feedbackKey > 0}
+        refreshKey={feedbackKey}
+        onOpenFeedback={onOpenFeedback}
+        onClose={goToMyRequests}
+      />
     </div>
   );
 };

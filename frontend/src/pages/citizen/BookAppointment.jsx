@@ -1,5 +1,6 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import FeedbackPopup from "../../components/FeedbackPopup";
 import "../clinicAdmin/ClinicAdminDashboard.css";
 
 const API = "http://localhost:5000/api";
@@ -26,7 +27,7 @@ function formatDateTime(value) {
   });
 }
 
-function BookAppointment({ onBack }) {
+function BookAppointment({ onBack, onOpenFeedback }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const citizenId = user?.id || user?._id;
   const token = localStorage.getItem("token");
@@ -54,6 +55,8 @@ function BookAppointment({ onBack }) {
   const [pageError, setPageError] = useState("");
   const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  // Bumped after a booking that earned a feedback prompt
+  const [feedbackKey, setFeedbackKey] = useState(0);
 
   const authHeaders = useMemo(
     () => ({
@@ -341,6 +344,12 @@ function BookAppointment({ onBack }) {
       setSuccessMessage(
         `Appointment booked successfully at ${selectedClinic?.name || "the selected clinic"} for ${selectedVaccine?.name || "the selected vaccine"}, dose ${doseNumber}, on ${date} at ${selectedSlot}.`
       );
+
+      // Show the feedback popup right away (the server only returns a
+      // prompt when the cooldown allows one)
+      if (data?.feedback) {
+        setFeedbackKey((key) => key + 1);
+      }
 
       resetForm();
       await loadAppointments();
@@ -934,6 +943,15 @@ function BookAppointment({ onBack }) {
           </section>
         </div>
       </main>
+
+      {/* Asks about the booking experience (only when the server created a prompt) */}
+      <FeedbackPopup
+        type="Appointment"
+        delay={0}
+        enabled={feedbackKey > 0}
+        refreshKey={feedbackKey}
+        onOpenFeedback={onOpenFeedback}
+      />
     </div>
   );
 }

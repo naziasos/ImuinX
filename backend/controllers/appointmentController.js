@@ -8,6 +8,7 @@ const Clinic = require("../models/Clinic");
 const Vaccine = require("../models/Vaccine");
 const VaccineSchedule = require("../models/VaccineSchedule");
 const DutyAssignment = require("../models/DutyAssignment");
+const feedbackPrompt = require("../services/feedbackPromptService");
 
 const TIME_ZONE = process.env.APP_TIMEZONE || "Asia/Dhaka";
 
@@ -434,6 +435,13 @@ exports.createAppointment = async (req, res) => {
       status: "Confirmed",
     });
 
+    // Ask for feedback on the booking experience (respects the cooldown;
+    // never throws, so it cannot break a successful booking)
+    const feedback = await feedbackPrompt.promptAfterAppointment(
+      appointment,
+      vaccine.name
+    );
+
     return res.status(201).json({
       message: selectedWorker
         ? "Appointment booked and worker assigned successfully."
@@ -441,6 +449,7 @@ exports.createAppointment = async (req, res) => {
       appointmentId: appointment._id,
       status: appointment.status,
       assignedWorkerId: appointment.assignedWorkerId,
+      feedback: feedbackPrompt.toPromptSummary(feedback),
     });
   } catch (error) {
     console.error("Create appointment error:", error);

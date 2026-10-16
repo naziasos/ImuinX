@@ -60,14 +60,14 @@ const PORT = process.env.PORT || 5000;
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log("MongoDB connected successfully");
+    await require("./services/feedbackPromptService").ensureFeedbackIndexes();
     
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
     cron.schedule("0 * * * *", async () => {
-      console.log("Checking appointment reminders...");
       await createAppointmentReminders();
     });
   })

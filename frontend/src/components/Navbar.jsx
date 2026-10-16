@@ -72,6 +72,22 @@ function Navbar({ page, setPage, currentUser, onLogout }) {
     fetchNotifications();
   }, [fetchNotifications]);
 
+    // Each role has its own dashboard page (same names App.jsx uses after login)
+  const getDashboardPage = (user) => {
+    switch (user?.role) {
+      case "admin":
+        return "dashboard";
+      case "clinicAdmin":
+      case "clinic_admin":
+        return "clinicDashboard";
+      case "worker":
+        return "workerDashboard";
+      default:
+        return "citizenDashboard";
+    }
+  };
+
+  const goToMyDashboard = () => handleNavigation(getDashboardPage(currentUser));
   const handleNavigation = (value) => {
     setPage(value);
     setMobileMenuOpen(false);
@@ -231,7 +247,12 @@ function Navbar({ page, setPage, currentUser, onLogout }) {
 
             {currentUser ? (
               <div className="flex items-center gap-3 ml-2">
-                <div className="hidden lg:flex items-center gap-2 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2">
+                <button
+                  type="button"
+                  onClick={goToMyDashboard}
+                  title="Go to my dashboard"
+                  className="hidden lg:flex items-center gap-2 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2 text-left hover:bg-blue-100 hover:border-blue-200 transition cursor-pointer"
+                >
                   <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
                     {(currentUser.name || currentUser.email || "U").charAt(0).toUpperCase()}
                   </div>
@@ -239,7 +260,7 @@ function Navbar({ page, setPage, currentUser, onLogout }) {
                     <p className="text-sm font-semibold text-slate-800 max-w-36 truncate">{currentUser.name || currentUser.email || "User"}</p>
                     <p className="text-[10px] uppercase tracking-wide text-blue-600">{currentUser.role || "User"}</p>
                   </div>
-                </div>
+                </button>
                 <button
                   onClick={onLogout}
                   className="px-4 py-2.5 rounded-full border border-rose-200 text-rose-600 text-sm font-semibold hover:bg-rose-50 transition"
@@ -476,6 +497,11 @@ function Navbar({ page, setPage, currentUser, onLogout }) {
               {currentUser ? (
                 <div className="mt-3 border-t border-slate-100 pt-4 px-4">
                   <div className="flex items-center gap-3 mb-3">
+                                      <button
+                    type="button"
+                    onClick={goToMyDashboard}
+                    className="w-full flex items-center gap-3 mb-3 text-left rounded-xl hover:bg-blue-50 transition"
+                  >
                     <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
                       {(currentUser.name || currentUser.email || "U").charAt(0).toUpperCase()}
                     </div>
@@ -483,6 +509,7 @@ function Navbar({ page, setPage, currentUser, onLogout }) {
                       <p className="text-sm font-semibold text-slate-800 truncate">{currentUser.name || currentUser.email || "User"}</p>
                       <p className="text-xs text-blue-600 capitalize">{currentUser.role || "User"}</p>
                     </div>
+                  </button>
                   </div>
                   <button onClick={onLogout} className="w-full px-4 py-3 rounded-xl border border-rose-200 text-rose-600 text-sm font-semibold hover:bg-rose-50 transition">Logout</button>
                 </div>

@@ -13,6 +13,13 @@ const TAGS = [
 ];
 const LABELS = ["", "Very poor", "Poor", "Okay", "Good", "Excellent"];
 
+// Heading / emoji per feedback type
+const COPY = {
+  Vaccination: { emoji: "💉", title: "How was your vaccination visit?" },
+  Appointment: { emoji: "📅", title: "How was booking your appointment?" },
+  InHouse: { emoji: "🏠", title: "How was requesting an in-house visit?" },
+};
+
 // After "Maybe later", don't ask again for this long (it stays in the Feedback page)
 const SNOOZE_MS = 24 * 60 * 60 * 1000;
 // Stop auto-popping after this many "Maybe later" taps
@@ -27,11 +34,23 @@ function canPrompt(item) {
 }
 
 /**
- * Pops up automatically once the citizen has reached their certificate and
- * still has a vaccination waiting for feedback.
- *   <FeedbackPopup enabled={!loading && !error} onOpenFeedback={...} />
+ * Pops up automatically when the citizen has a pending feedback prompt.
+ *
+ *   type        "Vaccination" | "Appointment" | "InHouse" - only prompts of
+ *               this kind are shown (omit to show any kind)
+ *   enabled     set true when it is a good moment to ask
+ *   refreshKey  change it (e.g. +1 after each booking) to look for a new prompt
+ *   onClose     called when the popup is closed / finished
+ *
+ *   <FeedbackPopup type="Vaccination" enabled={!loading && !error} onOpenFeedback={...} />
  */
-function FeedbackPopup({ enabled = true, onOpenFeedback }) {
+function FeedbackPopup({
+  type,
+  enabled = true,
+  refreshKey = 0,
+  onOpenFeedback,
+  onClose,
+}) {
   const [item, setItem] = useState(null);
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
@@ -51,28 +70,47 @@ function FeedbackPopup({ enabled = true, onOpenFeedback }) {
     let timer;
 
     api
-      .get("/feedback/my-pending")
+      .get("/feedback/my-pending", { params: type ? { type } : {} })
       .then((res) => {
         if (!active) return;
         const list = (res.data.feedback || []).filter(canPrompt);
-        if (list.length === 0) return;
+        if (list.length === 0) {
+          // Nothing to ask (e.g. cooldown still running) - let the caller go on
+          onClose?.();
+          return;
+        }
+        // Fresh form for every new prompt
+        setDone(false);
+        setRating(0);
+        setHover(0);
+        setTags([]);
+        setComment("");
+        setIsAnonymous(false);
+        setError("");
         setItem(list[0]);
         setMore(list.length - 1);
         timer = setTimeout(() => active && setOpen(true), SHOW_DELAY_MS);
       })
       .catch(() => {
         /* a failed prompt lookup must never get in the user's way */
+        onClose?.();
       });
 
     return () => {
       active = false;
       clearTimeout(timer);
     };
-  }, [enabled]);
+    // onClose is intentionally left out so an inline arrow function
+    // from the parent does not re-run the lookup on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, type, refreshKey]);
 
   if (!open || !item) return null;
 
-  const close = () => setOpen(false);
+  const close = () => {
+    setOpen(false);
+    onClose?.();
+  };
 
   const later = async () => {
     try {
@@ -111,6 +149,7 @@ function FeedbackPopup({ enabled = true, onOpenFeedback }) {
     setTags((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
 
   const who = item.citizenId?.name;
+  const copy = COPY[item.feedbackType] || COPY.Vaccination;
 
   return (
     <div className="fbp-backdrop" role="presentation">
@@ -138,8 +177,8 @@ function FeedbackPopup({ enabled = true, onOpenFeedback }) {
             </button>
 
             <div className="fbp-head">
-              <span className="fbp-emoji">💉</span>
-              <h2 id="fbp-title">How was your vaccination visit?</h2>
+              <span className="fbp-emoji">{copy.emoji}</span>
+              <h2 id="fbp-title">{copy.title}</h2>
               <p>
                 {item.vaccineType}
                 {who ? ` · ${who}` : ""}
@@ -221,7 +260,7 @@ function FeedbackPopup({ enabled = true, onOpenFeedback }) {
                   onOpenFeedback();
                 }}
               >
-                {more} more visit{more > 1 ? "s" : ""} waiting for feedback →
+                {more} more waiting for feedback →
               </button>
             )}
           </form>

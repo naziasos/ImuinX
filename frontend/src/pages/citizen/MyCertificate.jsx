@@ -543,6 +543,7 @@ function MyCertificate({ onBack, onOpenFeedback }) {
 
       {/* Asks for feedback automatically once the certificate has loaded */}
       <FeedbackPopup
+        type="Vaccination"
         enabled={!loading && !error}
         onOpenFeedback={onOpenFeedback}
       />
