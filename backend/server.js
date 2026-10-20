@@ -18,6 +18,7 @@ const clinicFeedbackRoutes = require("./routes/clinicFeedbackRoutes");
 const inHouseRoutes = require("./routes/inHouseRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const createAppointmentReminders = require("./jobs/appointmentReminder");
+const runMissedDoseDetectionJob = require("./jobs/missedDoseDetection");
 
 const vaccineRoutes = require("./routes/vaccineRoutes");
 const vaccineScheduleRoutes = require("./routes/vaccineScheduleRoutes");
@@ -69,6 +70,25 @@ mongoose
     });
     cron.schedule("0 * * * *", async () => {
       await createAppointmentReminders();
+    });
+
+    // Detect overdue vaccine doses once per day in the application's
+    // local timezone. Run once after startup as well, so missed doses
+    // are not delayed until the next midnight after a deployment.
+    cron.schedule(
+      "15 0 * * *",
+      async () => {
+        try {
+          await runMissedDoseDetectionJob();
+        } catch (error) {
+          console.error("Scheduled missed-dose job error:", error.message);
+        }
+      },
+      { timezone: process.env.APP_TIMEZONE || "Asia/Dhaka" }
+    );
+
+    runMissedDoseDetectionJob().catch((error) => {
+      console.error("Initial missed-dose job error:", error.message);
     });
   })
   .catch((error) => {

@@ -17,6 +17,7 @@ const notificationSchema = new mongoose.Schema(
         "appointment",
         "appointment_reminder",
         "dose",
+        "missed_dose",
         "certificate",
         "general",
       ],
@@ -33,6 +34,14 @@ const notificationSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Stable key for jobs/events that may be retried.
+    // Sparse unique index leaves existing notification types unchanged.
+    dedupeKey: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
+
     isRead: {
       type: Boolean,
       default: false,
@@ -40,6 +49,15 @@ const notificationSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+  }
+);
+
+notificationSchema.index(
+  { dedupeKey: 1 },
+  {
+    unique: true,
+    sparse: true,
+    name: "unique_notification_dedupe_key",
   }
 );
 

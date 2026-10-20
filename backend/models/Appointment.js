@@ -87,4 +87,13 @@ appointmentSchema.index({
   status: 1,
 });
 
+// Used by the missed-dose job to avoid flagging an already-booked dose.
+appointmentSchema.index({
+  citizenId: 1,
+  familyProfileId: 1,
+  vaccineId: 1,
+  doseNumber: 1,
+  status: 1,
+});
+
 module.exports = mongoose.model("Appointment", appointmentSchema);

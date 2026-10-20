@@ -19,6 +19,22 @@ const doseRecordSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Persist the scheduled dose number so missed-dose detection can
+    // distinguish dose 1 from dose 2 for the same vaccine.
+    // Optional for backward compatibility with older/manual records.
+    doseNumber: {
+      type: Number,
+      min: 1,
+      default: null,
+      validate: {
+        validator: (value) =>
+          value === null ||
+          value === undefined ||
+          Number.isInteger(value),
+        message: "Dose number must be a whole number.",
+      },
+    },
+
     batchNumber: {
       type: String,
       required: true,
@@ -86,5 +102,6 @@ const doseRecordSchema = new mongoose.Schema(
 
 
 doseRecordSchema.index({ citizenId: 1, citizenType: 1, dateAdministered: 1 });
+doseRecordSchema.index({ citizenId: 1, citizenType: 1, vaccineType: 1, doseNumber: 1 });
 doseRecordSchema.index({ batchNumber: 1, vaccineType: 1 });
 module.exports = mongoose.model("DoseRecord", doseRecordSchema);

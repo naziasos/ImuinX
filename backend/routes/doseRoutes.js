@@ -60,6 +60,7 @@ router.post("/", authMiddleware, async (req, res) => {
       batchNumber,
       dateAdministered,
       appointmentId,
+      doseNumber: requestedDoseNumber,
     } = req.body;
 
     // ------------------------------------------------------------
