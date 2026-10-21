@@ -27,7 +27,7 @@ function formatDateTime(value) {
   });
 }
 
-function BookAppointment({ onBack, onOpenFeedback }) {
+function BookAppointment({ onBack, onOpenFeedback, recoveryContext = null,}) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const citizenId = user?.id || user?._id;
   const token = localStorage.getItem("token");
@@ -207,6 +207,40 @@ function BookAppointment({ onBack, onOpenFeedback }) {
       setAppointmentLoading(false);
     }
   }, [citizenId, token, fetchJson]);
+
+
+  
+  useEffect(() => {
+    if (!recoveryContext) return;
+
+    const vaccineId =
+      typeof recoveryContext.vaccineId === "object"
+        ? recoveryContext.vaccineId?._id
+        : recoveryContext.vaccineId;
+
+    const profileId =
+      typeof recoveryContext.profileId === "object"
+        ? recoveryContext.profileId?._id
+        : recoveryContext.profileId;
+
+    setSelectedPerson(
+      recoveryContext.profileType === "FamilyProfile"
+        ? String(profileId || "")
+        : "self"
+    );
+
+    setVaccine(String(vaccineId || ""));
+    setDoseNumber(String(recoveryContext.doseNumber || ""));
+
+    // The user must select a clinic, a date and an available slot.
+    setClinic("");
+    setDate("");
+    setSelectedSlot("");
+    setTimeSlots([]);
+    setFormError("");
+    setSuccessMessage("");
+  }, [recoveryContext]);
+
 
   useEffect(() => {
     loadAppointments();

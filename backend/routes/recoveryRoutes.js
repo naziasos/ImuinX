@@ -87,11 +87,20 @@ function markReviewRequired(recovery, reason) {
 // List the signed-in guardian/citizen's recovery schedules.
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const schedules = await CatchUpSchedule.find({ guardianId: req.user._id })
+    const schedules = await CatchUpSchedule.find({
+      guardianId: req.user._id,
+    })
+      .populate("vaccineId", "name code")
+      .populate("profileId", "name")
       .sort({ createdAt: -1 });
-    return res.json({ schedules });
+
+    return res.status(200).json({ schedules });
   } catch (error) {
-    return res.status(500).json({ message: "Could not load recovery schedules." });
+    console.error("Get recovery schedules error:", error);
+
+    return res.status(500).json({
+      message: "Could not load recovery schedules.",
+    });
   }
 });
 

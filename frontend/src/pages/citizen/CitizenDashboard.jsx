@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../../services/api";
 import "../clinicAdmin/ClinicAdminDashboard.css";
+import MissedDoses from "./MissedDoses";
 
-function CitizenDashboard({ onEditProfile,onFamilyAccount,onAppointments,onCertificate,onVaccinations, onFeedback, onInHouseVisit, onMyInHouseRequests, onLogout}) {
+function CitizenDashboard({ onEditProfile,onFamilyAccount,onAppointments,onCertificate,onVaccinations, onFeedback, onInHouseVisit, onMyInHouseRequests, onLogout, onBookRecovery}) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const [pendingFeedback, setPendingFeedback] = useState(0);
 
@@ -238,6 +239,10 @@ function CitizenDashboard({ onEditProfile,onFamilyAccount,onAppointments,onCerti
           </div>
 
         </section>
+
+
+        {/* Missed doses and catch-up schedule */}
+        <MissedDoses onBookAppointment={onBookRecovery} />
 
         {}
         <section className="workers-section">

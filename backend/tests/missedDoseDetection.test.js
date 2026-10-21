@@ -1,5 +1,3 @@
-// Unit tests for T9.2. All database models are mocked, so these tests do not
-// require MongoDB and never create/update real project data.
 jest.mock("../models/User", () => ({ find: jest.fn() }));
 jest.mock("../models/FamilyProfile", () => ({ find: jest.fn() }));
 jest.mock("../models/VaccineSchedule", () => ({ find: jest.fn() }));
@@ -58,7 +56,7 @@ beforeEach(() => {
   process.env.APP_TIMEZONE = "Asia/Dhaka";
 });
 
-describe("T9.2 missed-dose detection unit tests", () => {
+describe("missed-dose detection unit tests", () => {
   test("creates one recovery record and notification for an overdue dose", async () => {
     configureBase();
 

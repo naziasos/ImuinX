@@ -63,7 +63,7 @@ beforeEach(() => {
   process.env.APP_TIMEZONE = "Asia/Dhaka";
 });
 
-describe("T9.3 recovery reason and catch-up API", () => {
+describe("Recovery reason and catch-up API", () => {
   test("validates reason and requires details for other", async () => {
     CatchUpSchedule.findById.mockResolvedValue(recovery());
     const response = await request(app).patch(`/api/recovery/${recoveryId}/reason`)

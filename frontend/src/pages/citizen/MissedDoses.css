@@ -1,0 +1,401 @@
+
+.missed-doses-section {
+  margin: 26px 0;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e5eaf1;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+  color: #172033;
+}
+
+.missed-doses-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.missed-doses-eyebrow {
+  margin: 0 0 7px;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+}
+
+.missed-doses-heading h2 {
+  margin: 0;
+  font-size: 23px;
+  line-height: 1.35;
+  font-weight: 750;
+}
+
+.missed-doses-heading p {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.missed-dose-refresh,
+.missed-dose-primary,
+.missed-dose-secondary {
+  min-height: 40px;
+  padding: 10px 15px;
+  border-radius: 9px;
+  font-weight: 650;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.missed-dose-refresh,
+.missed-dose-secondary {
+  background: #fff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.missed-dose-refresh:hover,
+.missed-dose-secondary:hover {
+  background: #f1f5f9;
+}
+
+.missed-dose-primary {
+  background: #2563eb;
+  color: #fff;
+  border: 1px solid #2563eb;
+}
+
+.missed-dose-primary:hover {
+  background: #1d4ed8;
+}
+
+.missed-dose-primary:disabled,
+.missed-dose-secondary:disabled,
+.missed-dose-refresh:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.missed-dose-group {
+  margin-top: 24px;
+}
+
+.missed-dose-group > h3 {
+  margin: 0 0 13px;
+  font-size: 17px;
+  font-weight: 750;
+  color: #1e293b;
+}
+
+.missed-dose-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 16px;
+}
+
+.missed-dose-card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.missed-dose-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #edf1f6;
+}
+
+.missed-dose-card-top h4 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.missed-dose-number {
+  margin: 5px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.missed-dose-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.missed-dose-status.status-review {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.missed-dose-status.status-booked {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.missed-dose-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 12px;
+  padding: 17px 0;
+}
+
+.missed-dose-details > div {
+  min-width: 0;
+}
+
+.missed-dose-details span {
+  display: block;
+  margin-bottom: 5px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.missed-dose-details strong {
+  display: block;
+  color: #1e293b;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.missed-dose-full-row {
+  grid-column: 1 / -1;
+}
+
+.missed-dose-review-note {
+  margin: 0 0 15px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.missed-dose-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding-top: 14px;
+  border-top: 1px solid #edf1f6;
+}
+
+.missed-dose-actions button {
+  flex: 1;
+}
+
+.missed-dose-empty {
+  padding: 35px 20px;
+  text-align: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.missed-dose-empty h3 {
+  margin: 10px 0 6px;
+  color: #1e293b;
+  font-size: 18px;
+}
+
+.missed-dose-empty p {
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.missed-dose-empty-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.missed-dose-error,
+.missed-dose-success {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-radius: 9px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.missed-dose-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.missed-dose-error button {
+  margin-left: 10px;
+  color: #991b1b;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+.missed-dose-success {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.missed-dose-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.missed-dose-modal {
+  width: 100%;
+  max-width: 490px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
+}
+
+.missed-dose-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.missed-dose-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.missed-dose-modal-header p {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.missed-dose-close {
+  color: #64748b;
+  font-size: 27px;
+  line-height: 1;
+}
+
+.missed-dose-modal form label {
+  display: block;
+  margin: 14px 0 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.missed-dose-modal form label span {
+  color: #dc2626;
+}
+
+.missed-dose-modal select,
+.missed-dose-modal textarea {
+  display: block;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #1e293b;
+  font: inherit;
+  font-size: 14px;
+}
+
+.missed-dose-modal textarea {
+  resize: vertical;
+}
+
+.missed-dose-modal select:focus,
+.missed-dose-modal textarea:focus {
+  outline: 2px solid #bfdbfe;
+  border-color: #2563eb;
+}
+
+.missed-dose-character-count {
+  margin: 5px 0;
+  text-align: right;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.missed-dose-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+  .missed-doses-section {
+    padding: 16px;
+  }
+
+  .missed-doses-heading {
+    flex-direction: column;
+  }
+
+  .missed-doses-heading h2 {
+    font-size: 20px;
+  }
+
+  .missed-dose-refresh {
+    align-self: flex-start;
+  }
+
+  .missed-dose-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .missed-dose-card {
+    padding: 14px;
+  }
+
+  .missed-dose-actions {
+    flex-direction: column;
+  }
+
+  .missed-dose-actions button {
+    width: 100%;
+  }
+
+  .missed-dose-modal {
+    padding: 18px;
+  }
+}

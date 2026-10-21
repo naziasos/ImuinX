@@ -1,3 +1,4 @@
+
 import AddWorker from "./pages/AddWorker.jsx";
 import WorkerList from "./pages/clinicAdmin/WorkerList.jsx";
 import BookAppointment from "./pages/citizen/BookAppointment";
@@ -29,15 +30,11 @@ import MyCertificate from "./pages/citizen/MyCertificate";
 import MyVaccinationRecord from "./pages/citizen/MyVaccinationRecord";
 import Verify from "./pages/Verify";
 
-
 import RequestInHouseVisit from "./pages/citizen/RequestInHouseVisit";
 import MyInHouseRequests from "./pages/citizen/MyInHouseRequests";
 
-
 import VaccineInsert from "./pages/admin/VaccineInsert";
 import VaccineScheduleInsert from "./pages/admin/VaccineScheduleInsert";
-
-
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -48,47 +45,73 @@ function App() {
   const [page, setPage] = useState("home");
   const [authEmail, setAuthEmail] = useState("");
 
-  const [appointmentForDose, setAppointmentForDose] =
-  useState(null);
+  // Shared context for worker dose logging and citizen recovery booking.
+  const [appointmentForDose, setAppointmentForDose] = useState(null);
+
   const [currentUser, setCurrentUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
+
+    try {
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
   });
 
-  const handleSplashDone = useCallback(() => setShowSplash(false), []);
+  const handleSplashDone = useCallback(() => {
+    setShowSplash(false);
+  }, []);
+
+  // Clear authentication and shared appointment context.
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("jwt");
+    localStorage.removeItem("user");
+
+    setCurrentUser(null);
+    setAppointmentForDose(null);
+    setPage("home");
+  };
+
+  // Open booking with the selected missed-dose record.
+  const handleBookRecovery = (recovery) => {
+    if (!recovery?._id) {
+      console.error("Invalid recovery record.");
+      return;
+    }
+
+    setAppointmentForDose(recovery);
+    setPage("bookAppointment");
+  };
+
+  // Normal appointment booking must not reuse an old recovery record.
+  const handleOpenAppointments = () => {
+    setAppointmentForDose(null);
+    setPage("bookAppointment");
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
-
-      {/* Intro loader (overlay, lifts away when done) */}
       {showSplash && <Loader onDone={handleSplashDone} />}
 
-      {/* Navbar */}
       <Navbar
         page={page}
         setPage={setPage}
         currentUser={currentUser}
-        onLogout={() => {
-          localStorage.removeItem("token");
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("jwt");
-          localStorage.removeItem("user");
-          setCurrentUser(null);
-          setPage("home");
-        }}
+        onLogout={handleLogout}
       />
 
-      {/* Main Content */}
       <main className="flex-1">
         <div className="w-full">
-
-          {/* Home Page */}
+          {/* Home */}
           {page === "home" && (
             <Home
               onGetStarted={() => setPage("register")}
               onLogin={() => setPage("login")}
             />
           )}
+
           {/* About */}
           {page === "about" && (
             <About
@@ -104,9 +127,9 @@ function App() {
               onVerify={() => setPage("verifyCertificate")}
             />
           )}
-          {/* Page Card */}
-          {page !== "home" &&
 
+          {/* Register, Login, Email Verification, Forgot Password */}
+          {page !== "home" &&
             page !== "about" &&
             page !== "services" &&
             page !== "dashboard" &&
@@ -124,10 +147,16 @@ function App() {
             page !== "feedback" &&
             page !== "clinicFeedback" &&
             page !== "workerList" &&
-            page !== "requestInHouseVisit" && (
+            page !== "requestInHouseVisit" &&
+            page !== "myInHouseRequests" &&
+            page !== "workerAppointments" &&
+            page !== "addClinic" &&
+            page !== "addVaccine" &&
+            page !== "addVaccineSchedule" &&
+            page !== "addWorker" &&
+            page !== "inventory" &&
+            page !== "assignDuty" && (
               <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10 mb-10">
-
-                {/* Register */}
                 {page === "register" && (
                   <Register
                     onRegisterSuccess={(email) => {
@@ -138,7 +167,6 @@ function App() {
                   />
                 )}
 
-                {/* Verify Email */}
                 {page === "verify" && (
                   <VerifyEmail
                     email={authEmail}
@@ -146,7 +174,6 @@ function App() {
                   />
                 )}
 
-                {/* Login */}
                 {page === "login" && (
                   <Login
                     onLoginSuccess={(user) => {
@@ -154,7 +181,10 @@ function App() {
 
                       if (user.role === "admin") {
                         setPage("dashboard");
-                      } else if (user.role === "clinicAdmin") {
+                      } else if (
+                        user.role === "clinicAdmin" ||
+                        user.role === "clinic_admin"
+                      ) {
                         setPage("clinicDashboard");
                       } else if (user.role === "worker") {
                         setPage("workerDashboard");
@@ -168,7 +198,6 @@ function App() {
                   />
                 )}
 
-                {/* Forgot Password */}
                 {page === "forgotPassword" && (
                   <ForgotPassword
                     onBack={() => setPage("login")}
@@ -176,9 +205,7 @@ function App() {
                   />
                 )}
 
-                {/* Create Admin */}
                 {page === "admin" && <CreateAdmin />}
-
               </div>
             )}
 
@@ -191,51 +218,37 @@ function App() {
               onOpenInventory={() => setPage("inventory")}
               onFeedback={() => setPage("clinicFeedback")}
               onEditProfile={() => setPage("editProfile")}
-              onLogout={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                setCurrentUser(null);
-                setPage("login");
-              }}
+              onLogout={handleLogout}
             />
           )}
 
+          {/* Admin Dashboard */}
+          {page === "dashboard" && (
+            <AdminDashboard
+              onAddClinic={() => setPage("addClinic")}
+              onManageVaccines={() => setPage("addVaccine")}
+              onManageSchedules={() => setPage("addVaccineSchedule")}
+            />
+          )}
 
-
-
-          
-            {page === "dashboard" && (
-              <AdminDashboard
-                onAddClinic={() => setPage("addClinic")}
-                onManageVaccines={() => setPage("addVaccine")}
-                onManageSchedules={() => setPage("addVaccineSchedule")}
-              />
-            )}
-
-
-
-
-          {/* Citizen Dashboard */}
+          {/* Citizen Dashboard: T9.4 integration */}
           {page === "citizenDashboard" && (
             <CitizenDashboard
               onEditProfile={() => setPage("editProfile")}
               onFamilyAccount={() => setPage("familyAccount")}
-              onAppointments={() => setPage("bookAppointment")}
+              onAppointments={handleOpenAppointments}
               onCertificate={() => setPage("myCertificate")}
               onVaccinations={() => setPage("myVaccinations")}
               onFeedback={() => setPage("feedback")}
               onInHouseVisit={() => setPage("requestInHouseVisit")}
               onMyInHouseRequests={() => setPage("myInHouseRequests")}
-              onLogout={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                setCurrentUser(null);
-                setPage("login");
-              }}
+
+              // pass selected recovery to appointment booking.
+              onBookRecovery={handleBookRecovery}
+
+              onLogout={handleLogout}
             />
           )}
-
-
 
           {/* Edit Profile */}
           {page === "editProfile" && (
@@ -255,8 +268,7 @@ function App() {
             />
           )}
 
-
-          {/* Feedback Page */}
+          {/* Feedback */}
           {page === "feedback" && (
             <Feedback
               onBack={() => setPage("citizenDashboard")}
@@ -267,32 +279,22 @@ function App() {
           {page === "familyAccount" && (
             <FamilyAccount
               onBack={() => setPage("citizenDashboard")}
-              onLogout={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                setCurrentUser(null);
-                setPage("login");
-              }}
+              onLogout={handleLogout}
             />
           )}
 
-
-          {/* Request In-House Visit */}
+          {/* In-house Visit */}
           {page === "requestInHouseVisit" && (
             <RequestInHouseVisit
               onBack={() => setPage("citizenDashboard")}
             />
           )}
+
           {page === "myInHouseRequests" && (
             <MyInHouseRequests
               onBack={() => setPage("citizenDashboard")}
             />
           )}
-
-
-
-
-
 
           {/* Public Certificate Verifier */}
           {page === "verifyCertificate" && <Verify />}
@@ -309,44 +311,36 @@ function App() {
           {page === "myVaccinations" && (
             <MyVaccinationRecord
               onDashboard={() => setPage("citizenDashboard")}
-              onAppointments={() => setPage("bookAppointment")}
+              onAppointments={handleOpenAppointments}
               onCertificate={() => setPage("myCertificate")}
               onFamilyAccount={() => setPage("familyAccount")}
-              onLogout={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                setCurrentUser(null);
-                setPage("login");
-              }}
+              onLogout={handleLogout}
             />
           )}
 
-          {/* Book Appointment */}
+          {/* Book Appointment: T9.4 recoveryContext integration */}
           {page === "bookAppointment" && (
             <BookAppointment
-              onBack={() => setPage("citizenDashboard")}
-              onLogout={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                setCurrentUser(null);
-                setPage("login");
+              recoveryContext={appointmentForDose}
+              onBack={() => {
+                setAppointmentForDose(null);
+                setPage("citizenDashboard");
               }}
+              onLogout={handleLogout}
             />
           )}
 
           {/* Worker Dashboard */}
           {page === "workerDashboard" && (
             <WorkerDashboard
-              onLogDose={() => setPage("logDose")}
+              onLogDose={() => {
+                setAppointmentForDose(null);
+                setPage("logDose");
+              }}
               onShowWork={() => setPage("showWork")}
               onAppointments={() => setPage("workerAppointments")}
               onEditProfile={() => setPage("editProfile")}
-              onLogout={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                setCurrentUser(null);
-                setPage("login");
-              }}
+              onLogout={handleLogout}
             />
           )}
 
@@ -359,12 +353,7 @@ function App() {
                 setPage("logDose");
               }}
               onShowWork={() => setPage("showWork")}
-              onLogout={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                setCurrentUser(null);
-                setPage("login");
-              }}
+              onLogout={handleLogout}
             />
           )}
 
@@ -377,12 +366,7 @@ function App() {
                 setPage("logDose");
               }}
               onAppointments={() => setPage("workerAppointments")}
-              onLogout={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                setCurrentUser(null);
-                setPage("login");
-              }}
+              onLogout={handleLogout}
             />
           )}
 
@@ -395,12 +379,7 @@ function App() {
                 setPage("workerDashboard");
               }}
               onAppointments={() => setPage("workerAppointments")}
-              onLogout={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                setCurrentUser(null);
-                setPage("login");
-              }}
+              onLogout={handleLogout}
             />
           )}
 
@@ -412,11 +391,6 @@ function App() {
             />
           )}
 
-
-
-
-
-
           {/* Add Vaccine */}
           {page === "addVaccine" && (
             <VaccineInsert
@@ -425,32 +399,12 @@ function App() {
             />
           )}
 
-
-
-
-
-
-
-
-          
-        {page === "addVaccineSchedule" && (
-        <VaccineScheduleInsert
-          onBack={() => setPage("dashboard")}
-        />
-      )}
-
-
-
-
-
-
-
-
-
-
-
-
-
+          {/* Vaccine Schedule */}
+          {page === "addVaccineSchedule" && (
+            <VaccineScheduleInsert
+              onBack={() => setPage("dashboard")}
+            />
+          )}
 
           {/* Add Worker */}
           {page === "addWorker" && (
@@ -468,16 +422,14 @@ function App() {
             />
           )}
 
-
-{/* Vaccines inventory */}
-
+          {/* Vaccine Inventory */}
           {page === "inventory" && (
             <VaccineInventory
               onBack={() => setPage("clinicDashboard")}
             />
           )}
 
-          {/* Clinic Feedback (staff) */}
+          {/* Clinic Feedback */}
           {page === "clinicFeedback" && (
             <ClinicFeedback
               onBack={() => setPage("clinicDashboard")}
@@ -494,7 +446,6 @@ function App() {
               onBack={() => setPage("clinicDashboard")}
             />
           )}
-
         </div>
       </main>
 
@@ -511,10 +462,10 @@ function App() {
         page !== "verifyCertificate" &&
         page !== "showWork" &&
         page !== "feedback" &&
-        page !== "clinicFeedback" && (
+        page !== "clinicFeedback" &&
+        page !== "workerAppointments" && (
           <Footer />
         )}
-
     </div>
   );
 }
