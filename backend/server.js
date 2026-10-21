@@ -22,6 +22,7 @@ const runMissedDoseDetectionJob = require("./jobs/missedDoseDetection");
 
 const vaccineRoutes = require("./routes/vaccineRoutes");
 const vaccineScheduleRoutes = require("./routes/vaccineScheduleRoutes");
+const recoveryRoutes = require("./routes/recoveryRoutes");
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use("/api/in-house-requests", inHouseRoutes);
 
 app.use("/api/vaccines", vaccineRoutes);
 app.use("/api/vaccine-schedules", vaccineScheduleRoutes);
+app.use("/api/recovery", recoveryRoutes);
 
 
 

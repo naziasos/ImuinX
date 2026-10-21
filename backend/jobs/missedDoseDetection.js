@@ -367,7 +367,6 @@ async function detectMissedDoses(options = {}) {
 async function runMissedDoseDetectionJob() {
   try {
     const summary = await detectMissedDoses();
-    console.log("Missed-dose detection completed:", summary);
     return summary;
   } catch (error) {
     console.error("Missed-dose detection failed:", error);
