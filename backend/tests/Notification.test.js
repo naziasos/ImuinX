@@ -63,6 +63,33 @@ describe("Notification Schema Tests", () => {
     expect(error.errors.type).toBeDefined();
   });
 
+
+  test.each([
+    "missed_dose",
+    "recovery_reason_submitted",
+    "catch_up_schedule_ready",
+    "recovery_review_required",
+  ])("should accept recovery notification type: %s", (type) => {
+    const notification = new Notification({
+      userId: validUserId,
+      type,
+      message: "Recovery status updated",
+      referenceId: new mongoose.Types.ObjectId(),
+      dedupeKey: `test:${type}`,
+    });
+
+    expect(notification.validateSync()).toBeUndefined();
+  });
+
+  test("should define a unique sparse dedupeKey index", () => {
+    const index = Notification.schema.indexes().find(
+      ([fields, options]) =>
+        fields.dedupeKey === 1 && options.unique === true && options.sparse === true
+    );
+
+    expect(index).toBeDefined();
+  });
+
   test("should have createdAt and updatedAt timestamps", () => {
     const notification = new Notification({
       userId: validUserId,

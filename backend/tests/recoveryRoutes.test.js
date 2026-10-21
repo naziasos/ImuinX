@@ -9,6 +9,7 @@ jest.mock("../models/VaccineSchedule", () => ({ find: jest.fn() }));
 jest.mock("../models/DoseRecord", () => ({ findOne: jest.fn(), find: jest.fn() }));
 jest.mock("../models/Appointment", () => ({ findOne: jest.fn() }));
 jest.mock("../models/Vaccine", () => ({ findById: jest.fn() }));
+jest.mock("../models/Notification", () => ({ updateOne: jest.fn() }));
 
 const express = require("express");
 const request = require("supertest");
@@ -20,6 +21,7 @@ const VaccineSchedule = require("../models/VaccineSchedule");
 const DoseRecord = require("../models/DoseRecord");
 const Appointment = require("../models/Appointment");
 const Vaccine = require("../models/Vaccine");
+const Notification = require("../models/Notification");
 const recoveryRoutes = require("../routes/recoveryRoutes");
 
 const app = express();
@@ -59,6 +61,7 @@ function recovery(overrides = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  Notification.updateOne.mockResolvedValue({ acknowledged: true, upsertedCount: 1 });
   process.env.JWT_SECRET = "test-secret";
   process.env.APP_TIMEZONE = "Asia/Dhaka";
 });
@@ -80,6 +83,17 @@ describe("Recovery reason and catch-up API", () => {
     expect(row.reasonCode).toBe("travel");
     expect(row.reportedBy).toBe(userId);
     expect(row.save).toHaveBeenCalled();
+    expect(Notification.updateOne).toHaveBeenCalledWith(
+      { dedupeKey: `recovery-reason-submitted:${recoveryId}` },
+      expect.objectContaining({
+        $setOnInsert: expect.objectContaining({
+          userId,
+          type: "recovery_reason_submitted",
+          referenceId: recoveryId,
+        }),
+      }),
+      expect.objectContaining({ upsert: true })
+    );
   });
 
   test("blocks another account from changing the reason", async () => {
@@ -99,6 +113,16 @@ describe("Recovery reason and catch-up API", () => {
     expect(response.status).toBe(200);
     expect(response.body.status).toBe("ReviewRequired");
     expect(row.suggestedDueDate).toBeNull();
+    expect(Notification.updateOne).toHaveBeenCalledWith(
+      { dedupeKey: `recovery-review-required:${recoveryId}` },
+      expect.objectContaining({
+        $setOnInsert: expect.objectContaining({
+          type: "recovery_review_required",
+          referenceId: recoveryId,
+        }),
+      }),
+      expect.objectContaining({ upsert: true })
+    );
   });
 
   test("suggested date respects the approved minimum interval and repeated calls reuse it", async () => {
@@ -123,6 +147,17 @@ describe("Recovery reason and catch-up API", () => {
       .set(auth()).send();
     expect(first.status).toBe(200);
     expect(first.body.status).toBe("ScheduleReady");
+    expect(Notification.updateOne).toHaveBeenCalledWith(
+      { dedupeKey: `catch-up-schedule-ready:${recoveryId}` },
+      expect.objectContaining({
+        $setOnInsert: expect.objectContaining({
+          userId,
+          type: "catch_up_schedule_ready",
+          referenceId: recoveryId,
+        }),
+      }),
+      expect.objectContaining({ upsert: true })
+    );
     expect(new Date(first.body.suggestedDueDate).getTime()).toBeGreaterThanOrEqual(
       new Date("2026-10-29T00:00:00.000Z").getTime()
     );

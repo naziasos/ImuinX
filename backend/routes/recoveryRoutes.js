@@ -7,6 +7,7 @@ const User = require("../models/User");
 const VaccineSchedule = require("../models/VaccineSchedule");
 const DoseRecord = require("../models/DoseRecord");
 const Appointment = require("../models/Appointment");
+const Notification = require("../models/Notification");
 
 const router = express.Router();
 
@@ -72,16 +73,53 @@ async function loadOwnedRecovery(req, res) {
   return recovery;
 }
 
-function markReviewRequired(recovery, reason) {
+function isDuplicateKey(error) {
+  return Boolean(error && error.code === 11000);
+}
+
+// Notifications are idempotent: the unique dedupeKey index in Notification.js
+// prevents duplicate rows if an API request is retried or concurrent requests race.
+async function notifyRecovery({ recovery, type, dedupeKey, message }) {
+  try {
+    await Notification.updateOne(
+      { dedupeKey },
+      {
+        $setOnInsert: {
+          userId: recovery.guardianId,
+          type,
+          message,
+          referenceId: recovery._id,
+          dedupeKey,
+          isRead: false,
+        },
+      },
+      { upsert: true, setDefaultsOnInsert: true }
+    );
+  } catch (error) {
+    if (!isDuplicateKey(error)) throw error;
+  }
+}
+
+async function markReviewRequired(recovery, reason) {
   recovery.status = "ReviewRequired";
   recovery.suggestedDueDate = null;
   recovery.scheduleGeneratedAt = null;
-  return recovery.save().then(() => ({
+  await recovery.save();
+
+  // Stable key means retries can repair a missed notification without duplicates.
+  await notifyRecovery({
+    recovery,
+    type: "recovery_review_required",
+    dedupeKey: `recovery-review-required:${recovery._id}`,
+    message: `Your catch-up vaccination needs clinical review. ${reason}`,
+  });
+
+  return {
     status: "ReviewRequired",
     suggestedDueDate: null,
     message: reason,
     recovery,
-  }));
+  };
 }
 
 // List the signed-in guardian/citizen's recovery schedules.
@@ -100,6 +138,27 @@ router.get("/", authMiddleware, async (req, res) => {
 
     return res.status(500).json({
       message: "Could not load recovery schedules.",
+    });
+  }
+});
+
+// Fetch one recovery record from a notification's referenceId.
+// Ownership is checked the same way as reason/schedule mutations.
+router.get("/:recoveryId", authMiddleware, async (req, res) => {
+  try {
+    const recovery = await loadOwnedRecovery(req, res);
+    if (!recovery) return;
+
+    await recovery.populate([
+      { path: "vaccineId", select: "name code" },
+      { path: "profileId", select: "name" },
+    ]);
+
+    return res.status(200).json({ schedule: recovery });
+  } catch (error) {
+    console.error("Get recovery schedule detail error:", error);
+    return res.status(500).json({
+      message: "Could not load recovery schedule details.",
     });
   }
 });
@@ -138,6 +197,15 @@ router.patch("/:recoveryId/reason", authMiddleware, async (req, res) => {
     }
     await recovery.save();
 
+    // Re-run the idempotent upsert even on retries: this repairs the case
+    // where the reason was saved but the process stopped before notifying.
+    await notifyRecovery({
+      recovery,
+      type: "recovery_reason_submitted",
+      dedupeKey: `recovery-reason-submitted:${recovery._id}`,
+      message: "Your missed-dose recovery reason has been submitted.",
+    });
+
     return res.json({
       message: "Recovery reason saved.",
       schedule: recovery,
@@ -161,6 +229,13 @@ router.post("/:recoveryId/generate-schedule", authMiddleware, async (req, res) =
 
     // Idempotent: a previously generated valid schedule is returned unchanged.
     if (recovery.status === "ScheduleReady" && recovery.suggestedDueDate) {
+      // Idempotent notification upsert also repairs a prior interrupted request.
+      await notifyRecovery({
+        recovery,
+        type: "catch_up_schedule_ready",
+        dedupeKey: `catch-up-schedule-ready:${recovery._id}`,
+        message: "Your catch-up vaccination schedule is ready. Please review the suggested date.",
+      });
       return res.json({
         message: "Existing catch-up schedule returned.",
         status: recovery.status,
@@ -306,6 +381,13 @@ router.post("/:recoveryId/generate-schedule", authMiddleware, async (req, res) =
     recovery.scheduleGeneratedAt = new Date();
     recovery.status = "ScheduleReady";
     await recovery.save();
+
+    await notifyRecovery({
+      recovery,
+      type: "catch_up_schedule_ready",
+      dedupeKey: `catch-up-schedule-ready:${recovery._id}`,
+      message: "Your catch-up vaccination schedule is ready. Please review the suggested date.",
+    });
 
     return res.json({
       message: "Catch-up schedule generated and saved.",
