@@ -13,6 +13,98 @@ const { sendClinicAdminCredentials } = require("../utils/email");
 const { sendWorkerCredentials } = require("../utils/email");
 
 const router = express.Router();
+
+
+const EARTH_RADIUS_KM = 6371;
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const toRadians = (degrees) => (degrees * Math.PI) / 180;
+
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+
+  const safeA = Math.min(1, Math.max(0, a));
+
+  return (
+    2 *
+    EARTH_RADIUS_KM *
+    Math.atan2(Math.sqrt(safeA), Math.sqrt(1 - safeA))
+  );
+}
+
+// Get nearby active clinics, sorted nearest first.
+router.get("/nearby", async (req, res) => {
+  try {
+    const latitude = Number(req.query.latitude);
+    const longitude = Number(req.query.longitude);
+
+    if (
+      req.query.latitude === undefined ||
+      req.query.latitude.trim?.() === "" ||
+      req.query.longitude === undefined ||
+      req.query.longitude.trim?.() === "" ||
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      return res.status(400).json({
+        message: "Valid latitude and longitude are required",
+      });
+    }
+
+    const clinics = await Clinic.find({
+      status: "Active",
+      latitude: { $type: "number" },
+      longitude: { $type: "number" },
+    }).select("name location contact latitude longitude");
+
+    const nearbyClinics = clinics
+      .map((clinic) => {
+        const clinicData =
+          typeof clinic.toObject === "function"
+            ? clinic.toObject()
+            : clinic;
+
+        const distance = calculateDistance(
+          latitude,
+          longitude,
+          clinicData.latitude,
+          clinicData.longitude
+        );
+
+        return {
+          id: clinicData._id,
+          name: clinicData.name,
+          address: clinicData.location,
+          contact: clinicData.contact,
+          latitude: clinicData.latitude,
+          longitude: clinicData.longitude,
+          distance: Number(distance.toFixed(2)),
+        };
+      })
+      .sort((a, b) => a.distance - b.distance);
+
+    return res.status(200).json({
+      clinics: nearbyClinics,
+    });
+  } catch (error) {
+    console.error("Nearby clinics error:", error.message);
+
+    return res.status(500).json({
+      message: "Failed to fetch nearby clinics",
+    });
+  }
+});
+
 // Get all clinics
 router.get("/", async (req, res) => {
   try {

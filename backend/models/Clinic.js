@@ -14,6 +14,16 @@ const clinicSchema = new mongoose.Schema(
       trim: true,
     },
 
+        latitude: {
+      type: Number,
+      default: null,
+    },
+
+    longitude: {
+      type: Number,
+      default: null,
+    },
+
     contact: {
       type: String,
       required: true,
