@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const API_BASE_URL = "http://localhost:5000";
 
-function Navbar({ page, setPage, currentUser, onLogout }) {
+function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Notification states
@@ -11,12 +11,24 @@ function Navbar({ page, setPage, currentUser, onLogout }) {
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [notificationLoading, setNotificationLoading] = useState(false);
 
+  // Public vaccine campaigns (visible without login)
+  const [campaigns, setCampaigns] = useState([]);
+  const [seenCampaignIds, setSeenCampaignIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("seenCampaigns") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
   const navItems = [
     { label: "Home", value: "home" },
     { label: "Who it's for", value: "whoFor", section: "who-its-for" },
     { label: "About", value: "about" },
     { label: "Services", value: "services" },
     { label: "Verify", value: "verifyCertificate" },
+    // Visitors without an account can collect a campaign certificate
+    ...(currentUser ? [] : [{ label: "Get Certificate", value: "guestCertificate" }]),
   ];
 
   // Get JWT token from localStorage
@@ -28,8 +40,24 @@ function Navbar({ page, setPage, currentUser, onLogout }) {
     );
   };
 
-  // Fetch notifications
+  // Fetch public campaigns (no login required)
+  const fetchCampaigns = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/campaigns/active`);
+
+      if (!response.ok) throw new Error("Failed to fetch campaigns");
+
+      const data = await response.json();
+      setCampaigns(data.campaigns || []);
+    } catch (error) {
+      console.error("Campaign fetch error:", error);
+    }
+  }, []);
+
+  // Fetch notifications (campaigns for everyone, personal ones when logged in)
   const fetchNotifications = useCallback(async () => {
+    fetchCampaigns();
+
     const token = getToken();
 
     if (!token) {
@@ -65,11 +93,17 @@ function Navbar({ page, setPage, currentUser, onLogout }) {
     } finally {
       setNotificationLoading(false);
     }
-  }, []);
+  }, [fetchCampaigns]);
 
   // Fetch notifications when Navbar loads
   useEffect(() => {
     fetchNotifications();
+  }, [fetchNotifications, currentUser]);
+
+  // Pick up new campaigns / notifications without a page reload
+  useEffect(() => {
+    const id = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(id);
   }, [fetchNotifications]);
 
     // Each role has its own dashboard page (same names App.jsx uses after login)
@@ -125,6 +159,45 @@ function Navbar({ page, setPage, currentUser, onLogout }) {
     if (!notificationOpen) {
       fetchNotifications();
     }
+  };
+
+  const unseenCampaigns = campaigns.filter(
+    (campaign) => !seenCampaignIds.includes(campaign._id)
+  );
+  const badgeCount = unreadCount + unseenCampaigns.length;
+
+  const markCampaignsSeen = () => {
+    const ids = campaigns.map((campaign) => campaign._id);
+    setSeenCampaignIds(ids);
+    localStorage.setItem("seenCampaigns", JSON.stringify(ids));
+  };
+
+  // Book a campaign directly - no login or registration needed
+  const openCampaign = (campaign) => {
+    markCampaignsSeen();
+    setNotificationOpen(false);
+    setMobileMenuOpen(false);
+    onOpenCampaign?.(campaign);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  // Jump to the screen a notification is about
+  const openNotification = (notification) => {
+    if (!notification.isRead) markAsRead(notification._id);
+
+    if (notification.type === "certificate") {
+      setNotificationOpen(false);
+      handleNavigation("myCertificate");
+    }
+  };
+
+  const NOTIFICATION_ICONS = {
+    appointment: "📅",
+    appointment_reminder: "⏰",
+    certificate: "📜",
+    dose: "💉",
+    missed_dose: "⚠️",
+    campaign: "📢",
   };
 
   // Mark notification as read
@@ -183,6 +256,189 @@ function Navbar({ page, setPage, currentUser, onLogout }) {
 
     return notificationDate.toLocaleString();
   };
+
+  // Bell + dropdown. Rendered in the desktop bar and next to the mobile menu button.
+  const renderBell = (wrapperClass = "") => (
+    <div className={`relative ${wrapperClass}`}>
+      <button
+        onClick={handleNotificationClick}
+        className="relative w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition"
+        aria-label="Notifications"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-5 h-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15 17h5l-1.5-1.5A2 2 0 0118 14v-3a6 6 0 10-12 0v3a2 2 0 01-.5 1.5L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+          />
+        </svg>
+
+        {badgeCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-white flex items-center justify-center">
+            {badgeCount > 99 ? "99+" : badgeCount}
+          </span>
+        )}
+      </button>
+
+      {notificationOpen && (
+        <div className="absolute right-0 mt-3 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[100]">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-slate-800">Notifications</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {badgeCount > 0 ? `${badgeCount} new` : "You're all caught up"}
+              </p>
+            </div>
+
+            <button
+              onClick={fetchNotifications}
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+            >
+              Refresh
+            </button>
+          </div>
+
+          <div className="max-h-96 overflow-y-auto">
+            {/* ---------- Vaccine campaigns (public) ---------- */}
+            {campaigns.length > 0 && (
+              <div className="border-b border-slate-100 bg-emerald-50/50">
+                <p className="px-5 pt-3 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                  Vaccine campaigns
+                </p>
+
+                {campaigns.map((campaign) => {
+                  const isNew = !seenCampaignIds.includes(campaign._id);
+
+                  return (
+                    <div
+                      key={campaign._id}
+                      className="px-5 py-3 border-b border-emerald-100 last:border-b-0"
+                    >
+                      <div className="flex gap-3">
+                        <span className="text-xl leading-none pt-0.5">📢</span>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <span className="truncate">{campaign.title}</span>
+                            {isNew && (
+                              <span className="text-[10px] font-bold text-emerald-700">
+                                New
+                              </span>
+                            )}
+                          </p>
+
+                          <p className="text-xs text-slate-600 mt-0.5">
+                            {campaign.vaccine?.name}
+                            {campaign.doseNumber ? ` · Dose ${campaign.doseNumber}` : ""}
+                            {" · "}
+                            {campaign.startDate} to {campaign.endDate}
+                          </p>
+
+                          {campaign.description && (
+                            <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                              {campaign.description}
+                            </p>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => openCampaign(campaign)}
+                            className="mt-2 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition"
+                          >
+                            Book now — no login needed
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ---------- Personal notifications ---------- */}
+            {!currentUser ? (
+              campaigns.length === 0 && (
+                <div className="px-5 py-10 text-center">
+                  <div className="text-3xl mb-2">🔔</div>
+                  <p className="text-sm font-semibold text-slate-600">
+                    No campaigns right now
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Log in to see your appointment and certificate updates.
+                  </p>
+                </div>
+              )
+            ) : notificationLoading ? (
+              <div className="px-5 py-10 text-center text-sm text-slate-400">
+                Loading notifications...
+              </div>
+            ) : notifications.length === 0 ? (
+              campaigns.length === 0 && (
+                <div className="px-5 py-10 text-center">
+                  <div className="text-3xl mb-2">🔔</div>
+                  <p className="text-sm font-semibold text-slate-600">
+                    No notifications
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    You're all caught up!
+                  </p>
+                </div>
+              )
+            ) : (
+              notifications.map((notification) => (
+                <button
+                  key={notification._id}
+                  onClick={() => openNotification(notification)}
+                  className={`w-full text-left px-5 py-4 border-b border-slate-100 transition ${
+                    notification.isRead
+                      ? "bg-white hover:bg-slate-50"
+                      : "bg-blue-50/60 hover:bg-blue-50"
+                  }`}
+                >
+                  <div className="flex gap-3">
+                    <span className="text-lg leading-none pt-0.5">
+                      {NOTIFICATION_ICONS[notification.type] || "🔔"}
+                    </span>
+
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={`text-sm ${
+                          notification.isRead
+                            ? "font-medium text-slate-600"
+                            : "font-bold text-slate-800"
+                        }`}
+                      >
+                        {notification.message}
+                      </p>
+
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[11px] text-slate-400">
+                          {formatNotificationTime(notification.createdAt)}
+                        </span>
+
+                        {!notification.isRead && (
+                          <span className="text-[10px] font-bold text-blue-600">
+                            New
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
@@ -281,159 +537,15 @@ function Navbar({ page, setPage, currentUser, onLogout }) {
               </>
             )}
 
-            {/* ================= NOTIFICATION ================= */}
-            <div className="relative ml-2">
-
-              <button
-                onClick={handleNotificationClick}
-                className="relative w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition"
-                aria-label="Notifications"
-              >
-                {/* Bell icon */}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15 17h5l-1.5-1.5A2 2 0 0118 14v-3a6 6 0 10-12 0v3a2 2 0 01-.5 1.5L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
-                </svg>
-
-                {/* Unread badge */}
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-white flex items-center justify-center">
-                    {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Notification Dropdown */}
-              {notificationOpen && (
-                <div className="absolute right-0 mt-3 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[100]">
-
-                  {/* Header */}
-                  <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-bold text-slate-800">
-                        Notifications
-                      </h3>
-
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {unreadCount > 0
-                          ? `${unreadCount} unread`
-                          : "You're all caught up"}
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={fetchNotifications}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700"
-                    >
-                      Refresh
-                    </button>
-                  </div>
-
-                  {/* Notification content */}
-                  <div className="max-h-96 overflow-y-auto">
-
-                    {notificationLoading ? (
-                      <div className="px-5 py-10 text-center text-sm text-slate-400">
-                        Loading notifications...
-                      </div>
-                    ) : notifications.length === 0 ? (
-                      <div className="px-5 py-10 text-center">
-                        <div className="text-3xl mb-2">
-                          🔔
-                        </div>
-
-                        <p className="text-sm font-semibold text-slate-600">
-                          No notifications
-                        </p>
-
-                        <p className="text-xs text-slate-400 mt-1">
-                          You're all caught up!
-                        </p>
-                      </div>
-                    ) : (
-                      notifications.map((notification) => (
-                        <button
-                          key={notification._id}
-                          onClick={() =>
-                            !notification.isRead &&
-                            markAsRead(notification._id)
-                          }
-                          className={`w-full text-left px-5 py-4 border-b border-slate-100 transition ${
-                            notification.isRead
-                              ? "bg-white hover:bg-slate-50"
-                              : "bg-blue-50/60 hover:bg-blue-50"
-                          }`}
-                        >
-                          <div className="flex gap-3">
-
-                            {/* Unread indicator */}
-                            <div className="pt-1.5">
-                              <span
-                                className={`block w-2.5 h-2.5 rounded-full ${
-                                  notification.isRead
-                                    ? "bg-slate-200"
-                                    : "bg-blue-600"
-                                }`}
-                              />
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-
-                              <div className="flex items-start justify-between gap-2">
-
-                                <p
-                                  className={`text-sm ${
-                                    notification.isRead
-                                      ? "font-medium text-slate-600"
-                                      : "font-bold text-slate-800"
-                                  }`}
-                                >
-                                  {notification.message}
-                                </p>
-
-                              </div>
-
-                              <div className="flex items-center gap-2 mt-2">
-
-                                <span className="text-[11px] text-slate-400">
-                                  {formatNotificationTime(
-                                    notification.createdAt
-                                  )}
-                                </span>
-
-                                {!notification.isRead && (
-                                  <span className="text-[10px] font-bold text-blue-600">
-                                    New
-                                  </span>
-                                )}
-
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      ))
-                    )}
-
-                  </div>
-                </div>
-              )}
-            </div>
+            {renderBell("ml-2")}
           </div>
 
-          {/* Mobile Button */}
+          {/* Mobile: bell + menu button */}
+          <div className="md:hidden flex items-center gap-1">
+          {renderBell()}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 transition"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 transition"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? (
@@ -468,6 +580,7 @@ function Navbar({ page, setPage, currentUser, onLogout }) {
               </svg>
             )}
           </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}

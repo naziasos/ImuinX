@@ -10,7 +10,7 @@ const doseRecordSchema = new mongoose.Schema(
     citizenType: {
       type: String,
       required: true,
-      enum: ["User", "FamilyProfile"],
+      enum: ["User", "FamilyProfile", "GuestProfile"],
     },
 
     vaccineType: {

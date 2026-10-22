@@ -9,6 +9,7 @@ const Vaccine = require("../models/Vaccine");
 const VaccineSchedule = require("../models/VaccineSchedule");
 const DutyAssignment = require("../models/DutyAssignment");
 const feedbackPrompt = require("../services/feedbackPromptService");
+const { notifyUser } = require("../utils/notify");
 
 const TIME_ZONE = process.env.APP_TIMEZONE || "Asia/Dhaka";
 
@@ -44,6 +45,18 @@ function formatTimeSlot(date) {
   })
     .format(date)
     .toUpperCase();
+}
+
+function formatDisplayDateTime(date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIME_ZONE,
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
 }
 
 function parseAppointmentDateTime(date, time) {
@@ -435,6 +448,17 @@ exports.createAppointment = async (req, res) => {
       status: "Confirmed",
     });
 
+    // Booking confirmation shown in the notification bell
+    await notifyUser({
+      userId: citizenId,
+      type: "appointment",
+      message: `Appointment confirmed: ${vaccine.name} (dose ${dose}) for ${
+        familyProfileId ? recipient.name : "you"
+      } at ${clinic.name} on ${formatDisplayDateTime(appointmentDateTime)}.`,
+      referenceId: appointment._id,
+      dedupeKey: `appointment-booked:${appointment._id}`,
+    });
+
     // Ask for feedback on the booking experience (respects the cooldown;
     // never throws, so it cannot break a successful booking)
     const feedback = await feedbackPrompt.promptAfterAppointment(
@@ -503,6 +527,7 @@ exports.getClinicAppointments = async (req, res) => {
         "familyProfileId",
         "name relationship gender dateOfBirth"
       )
+      
       .populate("vaccineId", "name code")
       .populate("assignedWorkerId", "name email phone")
       .sort({ dateTime: 1 });
@@ -605,6 +630,18 @@ exports.cancelAppointment = async (req, res) => {
     appointment.status = "Cancelled";
     await appointment.save();
 
+    if (appointment.citizenId) {
+      await notifyUser({
+        userId: appointment.citizenId,
+        type: "appointment",
+        message: `Your appointment on ${formatDisplayDateTime(
+          appointment.dateTime
+        )} has been cancelled.`,
+        referenceId: appointment._id,
+        dedupeKey: `appointment-cancelled:${appointment._id}`,
+      });
+    }
+
     return res.json({
       message: "Appointment cancelled successfully.",
       appointmentId: appointment._id,
@@ -623,4 +660,14 @@ exports.testAppointmentApi = (req, res) => {
   return res.json({
     message: "Appointment API is working.",
   });
+};
+
+// Shared with the public campaign booking controller.
+exports.helpers = {
+  ALL_TIME_SLOTS,
+  getLocalDateString,
+  getDayRange,
+  parseAppointmentDateTime,
+  formatDisplayDateTime,
+  selectVaccinationWorker,
 };

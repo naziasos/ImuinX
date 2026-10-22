@@ -3,12 +3,52 @@ const QRCode = require("qrcode");
 const Certificate = require("../models/Certificate");
 const DoseRecord = require("../models/DoseRecord");
 
+const FamilyProfile = require("../models/FamilyProfile");
+
 const qrToken = require("../utils/qrToken");
+const { notifyUser } = require("../utils/notify");
 
 const MONGO_DUPLICATE_KEY = 11000;
 const CERTIFICATE_VALIDITY_DAYS = Number(
   process.env.CERTIFICATE_VALIDITY_DAYS || 365
 );
+
+// Tell the account holder a certificate is ready. For a family member the
+// guardian (the only account that can open it) is notified.
+async function notifyCertificateIssued(doseRecord, certificate) {
+  try {
+    // Guests have no account / bell - they are emailed by the guest flow.
+    if (doseRecord.citizenType === "GuestProfile") return;
+
+    let userId = doseRecord.citizenId;
+    let who = "Your";
+
+    if (doseRecord.citizenType === "FamilyProfile") {
+      const profile = await FamilyProfile.findById(doseRecord.citizenId)
+        .select("name guardianId")
+        .lean();
+
+      if (!profile) return;
+
+      userId = profile.guardianId;
+      who = `${profile.name}'s`;
+    }
+
+    const detail = doseRecord.vaccineType
+      ? ` for ${doseRecord.vaccineType}${doseRecord.doseNumber ? ` (dose ${doseRecord.doseNumber})` : ""}`
+      : "";
+
+    await notifyUser({
+      userId,
+      type: "certificate",
+      message: `${who} vaccination certificate${detail} has been generated. You can view and download it from My Certificate.`,
+      referenceId: certificate._id,
+      dedupeKey: `certificate:${certificate._id}`,
+    });
+  } catch (error) {
+    console.error("Certificate notification error:", error.message);
+  }
+}
 
 async function issueForDose(doseRecord) {
   qrToken.assertConfigured();
@@ -29,6 +69,8 @@ async function issueForDose(doseRecord) {
       doseRecordId: doseRecord._id,
       expiryDate,
     });
+
+    await notifyCertificateIssued(doseRecord, certificate);
 
     return { certificate, created: true };
   } catch (error) {

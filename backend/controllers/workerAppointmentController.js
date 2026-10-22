@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const Appointment = require("../models/Appointment");
@@ -18,8 +17,11 @@ const getLocalDateString = (date = new Date()) => {
   }).formatToParts(date);
 
   const values = {};
+
   parts.forEach(({ type, value }) => {
-    if (type !== "literal") values[type] = value;
+    if (type !== "literal") {
+      values[type] = value;
+    }
   });
 
   return `${values.year}-${values.month}-${values.day}`;
@@ -51,6 +53,7 @@ const isValidDate = (date) => {
 // GET /api/worker-appointments/today
 // Optional filter: ?date=YYYY-MM-DD
 // No date means all appointments from today onward.
+// Supports account holders, family members and guests.
 // =====================================================
 const getWorkerAppointments = async (req, res) => {
   try {
@@ -94,6 +97,7 @@ const getWorkerAppointments = async (req, res) => {
       };
     } else {
       const { start } = getDayRange(today);
+
       dateFilter = {
         $gte: start,
       };
@@ -118,28 +122,18 @@ const getWorkerAppointments = async (req, res) => {
       dateTime: dateFilter,
       status: { $ne: "Cancelled" },
     })
-      // IMPORTANT:
-      // dateOfBirth is needed for age-based Log Dose
-      .populate(
-        "citizenId",
-        "name email dateOfBirth"
-      )
+      .populate("citizenId", "name email dateOfBirth")
       .populate(
         "familyProfileId",
         "name relationship gender dateOfBirth"
       )
       .populate(
-        "clinicId",
-        "name location contact"
+        "guestProfileId",
+        "name email dateOfBirth gender"
       )
-      .populate(
-        "vaccineId",
-        "name code"
-      )
-      .populate(
-        "assignedWorkerId",
-        "name email"
-      )
+      .populate("clinicId", "name location contact")
+      .populate("vaccineId", "name code")
+      .populate("assignedWorkerId", "name email")
       .sort({ dateTime: 1 });
 
     return res.json({
@@ -149,14 +143,10 @@ const getWorkerAppointments = async (req, res) => {
       total: appointments.length,
     });
   } catch (error) {
-    console.error(
-      "Worker appointment fetch error:",
-      error
-    );
+    console.error("Worker appointment fetch error:", error);
 
     return res.status(500).json({
-      message:
-        "Server error while loading appointments",
+      message: "Server error while loading appointments",
     });
   }
 };
@@ -164,7 +154,6 @@ const getWorkerAppointments = async (req, res) => {
 // =====================================================
 // GET CLINIC INVENTORY FOR WORKER
 // =====================================================
-
 const getWorkerInventory = async (req, res) => {
   try {
     if (req.user.role !== "worker") {
@@ -183,8 +172,7 @@ const getWorkerInventory = async (req, res) => {
 
     if (!worker.clinicId) {
       return res.status(400).json({
-        message:
-          "Worker is not assigned to any clinic",
+        message: "Worker is not assigned to any clinic",
       });
     }
 
@@ -193,34 +181,26 @@ const getWorkerInventory = async (req, res) => {
       quantity: { $gt: 0 },
       expiryDate: { $gt: new Date() },
     })
-      .populate(
-        "vaccineId",
-        "name code description"
-      )
-      .sort({
-        expiryDate: 1,
-      });
+      .populate("vaccineId", "name code description")
+      .sort({ expiryDate: 1 });
 
     return res.json({
       inventory,
     });
   } catch (error) {
-    console.error(
-      "Worker inventory fetch error:",
-      error
-    );
+    console.error("Worker inventory fetch error:", error);
 
     return res.status(500).json({
-      message:
-        "Server error while loading inventory",
+      message: "Server error while loading inventory",
     });
   }
 };
 
 // =====================================================
 // COMPLETE AN ASSIGNED APPOINTMENT
+// Family-member appointments are supported.
+// Campaign guests must use Campaign Check-in.
 // =====================================================
-
 const completeWorkerAppointment = async (req, res) => {
   try {
     if (req.user.role !== "worker") {
@@ -256,15 +236,29 @@ const completeWorkerAppointment = async (req, res) => {
       clinicId: worker.clinicId,
       assignedWorkerId: worker._id,
     })
-      .populate("citizenId", "name email")
+      .populate("citizenId", "name email dateOfBirth")
       .populate(
         "familyProfileId",
         "name relationship gender dateOfBirth"
+      )
+      .populate(
+        "guestProfileId",
+        "name email dateOfBirth gender"
       );
 
     if (!appointment) {
       return res.status(404).json({
         message: "Appointment not found or not assigned to you",
+      });
+    }
+
+    // Campaign guest appointments must be completed through
+    // Campaign Check-in, where identity verification and dose
+    // logging are handled together.
+    if (appointment.guestProfileId) {
+      return res.status(400).json({
+        message:
+          "This is a campaign guest booking. Use Campaign Check-in with the Appointment ID.",
       });
     }
 
@@ -277,6 +271,7 @@ const completeWorkerAppointment = async (req, res) => {
     const appointmentDate = getLocalDateString(
       new Date(appointment.dateTime)
     );
+
     const { start, end } = getDayRange(appointmentDate);
 
     const duty = await DutyAssignment.findOne({
@@ -299,26 +294,39 @@ const completeWorkerAppointment = async (req, res) => {
     appointment.status = "Completed";
     await appointment.save();
 
+    // Return the family member as the patient when this is a
+    // family-member appointment; otherwise return the citizen.
+    const isFamilyAppointment = Boolean(
+      appointment.familyProfileId
+    );
+
+    const patient = isFamilyAppointment
+      ? {
+          id: appointment.familyProfileId._id,
+          type: "family",
+          name: appointment.familyProfileId.name || null,
+          email: null,
+          relationship:
+            appointment.familyProfileId.relationship || null,
+          gender: appointment.familyProfileId.gender || null,
+          dateOfBirth:
+            appointment.familyProfileId.dateOfBirth || null,
+          guardianId: appointment.citizenId?._id || null,
+          guardianEmail: appointment.citizenId?.email || null,
+        }
+      : {
+          id: appointment.citizenId?._id || null,
+          type: "user",
+          name: appointment.citizenId?.name || null,
+          email: appointment.citizenId?.email || null,
+        };
+
     return res.json({
       message:
         "Appointment completed successfully. Please log the administered dose.",
       appointmentId: appointment._id,
       status: appointment.status,
-      patient: appointment.familyProfileId
-        ? {
-            id: appointment.familyProfileId._id,
-            type: "family",
-            name: appointment.familyProfileId.name,
-            relationship: appointment.familyProfileId.relationship,
-            dateOfBirth: appointment.familyProfileId.dateOfBirth,
-            gender: appointment.familyProfileId.gender,
-          }
-        : {
-            id: appointment.citizenId?._id,
-            type: "user",
-            name: appointment.citizenId?.name,
-            email: appointment.citizenId?.email,
-          },
+      patient,
     });
   } catch (error) {
     console.error("Appointment completion error:", error);

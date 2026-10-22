@@ -35,6 +35,10 @@ import MyInHouseRequests from "./pages/citizen/MyInHouseRequests";
 
 import VaccineInsert from "./pages/admin/VaccineInsert";
 import VaccineScheduleInsert from "./pages/admin/VaccineScheduleInsert";
+import AddCampaign from "./pages/admin/AddCampaign";
+import CampaignBooking from "./pages/CampaignBooking";
+import GuestCertificate from "./pages/GuestCertificate";
+import GuestCheckIn from "./pages/worker/GuestCheckIn";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -44,6 +48,9 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [page, setPage] = useState("home");
   const [authEmail, setAuthEmail] = useState("");
+
+  // Campaign opened from the notification bell (public booking, no login)
+  const [activeCampaign, setActiveCampaign] = useState(null);
 
   // Shared context for worker dose logging and citizen recovery booking.
   const [appointmentForDose, setAppointmentForDose] = useState(null);
@@ -100,6 +107,10 @@ function App() {
         setPage={setPage}
         currentUser={currentUser}
         onLogout={handleLogout}
+        onOpenCampaign={(campaign) => {
+          setActiveCampaign(campaign);
+          setPage("campaignBooking");
+        }}
       />
 
       <main className="flex-1">
@@ -153,6 +164,10 @@ function App() {
             page !== "addClinic" &&
             page !== "addVaccine" &&
             page !== "addVaccineSchedule" &&
+            page !== "addCampaign" &&
+            page !== "campaignBooking" &&
+            page !== "guestCertificate" &&
+            page !== "guestCheckIn" &&
             page !== "addWorker" &&
             page !== "inventory" &&
             page !== "assignDuty" && (
@@ -228,6 +243,7 @@ function App() {
               onAddClinic={() => setPage("addClinic")}
               onManageVaccines={() => setPage("addVaccine")}
               onManageSchedules={() => setPage("addVaccineSchedule")}
+              onManageCampaigns={() => setPage("addCampaign")}
             />
           )}
 
@@ -339,6 +355,7 @@ function App() {
               }}
               onShowWork={() => setPage("showWork")}
               onAppointments={() => setPage("workerAppointments")}
+              onGuestCheckIn={() => setPage("guestCheckIn")}
               onEditProfile={() => setPage("editProfile")}
               onLogout={handleLogout}
             />
@@ -404,6 +421,33 @@ function App() {
             <VaccineScheduleInsert
               onBack={() => setPage("dashboard")}
             />
+          )}
+
+          {/* Public campaign booking - no login needed */}
+          {page === "campaignBooking" && (
+            <CampaignBooking
+              campaign={activeCampaign}
+              onBack={() => setPage("home")}
+              onGetCertificate={() => setPage("guestCertificate")}
+            />
+          )}
+
+          {/* Public: guest certificate access (Appointment ID + email OTP) */}
+          {page === "guestCertificate" && (
+            <GuestCertificate
+              onBack={() => setPage("home")}
+              onRegister={() => setPage("register")}
+            />
+          )}
+
+          {/* Worker: campaign guest check-in (ID check -> dose -> certificate) */}
+          {page === "guestCheckIn" && (
+            <GuestCheckIn onBack={() => setPage("workerDashboard")} />
+          )}
+
+          {/* Publish campaign (admin) */}
+          {page === "addCampaign" && (
+            <AddCampaign onBack={() => setPage("dashboard")} />
           )}
 
           {/* Add Worker */}

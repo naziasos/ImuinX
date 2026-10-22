@@ -12,7 +12,7 @@ const certificateSchema = new mongoose.Schema(
     citizenType: {
       type: String,
       required: true,
-      enum: ["User", "FamilyProfile"],
+      enum: ["User", "FamilyProfile", "GuestProfile"],
     },
     doseRecordId: {
       type: mongoose.Schema.Types.ObjectId,

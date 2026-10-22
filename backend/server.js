@@ -17,6 +17,8 @@ const feedbackRoutes = require("./routes/feedbackRoutes");
 const clinicFeedbackRoutes = require("./routes/clinicFeedbackRoutes");
 const inHouseRoutes = require("./routes/inHouseRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const campaignRoutes = require("./routes/campaignRoutes");
+const guestRoutes = require("./routes/guestRoutes");
 const createAppointmentReminders = require("./jobs/appointmentReminder");
 const runMissedDoseDetectionJob = require("./jobs/missedDoseDetection");
 
@@ -44,6 +46,8 @@ app.use("/api/certificates", certificateRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/clinic-feedback", clinicFeedbackRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/campaigns", campaignRoutes);
+app.use("/api/guest", guestRoutes);
 
 const familyRoutes = require("./routes/familyRoutes");
 app.use("/api/family", familyRoutes);

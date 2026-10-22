@@ -93,7 +93,75 @@ ImuinX Vaccination Management System`,
 };
 
 
+// ===============================
+// GUEST (NO-LOGIN) CAMPAIGN EMAILS
+// ===============================
+
+const sendGuestOtpEmail = async (to, otp, purpose) => {
+  const what =
+    purpose === "guest-certificate"
+      ? "access your vaccination certificate"
+      : "confirm your vaccine campaign booking";
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to,
+    subject: "ImuinX - Your verification code",
+    text: `Your ImuinX verification code is: ${otp}\n\nUse it to ${what}. The code expires in 10 minutes. Please do not share it with anyone.`,
+  });
+};
+
+const sendGuestBookingEmail = async (to, details) => {
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to,
+    subject: `ImuinX - Appointment confirmed (${details.bookingCode})`,
+    text: `Hello ${details.name},
+
+Your vaccine campaign appointment is confirmed.
+
+Appointment ID: ${details.bookingCode}
+Campaign: ${details.campaign}
+Vaccine: ${details.vaccine}
+Clinic: ${details.clinic}
+When: ${details.when}
+
+Please bring a valid photo ID and show this Appointment ID to the health worker.
+
+After vaccination you can get your certificate on the ImuinX website
+("Get Certificate") using this Appointment ID and your email.
+
+Regards,
+ImuinX Vaccination Management System`,
+  });
+};
+
+const sendGuestCertificateReadyEmail = async (to, details) => {
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to,
+    subject: "ImuinX - Your vaccination certificate is ready",
+    text: `Hello ${details.name},
+
+Your ${details.vaccine} dose has been recorded and your certificate is ready.
+
+To view it securely, open ImuinX, choose "Get Certificate", and enter:
+  Appointment ID: ${details.bookingCode}
+  Email: ${to}
+You will receive a one-time code by email to confirm it is you.
+
+Tip: create an ImuinX account with this same email to keep all your
+vaccination records and certificates in one place.
+
+Regards,
+ImuinX Vaccination Management System`,
+  });
+};
+
 module.exports = {
+  sendGuestOtpEmail,
+  sendGuestBookingEmail,
+  sendGuestCertificateReadyEmail,
   sendOTPEmail,
   sendClinicAdminCredentials,
   sendWorkerCredentials,

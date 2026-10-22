@@ -35,6 +35,7 @@ function WorkerAppointments({
 
   const patientName = (appointment) =>
     appointment?.familyProfileId?.name ||
+    appointment?.guestProfileId?.name ||
     appointment?.citizenId?.name ||
     "Unknown Citizen";
 
@@ -43,6 +44,8 @@ function WorkerAppointments({
       ? `${appointment.familyProfileId.relationship || "Family member"} of ${
           appointment.citizenId?.name || "guardian"
         }`
+      : appointment?.guestProfileId
+      ? `Campaign guest · ID ${appointment.bookingCode} · use Campaign Check-in`
       : appointment?.citizenId?.email || "No email available";
 
   const formatTime = (date) =>

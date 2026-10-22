@@ -8,6 +8,7 @@ function WorkerDashboard({
   onLogDose,
   onShowWork,
   onAppointments,
+  onGuestCheckIn,
   onEditProfile,
 }) {
 
@@ -99,6 +100,11 @@ function WorkerDashboard({
             <button className="clinic-nav-item" onClick={onAppointments}>
               <span>📅</span>
               Appointments
+            </button>
+
+            <button className="clinic-nav-item" onClick={onGuestCheckIn}>
+              <span>🪪</span>
+              Campaign Check-in
             </button>
 
             <button className="clinic-nav-item" onClick={onLogDose}>

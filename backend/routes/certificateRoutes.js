@@ -5,6 +5,8 @@ const User = require("../models/User");
 const DoseRecord = require("../models/DoseRecord");
 const FamilyProfile = require("../models/FamilyProfile");
 const Certificate = require("../models/Certificate");
+const GuestProfile = require("../models/GuestProfile");
+const { notifyUser } = require("../utils/notify");
 
 const authMiddleware = require("../middleware/authMiddleware");
 const certificateService = require("../services/certificateService");
@@ -95,8 +97,45 @@ router.get("/mine", authMiddleware, async (req, res) => {
       });
     });
 
+    // Optional registration: if this account's (verified) email matches a
+    // guest vaccination, link those records to the account automatically.
+    if (user.emailVerified) {
+      const unclaimed = await GuestProfile.find({
+        email: user.email,
+        claimedBy: null,
+      });
+
+      for (const profile of unclaimed) {
+        profile.claimedBy = user._id;
+        await profile.save();
+
+        await notifyUser({
+          userId: user._id,
+          type: "certificate",
+          message: `Your earlier guest vaccination certificate (${profile.name}) has been added to your account.`,
+          referenceId: profile._id,
+          dedupeKey: `guest-claimed:${profile._id}`,
+        });
+      }
+    }
+
+    const guestProfiles = await GuestProfile.find({ claimedBy: user._id });
+
+    guestProfiles.forEach((profile) => {
+      people.set(String(profile._id), {
+        id: profile._id,
+        type: "guest",
+        name: profile.name,
+        relationship: "Self (campaign)",
+      });
+    });
+
     const doses = await DoseRecord.find({
       $or: [
+        {
+          citizenId: { $in: guestProfiles.map((profile) => profile._id) },
+          citizenType: "GuestProfile",
+        },
         { citizenId: user._id, citizenType: "User" },
         {
           citizenId: { $in: familyMembers.map((member) => member._id) },
@@ -211,6 +250,14 @@ router.get("/dose/:doseRecordId", authMiddleware, async (req, res) => {
         guardianId: user._id,
       });
       allowed = !!familyMember;
+    }
+
+    if (user.role === "citizen" && dose.citizenType === "GuestProfile") {
+      const guestProfile = await GuestProfile.findOne({
+        _id: dose.citizenId,
+        claimedBy: user._id,
+      });
+      allowed = !!guestProfile;
     }
 
     if (!allowed) {

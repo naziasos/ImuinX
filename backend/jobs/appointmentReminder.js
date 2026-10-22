@@ -17,6 +17,8 @@ const createAppointmentReminders = async () => {
       status: {
         $in: ["Pending", "Confirmed"],
       },
+      // Guest campaign bookings have no account to notify.
+      citizenId: { $ne: null },
     });
 
     for (const appointment of appointments) {
