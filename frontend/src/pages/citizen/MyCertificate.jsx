@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, errorMessage } from "../../services/api";
 import FeedbackPopup from "../../components/FeedbackPopup";
+import ReadAloudControls from "../../components/ReadAloudControls";
 import "./MyCertificate.css";
 
 function formatDate(value) {
@@ -203,7 +204,12 @@ function MyCertificate({ onBack, onOpenFeedback }) {
 
   return (
     <div className="certificate-page">
-      <div className="certificate-shell">
+       <ReadAloudControls guidance="Welcome to My Vaccination Certificate. On this page, you can view your available vaccination certificate. First, check that the certificate belongs to the correct person. Review the vaccination details to make sure the information is accurate. If a Download Certificate button is available, click it to download and save your certificate to your device. After downloading, open the file to check that it is readable. If your certificate is missing or unavailable, contact your healthcare provider for assistance." />
+      <div 
+      className="certificate-shell"
+      id="read-aloud-certificate"
+      
+      >
 
         {/* HEADER */}
 

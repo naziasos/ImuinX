@@ -1,6 +1,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import FeedbackPopup from "../../components/FeedbackPopup";
+import ReadAloudControls from "../../components/ReadAloudControls";
 import "../clinicAdmin/ClinicAdminDashboard.css";
 
 const API = "http://localhost:5000/api";
@@ -555,11 +556,17 @@ function BookAppointment({ onBack, onOpenFeedback, recoveryContext = null,}) {
   );
 
   return (
-    <div
-      className="clinic-dashboard"
-      style={{ display: "block", padding: "20px", minHeight: "100vh" }}
+     <div
+    className="clinic-dashboard"
+    style={{ display: "block", padding: "20px", minHeight: "100vh" }}
+  >
+    <ReadAloudControls  guidance="Welcome to the vaccination booking page. To book an appointment, select the citizen who needs vaccination. Choose the required vaccine, select a clinic, and choose an available date and time. Review your selections carefully, then submit your booking request. Check your appointment status after submitting. Make sure all the details are correct before confirming your booking." />
+
+    <main
+      className="clinic-main"
+      id="read-aloud-booking"
+      style={{ marginLeft: 0, width: "100%" }}
     >
-      <main className="clinic-main" style={{ marginLeft: 0, width: "100%" }}>
         <button
           type="button"
           onClick={onBack}

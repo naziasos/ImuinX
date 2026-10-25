@@ -1,5 +1,7 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { api, errorMessage } from "../../services/api";
+import ReadAloudControls from "../../components/ReadAloudControls";
 import "../clinicAdmin/ClinicAdminDashboard.css";
 import "./MyVaccinationRecord.css";
 
@@ -43,14 +45,11 @@ function MyVaccinationRecord({
         setLoading(true);
         setError("");
 
-        const { data } = await api.get(
-          `/doses/citizen/${user.id}`,
-          {
-            params: {
-              citizenType: "user",
-            },
-          }
-        );
+        const { data } = await api.get(`/doses/citizen/${user.id}`, {
+          params: {
+            citizenType: "user",
+          },
+        });
 
         if (!cancelled) {
           setDoses(data?.doses || []);
@@ -84,15 +83,11 @@ function MyVaccinationRecord({
 
   return (
     <div className="clinic-dashboard">
-
       {/* SIDEBAR */}
       <aside className="clinic-sidebar">
-
         <div>
           <div className="clinic-logo">
-            <div className="clinic-logo-icon">
-              +
-            </div>
+            <div className="clinic-logo-icon">+</div>
 
             <div>
               <strong>ImuniX</strong>
@@ -101,10 +96,7 @@ function MyVaccinationRecord({
           </div>
 
           <nav className="clinic-nav">
-
-            <p className="clinic-nav-title">
-              MAIN MENU
-            </p>
+            <p className="clinic-nav-title">MAIN MENU</p>
 
             <button
               className="clinic-nav-item"
@@ -151,7 +143,6 @@ function MyVaccinationRecord({
               <span>⚙️</span>
               Settings
             </button>
-
           </nav>
         </div>
 
@@ -162,23 +153,21 @@ function MyVaccinationRecord({
           <span>↪</span>
           Logout
         </button>
-
       </aside>
-
 
       {/* MAIN */}
       <main className="clinic-main">
+        <ReadAloudControls
+          guidance="Welcome to your vaccination record. This page helps you review your vaccination history. Vaccine Type tells you which vaccine you received. Date shows when you received it. Clinic identifies the clinic where you were vaccinated. Batch Number identifies the vaccine batch. Review each record to check your vaccination details. If your record is missing, contact your clinic or healthcare worker to verify that it has been added."
+        />
 
         <header className="clinic-header">
-
           <div>
             <p className="clinic-breadcrumb">
               My Vaccinations
             </p>
 
-            <h1>
-              My Vaccination Record
-            </h1>
+            <h1>My Vaccination Record</h1>
 
             <p className="clinic-description">
               View your complete vaccination history from all clinics.
@@ -186,34 +175,23 @@ function MyVaccinationRecord({
           </div>
 
           <div className="clinic-profile">
-
             <div className="clinic-profile-avatar">
               {user?.name?.charAt(0)?.toUpperCase() || "C"}
             </div>
 
             <div>
-              <strong>
-                {user?.name || "Citizen"}
-              </strong>
-
-              <span>
-                Citizen
-              </span>
+              <strong>{user?.name || "Citizen"}</strong>
+              <span>Citizen</span>
             </div>
-
           </div>
-
         </header>
-
 
         {/* LOADING */}
         {loading && (
           <div className="vaccination-state">
             <div className="vaccination-spinner"></div>
 
-            <h3>
-              Loading your vaccination records...
-            </h3>
+            <h3>Loading your vaccination records...</h3>
 
             <p>
               Please wait while we retrieve your records.
@@ -221,70 +199,46 @@ function MyVaccinationRecord({
           </div>
         )}
 
-
         {/* ERROR */}
         {!loading && error && (
           <div className="vaccination-error">
-            <h3>
-              Could not load vaccination records
-            </h3>
-
-            <p>
-              {error}
-            </p>
+            <h3>Could not load vaccination records</h3>
+            <p>{error}</p>
           </div>
         )}
-
 
         {/* EMPTY */}
         {!loading && !error && doses.length === 0 && (
           <div className="vaccination-state">
+            <div className="vaccination-empty-icon">💉</div>
 
-            <div className="vaccination-empty-icon">
-              💉
-            </div>
-
-            <h3>
-              No vaccination records yet
-            </h3>
+            <h3>No vaccination records yet</h3>
 
             <p>
               Your vaccination records will appear here after a clinic
               worker administers a dose.
             </p>
-
           </div>
         )}
-
 
         {/* RECORDS */}
         {!loading && !error && doses.length > 0 && (
           <section className="workers-section">
-
             <div className="workers-header">
-
               <div>
-                <p className="section-label">
-                  MY RECORDS
-                </p>
+                <p className="section-label">MY RECORDS</p>
 
-                <h2>
-                  Vaccination History
-                </h2>
+                <h2>Vaccination History</h2>
 
                 <p>
                   All your vaccination doses from different clinics.
                 </p>
               </div>
-
             </div>
 
             <div className="vaccination-table-card">
-
               <div className="vaccination-table-wrapper">
-
                 <table className="vaccination-table">
-
                   <thead>
                     <tr>
                       <th>Vaccine Type</th>
@@ -295,64 +249,40 @@ function MyVaccinationRecord({
                   </thead>
 
                   <tbody>
-
                     {doses.map((dose) => (
                       <tr key={dose._id}>
-
                         <td>
                           <div className="vaccine-name">
+                            <span className="vaccine-icon">💉</span>
 
-                            <span className="vaccine-icon">
-                              💉
-                            </span>
-
-                            <strong>
-                              {dose.vaccineType}
-                            </strong>
-
+                            <strong>{dose.vaccineType}</strong>
                           </div>
                         </td>
 
-                        <td>
-                          {formatDate(dose.dateAdministered)}
-                        </td>
+                        <td>{formatDate(dose.dateAdministered)}</td>
 
                         <td>
                           <div className="clinic-name">
-
                             <strong>
                               {dose.clinicId?.name || "Unknown clinic"}
                             </strong>
 
                             {dose.clinicId?.location && (
-                              <span>
-                                {dose.clinicId.location}
-                              </span>
+                              <span>{dose.clinicId.location}</span>
                             )}
-
                           </div>
                         </td>
 
-                        <td>
-                          {dose.batchNumber || "—"}
-                        </td>
-
+                        <td>{dose.batchNumber || "—"}</td>
                       </tr>
                     ))}
-
                   </tbody>
-
                 </table>
-
               </div>
-
             </div>
-
           </section>
         )}
-
       </main>
-
     </div>
   );
 }

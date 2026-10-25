@@ -1,4 +1,6 @@
+
 import { useCallback, useEffect, useState } from "react";
+import ReadAloudControls from "./ReadAloudControls";
 
 const API_BASE_URL = "http://localhost:5000";
 
@@ -106,7 +108,7 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
     return () => clearInterval(id);
   }, [fetchNotifications]);
 
-    // Each role has its own dashboard page (same names App.jsx uses after login)
+  // Each role has its own dashboard page (same names App.jsx uses after login)
   const getDashboardPage = (user) => {
     switch (user?.role) {
       case "admin":
@@ -289,151 +291,157 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
 
       {notificationOpen && (
         <div className="absolute right-0 mt-3 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[100]">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-slate-800">Notifications</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {badgeCount > 0 ? `${badgeCount} new` : "You're all caught up"}
-              </p>
-            </div>
-
-            <button
-              onClick={fetchNotifications}
-              className="text-xs font-semibold text-blue-600 hover:text-blue-700"
-            >
-              Refresh
-            </button>
+          <div className="px-4 py-3 border-b border-slate-100">
+            <ReadAloudControls  guidance="Welcome to Notifications. This page provides updates related to your vaccination services. Notifications may include appointment confirmations, schedule changes, reminders, and other important updates. Select a notification to view its details when available. Check the date and message carefully so you do not miss an important appointment update. Visit this page regularly to stay informed." />
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
-            {/* ---------- Vaccine campaigns (public) ---------- */}
-            {campaigns.length > 0 && (
-              <div className="border-b border-slate-100 bg-emerald-50/50">
-                <p className="px-5 pt-3 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-                  Vaccine campaigns
+          <div id="read-aloud-notifications">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-slate-800">Notifications</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {badgeCount > 0 ? `${badgeCount} new` : "You're all caught up"}
                 </p>
+              </div>
 
-                {campaigns.map((campaign) => {
-                  const isNew = !seenCampaignIds.includes(campaign._id);
+              <button
+                onClick={fetchNotifications}
+                className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+              >
+                Refresh
+              </button>
+            </div>
 
-                  return (
-                    <div
-                      key={campaign._id}
-                      className="px-5 py-3 border-b border-emerald-100 last:border-b-0"
-                    >
-                      <div className="flex gap-3">
-                        <span className="text-xl leading-none pt-0.5">📢</span>
+            <div className="max-h-96 overflow-y-auto">
+              {/* ---------- Vaccine campaigns (public) ---------- */}
+              {campaigns.length > 0 && (
+                <div className="border-b border-slate-100 bg-emerald-50/50">
+                  <p className="px-5 pt-3 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                    Vaccine campaigns
+                  </p>
 
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                            <span className="truncate">{campaign.title}</span>
-                            {isNew && (
-                              <span className="text-[10px] font-bold text-emerald-700">
-                                New
-                              </span>
-                            )}
-                          </p>
+                  {campaigns.map((campaign) => {
+                    const isNew = !seenCampaignIds.includes(campaign._id);
 
-                          <p className="text-xs text-slate-600 mt-0.5">
-                            {campaign.vaccine?.name}
-                            {campaign.doseNumber ? ` · Dose ${campaign.doseNumber}` : ""}
-                            {" · "}
-                            {campaign.startDate} to {campaign.endDate}
-                          </p>
+                    return (
+                      <div
+                        key={campaign._id}
+                        className="px-5 py-3 border-b border-emerald-100 last:border-b-0"
+                      >
+                        <div className="flex gap-3">
+                          <span className="text-xl leading-none pt-0.5">📢</span>
 
-                          {campaign.description && (
-                            <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                              {campaign.description}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                              <span className="truncate">{campaign.title}</span>
+                              {isNew && (
+                                <span className="text-[10px] font-bold text-emerald-700">
+                                  New
+                                </span>
+                              )}
                             </p>
-                          )}
 
-                          <button
-                            type="button"
-                            onClick={() => openCampaign(campaign)}
-                            className="mt-2 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition"
-                          >
-                            Book now — no login needed
-                          </button>
+                            <p className="text-xs text-slate-600 mt-0.5">
+                              {campaign.vaccine?.name}
+                              {campaign.doseNumber ? ` · Dose ${campaign.doseNumber}` : ""}
+                              {" · "}
+                              {campaign.startDate} to {campaign.endDate}
+                            </p>
+
+                            {campaign.description && (
+                              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                                {campaign.description}
+                              </p>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => openCampaign(campaign)}
+                              className="mt-2 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition"
+                            >
+                              Book now — no login needed
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ---------- Personal notifications ---------- */}
+              {!currentUser ? (
+                campaigns.length === 0 && (
+                  <div className="px-5 py-10 text-center">
+                    <div className="text-3xl mb-2">🔔</div>
+                    <p className="text-sm font-semibold text-slate-600">
+                      No campaigns right now
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Log in to see your appointment and certificate updates.
+                    </p>
+                  </div>
+                )
+              ) : notificationLoading ? (
+                <div className="px-5 py-10 text-center text-sm text-slate-400">
+                  Loading notifications...
+                </div>
+              ) : notifications.length === 0 ? (
+                campaigns.length === 0 && (
+                  <div className="px-5 py-10 text-center">
+                    <div className="text-3xl mb-2">🔔</div>
+                    <p className="text-sm font-semibold text-slate-600">
+                      No notifications
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      You're all caught up!
+                    </p>
+                  </div>
+                )
+              ) : (
+                notifications.map((notification) => (
+                  <button
+                    key={notification._id}
+                    onClick={() => openNotification(notification)}
+                    className={`w-full text-left px-5 py-4 border-b border-slate-100 transition ${
+                      notification.isRead
+                        ? "bg-white hover:bg-slate-50"
+                        : "bg-blue-50/60 hover:bg-blue-50"
+                    }`}
+                  >
+                    <div className="flex gap-3">
+                      <span className="text-lg leading-none pt-0.5">
+                        {NOTIFICATION_ICONS[notification.type] || "🔔"}
+                      </span>
+
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={`text-sm ${
+                            notification.isRead
+                              ? "font-medium text-slate-600"
+                              : "font-bold text-slate-800"
+                          }`}
+                        >
+                          {notification.message}
+                        </p>
+
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[11px] text-slate-400">
+                            {formatNotificationTime(notification.createdAt)}
+                          </span>
+
+                          {!notification.isRead && (
+                            <span className="text-[10px] font-bold text-blue-600">
+                              New
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* ---------- Personal notifications ---------- */}
-            {!currentUser ? (
-              campaigns.length === 0 && (
-                <div className="px-5 py-10 text-center">
-                  <div className="text-3xl mb-2">🔔</div>
-                  <p className="text-sm font-semibold text-slate-600">
-                    No campaigns right now
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Log in to see your appointment and certificate updates.
-                  </p>
-                </div>
-              )
-            ) : notificationLoading ? (
-              <div className="px-5 py-10 text-center text-sm text-slate-400">
-                Loading notifications...
-              </div>
-            ) : notifications.length === 0 ? (
-              campaigns.length === 0 && (
-                <div className="px-5 py-10 text-center">
-                  <div className="text-3xl mb-2">🔔</div>
-                  <p className="text-sm font-semibold text-slate-600">
-                    No notifications
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    You're all caught up!
-                  </p>
-                </div>
-              )
-            ) : (
-              notifications.map((notification) => (
-                <button
-                  key={notification._id}
-                  onClick={() => openNotification(notification)}
-                  className={`w-full text-left px-5 py-4 border-b border-slate-100 transition ${
-                    notification.isRead
-                      ? "bg-white hover:bg-slate-50"
-                      : "bg-blue-50/60 hover:bg-blue-50"
-                  }`}
-                >
-                  <div className="flex gap-3">
-                    <span className="text-lg leading-none pt-0.5">
-                      {NOTIFICATION_ICONS[notification.type] || "🔔"}
-                    </span>
-
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className={`text-sm ${
-                          notification.isRead
-                            ? "font-medium text-slate-600"
-                            : "font-bold text-slate-800"
-                        }`}
-                      >
-                        {notification.message}
-                      </p>
-
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[11px] text-slate-400">
-                          {formatNotificationTime(notification.createdAt)}
-                        </span>
-
-                        {!notification.isRead && (
-                          <span className="text-[10px] font-bold text-blue-600">
-                            New
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))
-            )}
+                  </button>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -542,44 +550,44 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
 
           {/* Mobile: bell + menu button */}
           <div className="md:hidden flex items-center gap-1">
-          {renderBell()}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 transition"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            )}
-          </button>
+            {renderBell()}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 transition"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
 
@@ -610,19 +618,19 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
               {currentUser ? (
                 <div className="mt-3 border-t border-slate-100 pt-4 px-4">
                   <div className="flex items-center gap-3 mb-3">
-                                      <button
-                    type="button"
-                    onClick={goToMyDashboard}
-                    className="w-full flex items-center gap-3 mb-3 text-left rounded-xl hover:bg-blue-50 transition"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
-                      {(currentUser.name || currentUser.email || "U").charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 truncate">{currentUser.name || currentUser.email || "User"}</p>
-                      <p className="text-xs text-blue-600 capitalize">{currentUser.role || "User"}</p>
-                    </div>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={goToMyDashboard}
+                      className="w-full flex items-center gap-3 mb-3 text-left rounded-xl hover:bg-blue-50 transition"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                        {(currentUser.name || currentUser.email || "U").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-800 truncate">{currentUser.name || currentUser.email || "User"}</p>
+                        <p className="text-xs text-blue-600 capitalize">{currentUser.role || "User"}</p>
+                      </div>
+                    </button>
                   </div>
                   <button onClick={onLogout} className="w-full px-4 py-3 rounded-xl border border-rose-200 text-rose-600 text-sm font-semibold hover:bg-rose-50 transition">Logout</button>
                 </div>

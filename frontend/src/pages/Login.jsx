@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ReadAloudControls from "../components/ReadAloudControls";
 
 function Login({ onBack, onLoginSuccess, onSignUp, onForgotPassword }) {
   const [formData, setFormData] = useState({
@@ -48,8 +49,14 @@ function Login({ onBack, onLoginSuccess, onSignUp, onForgotPassword }) {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
+     <div style={styles.page}>
+    <div style={{ width: "100%", maxWidth: "440px" }}>
+      <ReadAloudControls    guidance={{
+    en: "Welcome to ImuniX. Enter your registered email address and password. Click Login to access your account. If you do not have an account, click Sign Up. If you forgot your password, select Forgot Password and follow the instructions.",
+    bn: "ইমিউনিক্সে আপনাকে স্বাগতম। আপনার অ্যাকাউন্টে প্রবেশ করতে নিবন্ধিত ইমেইল ঠিকানা এবং পাসওয়ার্ড লিখুন। এরপর লগইন বাটনে ক্লিক করুন। অ্যাকাউন্ট না থাকলে সাইন আপ বাটনে ক্লিক করুন। পাসওয়ার্ড ভুলে গেলে ফরগট পাসওয়ার্ড নির্বাচন করে নির্দেশনা অনুসরণ করুন।"
+  }} />
+
+      <div style={styles.card} id="read-aloud-login"></div>
         <div style={styles.iconCircle}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
