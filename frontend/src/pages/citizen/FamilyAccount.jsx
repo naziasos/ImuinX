@@ -613,9 +613,11 @@ const FamilyAccount = ({ onLogout, onBack }) => {
   return (
     <div className="family-page">
       <main className="family-container">
-        <button className="family-back" onClick={onBack}>
-          ← Back to Dashboard
-        </button>
+                {onBack && (
+          <button className="family-back" onClick={onBack}>
+            ← Back to Dashboard
+          </button>
+        )}
 
         <div className="family-heading">
           <h1>Family Account</h1>

@@ -244,13 +244,16 @@ function EditProfile({ onBack }) {
   return (
     <div className="edit-profile-page">
       <main className="edit-profile-container">
-        <button
-          type="button"
-          className="edit-profile-back"
-          onClick={onBack}
-        >
-          ← Back to Dashboard
-        </button>
+                {/* Citizens use the sidebar; other roles still get a back button */}
+        {onBack && (
+          <button
+            type="button"
+            className="edit-profile-back"
+            onClick={onBack}
+          >
+            ← Back to Dashboard
+          </button>
+        )}
 
         <header className="edit-profile-heading">
           <span className="edit-profile-eyebrow">

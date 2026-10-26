@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { api } from "../../services/api";
 import FeedbackPopup from "../../components/FeedbackPopup";
+import PageHeader from "../../components/PageHeader";
+import Icon from "../../components/Icons";
 
-const RequestInHouseVisit = ({ onBack, onOpenFeedback }) => {
-  const navigate = useNavigate();
+const RequestInHouseVisit = ({ onSuccess, onOpenFeedback }) => {
 
   const [familyMembers, setFamilyMembers] = useState([]);
 
@@ -22,7 +22,8 @@ const RequestInHouseVisit = ({ onBack, onOpenFeedback }) => {
   // Bumped after a request that earned a feedback prompt
   const [feedbackKey, setFeedbackKey] = useState(0);
 
-  const goToMyRequests = () => navigate("/citizen/my-requests");
+  // Opens "My In-House Requests" (page state lives in App.jsx)
+  const goToMyRequests = () => onSuccess?.();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -138,189 +139,210 @@ const RequestInHouseVisit = ({ onBack, onOpenFeedback }) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white shadow-md rounded-lg mt-8">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">
-        Request In-House Visit
-      </h2>
+    <>
+      <PageHeader
+        icon="home"
+        eyebrow="Home visits"
+        title="Request In-House Visit"
+        description="Can't make it to a clinic? A health worker can visit you or a family member at home."
+      />
 
-      <button
-        type="button"
-        onClick={onBack}
-        style={{
-            marginBottom: "20px",
-            padding: "10px 16px",
-            borderRadius: "6px",
-            border: "none",
-            background: "#2563eb",
-            color: "#fff",
-            cursor: "pointer",
-        }}
-        >
-        ← Back to Dashboard
-        </button>
+      <div className="cz-grid-main">
+        <section className="cz-card">
+          {error && (
+            <div className="cz-alert cz-alert--error" role="alert">
+              <Icon name="alert" size={20} />
+              <span>{error}</span>
+            </div>
+          )}
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-          {error}
-        </div>
-      )}
+          {success && (
+            <div className="cz-alert cz-alert--success" role="status">
+              <Icon name="check" size={20} />
+              <span>{success}</span>
+            </div>
+          )}
 
-      {success && (
-        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
-          {success}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Self / Family Member */}
-        <div className="flex items-center space-x-3">
-          <input
-            type="checkbox"
-            name="forFamilyMember"
-            id="forFamilyMember"
-            checked={formData.forFamilyMember}
-            onChange={handleChange}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-
-          <label
-            htmlFor="forFamilyMember"
-            className="text-sm font-medium text-gray-700"
-          >
-            Request this visit for a family member instead of yourself
-          </label>
-        </div>
-
-        {/* Family Member */}
-        {formData.forFamilyMember && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Select Family Member
+          <form onSubmit={handleSubmit} noValidate>
+            {/* Self / Family Member */}
+            <label className="cz-check" htmlFor="forFamilyMember">
+              <input
+                type="checkbox"
+                name="forFamilyMember"
+                id="forFamilyMember"
+                checked={formData.forFamilyMember}
+                onChange={handleChange}
+              />
+              <span>Request this visit for a family member instead of yourself</span>
             </label>
 
-            <select
-              name="familyMemberId"
-              value={formData.familyMemberId}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">-- Choose Family Member --</option>
+            {/* Family Member */}
+            {formData.forFamilyMember && (
+              <div className="cz-field">
+                <label className="cz-label" htmlFor="familyMemberId">
+                  Select family member
+                </label>
 
-              {familyMembers.map((member) => (
-                <option key={member._id} value={member._id}>
-                  {member.name} (
-                  {member.relation || member.relationship || "Family Member"}
-                  )
-                </option>
-              ))}
-            </select>
+                <select
+                  id="familyMemberId"
+                  name="familyMemberId"
+                  className="cz-select"
+                  value={formData.familyMemberId}
+                  onChange={handleChange}
+                >
+                  <option value="">-- Choose family member --</option>
 
-            {errors.familyMemberId && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.familyMemberId}
-              </p>
+                  {familyMembers.map((member) => (
+                    <option key={member._id} value={member._id}>
+                      {member.name} (
+                      {member.relation || member.relationship || "Family Member"}
+                      )
+                    </option>
+                  ))}
+                </select>
+
+                {errors.familyMemberId && (
+                  <p className="cz-hint cz-hint--error">{errors.familyMemberId}</p>
+                )}
+              </div>
             )}
+
+            {/* Address */}
+            <div className="cz-field">
+              <label className="cz-label" htmlFor="visit-address">
+                Visit address
+              </label>
+
+              <textarea
+                id="visit-address"
+                name="address"
+                className="cz-textarea"
+                value={formData.address}
+                onChange={handleChange}
+                rows="3"
+                placeholder="Enter full street address, house/apartment number"
+              />
+
+              {errors.address && (
+                <p className="cz-hint cz-hint--error">{errors.address}</p>
+              )}
+            </div>
+
+            {/* Location */}
+            <div className="cz-field">
+              <label className="cz-label" htmlFor="visit-location">
+                Location
+              </label>
+
+              <input
+                id="visit-location"
+                type="text"
+                name="location"
+                className="cz-input"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="e.g., Dhaka, Mirpur"
+              />
+
+              {errors.location && (
+                <p className="cz-hint cz-hint--error">{errors.location}</p>
+              )}
+            </div>
+
+            {/* Preferred Date */}
+            <div className="cz-field">
+              <label className="cz-label" htmlFor="visit-date">
+                Preferred date &amp; time
+              </label>
+
+              <input
+                id="visit-date"
+                type="datetime-local"
+                name="preferredDate"
+                className="cz-input"
+                value={formData.preferredDate}
+                onChange={handleChange}
+              />
+
+              {errors.preferredDate && (
+                <p className="cz-hint cz-hint--error">{errors.preferredDate}</p>
+              )}
+            </div>
+
+            {/* Vaccine / Reason */}
+            <div className="cz-field">
+              <label className="cz-label" htmlFor="visit-reason">
+                Vaccine name / reason for visit
+              </label>
+
+              <input
+                id="visit-reason"
+                type="text"
+                name="vaccineOrReason"
+                className="cz-input"
+                value={formData.vaccineOrReason}
+                onChange={handleChange}
+                placeholder="e.g., Covid-19 Booster or General Health Check"
+              />
+
+              {errors.vaccineOrReason && (
+                <p className="cz-hint cz-hint--error">{errors.vaccineOrReason}</p>
+              )}
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="cz-btn cz-btn--primary cz-btn--block"
+            >
+              {loading ? "Submitting…" : "Submit in-house request"}
+            </button>
+          </form>
+        </section>
+
+        {/* How it works */}
+        <aside className="cz-card cz-card--soft">
+          <div className="cz-card__head">
+            <h2>How it works</h2>
           </div>
-        )}
 
-        {/* Address */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Visit Address
-          </label>
+          <ol className="cz-how">
+            <li>
+              <span>1</span>
+              <div>
+                <strong>Send your request</strong>
+                <p>Tell us where you are, when you prefer and which vaccine you need.</p>
+              </div>
+            </li>
+            <li>
+              <span>2</span>
+              <div>
+                <strong>A health worker accepts</strong>
+                <p>You'll be notified as soon as a worker is assigned to your visit.</p>
+              </div>
+            </li>
+            <li>
+              <span>3</span>
+              <div>
+                <strong>Get vaccinated at home</strong>
+                <p>Your dose is recorded and your certificate is created automatically.</p>
+              </div>
+            </li>
+          </ol>
 
-          <textarea
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            rows="3"
-            placeholder="Enter full street address, house/apartment number"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          />
-
-          {errors.address && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.address}
-            </p>
+          {onSuccess && (
+            <button
+              type="button"
+              className="cz-btn cz-btn--secondary cz-btn--block"
+              style={{ marginTop: 8 }}
+              onClick={onSuccess}
+            >
+              <Icon name="clipboard" size={17} /> View my requests
+            </button>
           )}
-        </div>
-
-        {/* Location */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Location
-          </label>
-
-          <input
-            type="text"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            placeholder="e.g., Dhaka, Mirpur"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          />
-
-          {errors.location && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.location}
-            </p>
-          )}
-        </div>
-
-        {/* Preferred Date */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Preferred Date & Time
-          </label>
-
-          <input
-            type="datetime-local"
-            name="preferredDate"
-            value={formData.preferredDate}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          />
-
-          {errors.preferredDate && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.preferredDate}
-            </p>
-          )}
-        </div>
-
-        {/* Vaccine / Reason */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Vaccine Name / Reason for Visit
-          </label>
-
-          <input
-            type="text"
-            name="vaccineOrReason"
-            value={formData.vaccineOrReason}
-            onChange={handleChange}
-            placeholder="e.g., Covid-19 Booster or General Health Check"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          />
-
-          {errors.vaccineOrReason && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.vaccineOrReason}
-            </p>
-          )}
-        </div>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium disabled:opacity-50"
-        >
-          {loading
-            ? "Submitting..."
-            : "Submit In-House Request"}
-        </button>
-      </form>
+        </aside>
+      </div>
 
       <FeedbackPopup
         type="InHouse"
@@ -330,9 +352,8 @@ const RequestInHouseVisit = ({ onBack, onOpenFeedback }) => {
         onOpenFeedback={onOpenFeedback}
         onClose={goToMyRequests}
       />
-    </div>
+    </>
   );
 };
 
 export default RequestInHouseVisit;
-

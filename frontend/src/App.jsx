@@ -41,6 +41,7 @@ import GuestCertificate from "./pages/GuestCertificate";
 import GuestCheckIn from "./pages/worker/GuestCheckIn";
 
 import Navbar from "./components/Navbar";
+import CitizenLayout from "./components/CitizenLayout";
 import Footer from "./components/Footer";
 import Loader from "./components/Loader";
 
@@ -96,6 +97,36 @@ function App() {
   const handleOpenAppointments = () => {
     setAppointmentForDose(null);
     setPage("bookAppointment");
+  };
+
+  // ---- Citizen area -------------------------------------------------------
+  // Every page below is shown inside ONE shared <CitizenLayout> (sidebar).
+  const CITIZEN_PAGES = [
+    "citizenDashboard",
+    "myVaccinations",
+    "bookAppointment",
+    "myCertificate",
+    "familyAccount",
+    "requestInHouseVisit",
+    "myInHouseRequests",
+    "feedback",
+  ];
+
+  // Edit Profile is shared with clinic admins and workers: only citizens get the sidebar.
+  const isCitizenRole =
+    !!currentUser &&
+    !["admin", "clinicAdmin", "clinic_admin", "worker"].includes(currentUser.role);
+
+  const isCitizenArea =
+    CITIZEN_PAGES.includes(page) || (page === "editProfile" && isCitizenRole);
+
+  // Sidebar clicks. "Appointments" must clear any old recovery context first.
+  const handleCitizenNavigate = (target) => {
+    if (target === "bookAppointment") {
+      handleOpenAppointments();
+      return;
+    }
+    setPage(target);
   };
 
   return (
@@ -247,27 +278,11 @@ function App() {
             />
           )}
 
-          {/* Citizen Dashboard: T9.4 integration */}
-          {page === "citizenDashboard" && (
-            <CitizenDashboard
-              onEditProfile={() => setPage("editProfile")}
-              onFamilyAccount={() => setPage("familyAccount")}
-              onAppointments={handleOpenAppointments}
-              onCertificate={() => setPage("myCertificate")}
-              onVaccinations={() => setPage("myVaccinations")}
-              onFeedback={() => setPage("feedback")}
-              onInHouseVisit={() => setPage("requestInHouseVisit")}
-              onMyInHouseRequests={() => setPage("myInHouseRequests")}
+          {/* Public Certificate Verifier */}
+          {page === "verifyCertificate" && <Verify />}
 
-              // pass selected recovery to appointment booking.
-              onBookRecovery={handleBookRecovery}
-
-              onLogout={handleLogout}
-            />
-          )}
-
-          {/* Edit Profile */}
-          {page === "editProfile" && (
+          {/* Edit Profile for clinic admin / worker (no citizen sidebar) */}
+          {page === "editProfile" && !isCitizenRole && (
             <EditProfile
               onBack={() => {
                 if (
@@ -284,66 +299,64 @@ function App() {
             />
           )}
 
-          {/* Feedback */}
-          {page === "feedback" && (
-            <Feedback
-              onBack={() => setPage("citizenDashboard")}
-            />
-          )}
-
-          {/* Family Account */}
-          {page === "familyAccount" && (
-            <FamilyAccount
-              onBack={() => setPage("citizenDashboard")}
+          {/* ================= CITIZEN AREA (shared sidebar) ================= */}
+          {isCitizenArea && (
+            <CitizenLayout
+              page={page}
+              onNavigate={handleCitizenNavigate}
               onLogout={handleLogout}
-            />
-          )}
+            >
+              {page === "citizenDashboard" && (
+                <CitizenDashboard
+                  onEditProfile={() => setPage("editProfile")}
+                  onFamilyAccount={() => setPage("familyAccount")}
+                  onAppointments={handleOpenAppointments}
+                  onCertificate={() => setPage("myCertificate")}
+                  onVaccinations={() => setPage("myVaccinations")}
+                  onFeedback={() => setPage("feedback")}
+                  onInHouseVisit={() => setPage("requestInHouseVisit")}
+                  onMyInHouseRequests={() => setPage("myInHouseRequests")}
+                  // pass selected recovery to appointment booking.
+                  onBookRecovery={handleBookRecovery}
+                />
+              )}
 
-          {/* In-house Visit */}
-          {page === "requestInHouseVisit" && (
-            <RequestInHouseVisit
-              onBack={() => setPage("citizenDashboard")}
-            />
-          )}
+              {page === "myVaccinations" && (
+                <MyVaccinationRecord onAppointments={handleOpenAppointments} />
+              )}
 
-          {page === "myInHouseRequests" && (
-            <MyInHouseRequests
-              onBack={() => setPage("citizenDashboard")}
-            />
-          )}
+              {/* Book Appointment: T9.4 recoveryContext integration */}
+              {page === "bookAppointment" && (
+                <BookAppointment
+                  recoveryContext={appointmentForDose}
+                  onOpenFeedback={() => setPage("feedback")}
+                />
+              )}
 
-          {/* Public Certificate Verifier */}
-          {page === "verifyCertificate" && <Verify />}
+              {page === "myCertificate" && (
+                <MyCertificate onOpenFeedback={() => setPage("feedback")} />
+              )}
 
-          {/* My Certificate */}
-          {page === "myCertificate" && (
-            <MyCertificate
-              onBack={() => setPage("citizenDashboard")}
-              onOpenFeedback={() => setPage("feedback")}
-            />
-          )}
+              {page === "familyAccount" && <FamilyAccount />}
 
-          {/* My Vaccination Record */}
-          {page === "myVaccinations" && (
-            <MyVaccinationRecord
-              onDashboard={() => setPage("citizenDashboard")}
-              onAppointments={handleOpenAppointments}
-              onCertificate={() => setPage("myCertificate")}
-              onFamilyAccount={() => setPage("familyAccount")}
-              onLogout={handleLogout}
-            />
-          )}
+              {page === "requestInHouseVisit" && (
+                <RequestInHouseVisit
+                  onSuccess={() => setPage("myInHouseRequests")}
+                  onOpenFeedback={() => setPage("feedback")}
+                />
+              )}
 
-          {/* Book Appointment: T9.4 recoveryContext integration */}
-          {page === "bookAppointment" && (
-            <BookAppointment
-              recoveryContext={appointmentForDose}
-              onBack={() => {
-                setAppointmentForDose(null);
-                setPage("citizenDashboard");
-              }}
-              onLogout={handleLogout}
-            />
+              {page === "myInHouseRequests" && (
+                <MyInHouseRequests
+                  onNewRequest={() => setPage("requestInHouseVisit")}
+                />
+              )}
+
+              {page === "feedback" && <Feedback />}
+
+              {/* No onBack: the sidebar is the navigation */}
+              {page === "editProfile" && isCitizenRole && <EditProfile />}
+            </CitizenLayout>
           )}
 
           {/* Worker Dashboard */}
@@ -494,7 +507,8 @@ function App() {
       </main>
 
       {/* Footer */}
-      {page !== "dashboard" &&
+      {!isCitizenArea &&
+        page !== "dashboard" &&
         page !== "clinicDashboard" &&
         page !== "citizenDashboard" &&
         page !== "editProfile" &&

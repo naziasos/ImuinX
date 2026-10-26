@@ -61,7 +61,7 @@ function getInitial(name) {
   return name.trim().charAt(0).toUpperCase();
 }
 
-function MyCertificate({ onBack, onOpenFeedback }) {
+function MyCertificate({ onOpenFeedback }) {
   const user = useMemo(
     () => JSON.parse(localStorage.getItem("user") || "null"),
     []
@@ -215,12 +215,7 @@ function MyCertificate({ onBack, onOpenFeedback }) {
 
         <header className="certificate-page-header no-print">
           <div>
-            <button
-              className="certificate-back"
-              onClick={onBack}
-            >
-              ← Back to Dashboard
-            </button>
+            
 
             <p className="certificate-eyebrow">
               MY RECORDS

@@ -2,7 +2,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import FeedbackPopup from "../../components/FeedbackPopup";
 import ReadAloudControls from "../../components/ReadAloudControls";
-import "../clinicAdmin/ClinicAdminDashboard.css";
+import PageHeader from "../../components/PageHeader";
+import EmptyState from "../../components/EmptyState";
+import StatusBadge from "../../components/StatusBadge";
+import Icon from "../../components/Icons";
 
 const API = "http://localhost:5000/api";
 
@@ -28,7 +31,7 @@ function formatDateTime(value) {
   });
 }
 
-function BookAppointment({ onBack, onOpenFeedback, recoveryContext = null,}) {
+function BookAppointment({ onOpenFeedback, recoveryContext = null }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const citizenId = user?.id || user?._id;
   const token = localStorage.getItem("token");
@@ -441,549 +444,346 @@ function BookAppointment({ onBack, onOpenFeedback, recoveryContext = null,}) {
     (item) => String(item._id) === String(vaccine)
   );
 
-  const inputStyle = {
-    width: "100%",
-    padding: "11px 12px",
-    border: "1px solid #cbd5e1",
-    borderRadius: "9px",
-    background: "#fff",
-    color: "#334155",
-    boxSizing: "border-box",
-  };
+  const recipientName =
+    selectedPerson === "self"
+      ? user?.name || "Myself"
+      : familyMembers.find((member) => member._id === selectedPerson)?.name ||
+        "Family member";
 
-  const labelStyle = {
-    display: "block",
-    marginBottom: "7px",
-    fontWeight: 600,
-    color: "#334155",
-  };
+  const formIncomplete =
+    booking || !clinic || !vaccine || !doseNumber || !date || !selectedSlot;
 
-  const renderAppointmentCard = (appointment) => (
-    <article
-      key={appointment._id}
-      style={{
-        border: "1px solid #e2e8f0",
-        borderRadius: "12px",
-        padding: "16px",
-        background: "#fff",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: "12px",
-        }}
-      >
-        <div>
-          <h3 style={{ margin: "0 0 5px", color: "#1e293b" }}>
-            {appointment.clinicId?.name || "Clinic"}
-          </h3>
-          <p style={{ margin: "0 0 12px", color: "#64748b", fontSize: "14px" }}>
-            {appointment.clinicId?.location || "Location unavailable"}
-          </p>
+  const renderAppointmentCard = (appointment) => {
+    const canCancel =
+      appointment.status !== "Cancelled" &&
+      appointment.status !== "Completed" &&
+      new Date(appointment.dateTime) >= now;
+
+    return (
+      <article key={appointment._id} className="cz-item">
+        <div className="cz-item__top">
+          <div>
+            <h3>{appointment.clinicId?.name || "Clinic"}</h3>
+            <p>
+              <Icon name="pin" size={14} />
+              {appointment.clinicId?.location || "Location unavailable"}
+            </p>
+          </div>
+
+          <StatusBadge status={appointment.status} />
         </div>
 
-        <span
-          style={{
-            flexShrink: 0,
-            borderRadius: "20px",
-            padding: "5px 9px",
-            fontSize: "12px",
-            fontWeight: 700,
-            background:
-              appointment.status === "Confirmed"
-                ? "#dcfce7"
-                : appointment.status === "Cancelled"
-                ? "#fee2e2"
-                : appointment.status === "Completed"
-                ? "#dbeafe"
-                : "#fef3c7",
-            color:
-              appointment.status === "Confirmed"
-                ? "#166534"
-                : appointment.status === "Cancelled"
-                ? "#b91c1c"
-                : appointment.status === "Completed"
-                ? "#1d4ed8"
-                : "#92400e",
-          }}
-        >
-          {appointment.status}
-        </span>
-      </div>
+        <dl className="cz-facts">
+          <div>
+            <dt>For</dt>
+            <dd>{appointment.familyProfileId?.name || user?.name || "Myself"}</dd>
+          </div>
+          <div>
+            <dt>Vaccine</dt>
+            <dd>{appointment.vaccineId?.name || "Details unavailable"}</dd>
+          </div>
+          <div>
+            <dt>Dose</dt>
+            <dd>
+              {appointment.doseNumber ? `Dose ${appointment.doseNumber}` : "Not specified"}
+            </dd>
+          </div>
+          <div>
+            <dt>Date &amp; time</dt>
+            <dd>{formatDateTime(appointment.dateTime)}</dd>
+          </div>
+        </dl>
 
-      <div style={{ color: "#475569", fontSize: "14px", lineHeight: 1.8 }}>
-        <p style={{ margin: 0 }}>
-          <strong>For:</strong>{" "}
-          {appointment.familyProfileId?.name || user?.name || "Myself"}
-        </p>
-        <p style={{ margin: 0 }}>
-          <strong>Vaccine:</strong>{" "}
-          {appointment.vaccineId?.name || "Vaccine details unavailable"}
-        </p>
-        <p style={{ margin: 0 }}>
-          <strong>Dose:</strong>{" "}
-          {appointment.doseNumber ? `Dose ${appointment.doseNumber}` : "Not specified"}
-        </p>
-        <p style={{ margin: 0 }}>
-          <strong>Date & time:</strong> {formatDateTime(appointment.dateTime)}
-        </p>
-      </div>
-
-      {appointment.status !== "Cancelled" &&
-        appointment.status !== "Completed" &&
-        new Date(appointment.dateTime) >= now && (
-          <button
-            type="button"
-            onClick={() => handleCancelAppointment(appointment._id)}
-            style={{
-              marginTop: "12px",
-              padding: "8px 12px",
-              border: "none",
-              borderRadius: "8px",
-              background: "#fee2e2",
-              color: "#b91c1c",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            Cancel appointment
-          </button>
+        {canCancel && (
+          <div className="cz-item__foot">
+            <button
+              type="button"
+              className="cz-btn cz-btn--danger cz-btn--sm"
+              onClick={() => handleCancelAppointment(appointment._id)}
+            >
+              Cancel appointment
+            </button>
+          </div>
         )}
-    </article>
-  );
+      </article>
+    );
+  };
 
   return (
-     <div
-    className="clinic-dashboard"
-    style={{ display: "block", padding: "20px", minHeight: "100vh" }}
-  >
-    <ReadAloudControls  guidance="Welcome to the vaccination booking page. To book an appointment, select the citizen who needs vaccination. Choose the required vaccine, select a clinic, and choose an available date and time. Review your selections carefully, then submit your booking request. Check your appointment status after submitting. Make sure all the details are correct before confirming your booking." />
+    <div id="read-aloud-booking">
+      <ReadAloudControls guidance="Welcome to the vaccination booking page. To book an appointment, select the citizen who needs vaccination. Choose the required vaccine, select a clinic, and choose an available date and time. Review your selections carefully, then submit your booking request. Check your appointment status after submitting. Make sure all the details are correct before confirming your booking." />
 
-    <main
-      className="clinic-main"
-      id="read-aloud-booking"
-      style={{ marginLeft: 0, width: "100%" }}
-    >
-        <button
-          type="button"
-          onClick={onBack}
-          style={{
-            marginBottom: "18px",
-            padding: "10px 15px",
-            border: "1px solid #cbd5e1",
-            borderRadius: "8px",
-            background: "#f1f5f9",
-            color: "#334155",
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
-        >
-          ← Back to Dashboard
-        </button>
+      <PageHeader
+        icon="calendar"
+        eyebrow="Appointments"
+        title="Vaccination Appointments"
+        description="Book a vaccination appointment and manage your upcoming visits."
+      />
 
-        <header className="clinic-header">
-          <div>
-            <p className="clinic-breadcrumb">Dashboard / Appointments</p>
-            <h1>Vaccination Appointments</h1>
-            <p className="clinic-description">
-              Book a vaccination appointment and manage your upcoming visits.
-            </p>
-          </div>
+      {pageError && (
+        <div className="cz-alert cz-alert--error" role="alert">
+          <Icon name="alert" size={20} />
+          <span>{pageError}</span>
+        </div>
+      )}
 
-          <div className="clinic-profile">
-            <div className="clinic-profile-avatar">
-              {user?.name?.charAt(0)?.toUpperCase() || "C"}
-            </div>
+      {recoveryContext && (
+        <div className="cz-alert cz-alert--info" role="status">
+          <Icon name="shield" size={20} />
+          <span>
+            You are booking a catch-up dose. We have pre-filled the vaccine and
+            recipient for you.
+          </span>
+        </div>
+      )}
+
+      {/* Booking form on the left, appointment list on the right */}
+      <div className="cz-grid-2">
+        <section className="cz-card">
+          <div className="cz-card__head">
             <div>
-              <strong>{user?.name || "Citizen"}</strong>
-              <span>Citizen</span>
+              <p className="cz-eyebrow">Appointment booking</p>
+              <h2>Book a vaccination</h2>
+              <p>Select the recipient, vaccine, clinic and available time.</p>
             </div>
           </div>
-        </header>
 
-        {pageError && (
-          <div
-            role="alert"
-            style={{
-              marginBottom: "16px",
-              padding: "12px 14px",
-              borderRadius: "9px",
-              background: "#fee2e2",
-              color: "#991b1b",
-            }}
-          >
-            {pageError}
-          </div>
-        )}
+          {formError && (
+            <div className="cz-alert cz-alert--error" role="alert">
+              <Icon name="alert" size={20} />
+              <span>{formError}</span>
+            </div>
+          )}
 
-        {/* Booking form on the left, appointment list on the right */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))",
-            alignItems: "start",
-            gap: "22px",
-          }}
-        >
-          <section
-            style={{
-              minWidth: 0,
-              padding: "22px",
-              borderRadius: "14px",
-              background: "#fff",
-              boxShadow: "0 2px 10px rgba(15, 23, 42, 0.06)",
-              border: "1px solid #e2e8f0",
-            }}
-          >
-            <p className="section-label">APPOINTMENT BOOKING</p>
-            <h2 style={{ marginTop: 0 }}>Book a vaccination</h2>
-            <p style={{ color: "#64748b", marginBottom: "22px" }}>
-              Select the recipient, vaccine, clinic and available time.
-            </p>
+          {successMessage && (
+            <div className="cz-alert cz-alert--success" role="status">
+              <Icon name="check" size={20} />
+              <span>{successMessage}</span>
+            </div>
+          )}
 
-            {formError && (
-              <div
-                role="alert"
-                style={{
-                  marginBottom: "16px",
-                  padding: "11px",
-                  borderRadius: "8px",
-                  background: "#fee2e2",
-                  color: "#991b1b",
-                }}
+          <form onSubmit={handleConfirm}>
+            <div className="cz-field">
+              <label className="cz-label" htmlFor="appointment-person">
+                Appointment for
+              </label>
+              <select
+                id="appointment-person"
+                className="cz-select"
+                value={selectedPerson}
+                onChange={(event) => setSelectedPerson(event.target.value)}
               >
-                {formError}
-              </div>
-            )}
+                <option value="self">Myself ({user?.name || "Citizen"})</option>
+                {familyMembers.map((member) => (
+                  <option key={member._id} value={member._id}>
+                    {member.name} ({member.relationship || "Family member"})
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            {successMessage && (
-              <div
-                role="status"
-                style={{
-                  marginBottom: "16px",
-                  padding: "11px",
-                  borderRadius: "8px",
-                  background: "#dcfce7",
-                  color: "#166534",
+            <div className="cz-field">
+              <label className="cz-label" htmlFor="appointment-vaccine">
+                Vaccine
+              </label>
+              <select
+                id="appointment-vaccine"
+                className="cz-select"
+                value={vaccine}
+                onChange={(event) => {
+                  setVaccine(event.target.value);
+                  setDoseNumber("");
+                  setFormError("");
                 }}
+                required
               >
-                {successMessage}
-              </div>
-            )}
+                <option value="">Select a vaccine</option>
+                {vaccines.map((item) => (
+                  <option key={item._id} value={item._id}>
+                    {item.name} ({item.code})
+                  </option>
+                ))}
+              </select>
+              {vaccines.length === 0 && (
+                <p className="cz-hint cz-hint--warn">
+                  No active vaccines loaded. Check the vaccine API response.
+                </p>
+              )}
+            </div>
 
-            <form onSubmit={handleConfirm}>
-              <div style={{ marginBottom: "17px" }}>
-                <label style={labelStyle} htmlFor="appointment-person">
-                  Appointment for
-                </label>
-                <select
-                  id="appointment-person"
-                  value={selectedPerson}
-                  onChange={(event) => setSelectedPerson(event.target.value)}
-                  style={inputStyle}
-                >
-                  <option value="self">Myself ({user?.name || "Citizen"})</option>
-                  {familyMembers.map((member) => (
-                    <option key={member._id} value={member._id}>
-                      {member.name} ({member.relationship || "Family member"})
-                    </option>
+            <div className="cz-field">
+              <label className="cz-label" htmlFor="appointment-dose">
+                Dose number
+              </label>
+              <select
+                id="appointment-dose"
+                className="cz-select"
+                value={doseNumber}
+                onChange={(event) => setDoseNumber(event.target.value)}
+                disabled={!vaccine || availableDoses.length === 0}
+                required
+              >
+                <option value="">Select a dose</option>
+                {availableDoses.map((dose) => (
+                  <option key={dose} value={dose}>
+                    Dose {dose}
+                  </option>
+                ))}
+              </select>
+              {vaccine && availableDoses.length === 0 && (
+                <p className="cz-hint cz-hint--warn">
+                  No dose schedule found for this vaccine.
+                </p>
+              )}
+            </div>
+
+            <div className="cz-field">
+              <label className="cz-label" htmlFor="appointment-clinic">
+                Clinic
+              </label>
+              <select
+                id="appointment-clinic"
+                className="cz-select"
+                value={clinic}
+                onChange={(event) => {
+                  setClinic(event.target.value);
+                  setSelectedSlot("");
+                  setTimeSlots([]);
+                  setFormError("");
+                }}
+                required
+              >
+                <option value="">Select a clinic</option>
+                {clinics.map((item) => (
+                  <option key={item._id} value={item._id}>
+                    {item.name} {item.location ? `- ${item.location}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="cz-field">
+              <label className="cz-label" htmlFor="appointment-date">
+                Date
+              </label>
+              <input
+                id="appointment-date"
+                className="cz-input"
+                type="date"
+                value={date}
+                min={getLocalDateString()}
+                onChange={(event) => {
+                  setDate(event.target.value);
+                  setSelectedSlot("");
+                  setTimeSlots([]);
+                  setFormError("");
+                }}
+                required
+              />
+            </div>
+
+            <div className="cz-field">
+              <span className="cz-label">Available time slots</span>
+
+              {!clinic || !date ? (
+                <p className="cz-hint">Select a clinic and date to see available times.</p>
+              ) : slotLoading ? (
+                <p className="cz-hint">Loading time slots…</p>
+              ) : timeSlots.length === 0 ? (
+                <p className="cz-hint">No available time slots for this date.</p>
+              ) : (
+                <div className="cz-slots">
+                  {timeSlots.map((slot) => (
+                    <button
+                      key={slot.time}
+                      type="button"
+                      className={`cz-slot ${selectedSlot === slot.time ? "is-selected" : ""}`}
+                      onClick={() => setSelectedSlot(slot.time)}
+                      aria-pressed={selectedSlot === slot.time}
+                    >
+                      {slot.time}
+                    </button>
                   ))}
-                </select>
-              </div>
-
-              <div style={{ marginBottom: "17px" }}>
-                <label style={labelStyle} htmlFor="appointment-vaccine">
-                  Vaccine
-                </label>
-                <select
-                  id="appointment-vaccine"
-                  value={vaccine}
-                  onChange={(event) => {
-                    setVaccine(event.target.value);
-                    setDoseNumber("");
-                    setFormError("");
-                  }}
-                  style={inputStyle}
-                  required
-                >
-                  <option value="">Select a vaccine</option>
-                  {vaccines.map((item) => (
-                    <option key={item._id} value={item._id}>
-                      {item.name} ({item.code})
-                    </option>
-                  ))}
-                </select>
-                {vaccines.length === 0 && (
-                  <p style={{ color: "#b45309", fontSize: "13px" }}>
-                    No active vaccines loaded. Check the vaccine API response.
-                  </p>
-                )}
-              </div>
-
-              <div style={{ marginBottom: "17px" }}>
-                <label style={labelStyle} htmlFor="appointment-dose">
-                  Dose number
-                </label>
-                <select
-                  id="appointment-dose"
-                  value={doseNumber}
-                  onChange={(event) => setDoseNumber(event.target.value)}
-                  style={inputStyle}
-                  disabled={!vaccine || availableDoses.length === 0}
-                  required
-                >
-                  <option value="">Select a dose</option>
-                  {availableDoses.map((dose) => (
-                    <option key={dose} value={dose}>
-                      Dose {dose}
-                    </option>
-                  ))}
-                </select>
-                {vaccine && availableDoses.length === 0 && (
-                  <p style={{ color: "#b45309", fontSize: "13px" }}>
-                    No dose schedule found for this vaccine.
-                  </p>
-                )}
-              </div>
-
-              <div style={{ marginBottom: "17px" }}>
-                <label style={labelStyle} htmlFor="appointment-clinic">
-                  Clinic
-                </label>
-                <select
-                  id="appointment-clinic"
-                  value={clinic}
-                  onChange={(event) => {
-                    setClinic(event.target.value);
-                    setSelectedSlot("");
-                    setTimeSlots([]);
-                    setFormError("");
-                  }}
-                  style={inputStyle}
-                  required
-                >
-                  <option value="">Select a clinic</option>
-                  {clinics.map((item) => (
-                    <option key={item._id} value={item._id}>
-                      {item.name} {item.location ? `- ${item.location}` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ marginBottom: "17px" }}>
-                <label style={labelStyle} htmlFor="appointment-date">
-                  Date
-                </label>
-                <input
-                  id="appointment-date"
-                  type="date"
-                  value={date}
-                  min={getLocalDateString()}
-                  onChange={(event) => {
-                    setDate(event.target.value);
-                    setSelectedSlot("");
-                    setTimeSlots([]);
-                    setFormError("");
-                  }}
-                  style={inputStyle}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: "18px" }}>
-                <label style={labelStyle}>Available time slots</label>
-
-                {!clinic || !date ? (
-                  <p style={{ color: "#64748b", fontSize: "14px" }}>
-                    Select a clinic and date to see available times.
-                  </p>
-                ) : slotLoading ? (
-                  <p style={{ color: "#64748b" }}>Loading time slots...</p>
-                ) : timeSlots.length === 0 ? (
-                  <p style={{ color: "#64748b", fontSize: "14px" }}>
-                    No available time slots for this date.
-                  </p>
-                ) : (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(105px, 1fr))",
-                      gap: "8px",
-                    }}
-                  >
-                    {timeSlots.map((slot) => {
-                      const selected = selectedSlot === slot.time;
-
-                      return (
-                        <button
-                          key={slot.time}
-                          type="button"
-                          onClick={() => setSelectedSlot(slot.time)}
-                          style={{
-                            padding: "10px 6px",
-                            border: selected
-                              ? "1px solid #2563eb"
-                              : "1px solid #cbd5e1",
-                            borderRadius: "8px",
-                            background: selected ? "#2563eb" : "#fff",
-                            color: selected ? "#fff" : "#334155",
-                            cursor: "pointer",
-                            fontWeight: selected ? 700 : 500,
-                          }}
-                        >
-                          {slot.time}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {selectedSlot && (
-                <div
-                  style={{
-                    marginBottom: "18px",
-                    padding: "13px",
-                    borderRadius: "9px",
-                    background: "#eff6ff",
-                    color: "#1e40af",
-                    fontSize: "14px",
-                    lineHeight: 1.8,
-                  }}
-                >
-                  <strong>Booking summary</strong>
-                  <div>Recipient: {selectedPerson === "self"
-                    ? user?.name || "Myself"
-                    : familyMembers.find(
-                        (member) => member._id === selectedPerson
-                      )?.name || "Family member"}</div>
-                  <div>Vaccine: {selectedVaccine?.name || "—"}</div>
-                  <div>Dose: {doseNumber ? `Dose ${doseNumber}` : "—"}</div>
-                  <div>Clinic: {selectedClinic?.name || "—"}</div>
-                  <div>Date: {date}</div>
-                  <div>Time: {selectedSlot}</div>
                 </div>
               )}
-
-              <button
-                type="submit"
-                disabled={
-                  booking ||
-                  !clinic ||
-                  !vaccine ||
-                  !doseNumber ||
-                  !date ||
-                  !selectedSlot
-                }
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  border: "none",
-                  borderRadius: "9px",
-                  background:
-                    booking ||
-                    !clinic ||
-                    !vaccine ||
-                    !doseNumber ||
-                    !date ||
-                    !selectedSlot
-                      ? "#cbd5e1"
-                      : "#2563eb",
-                  color: "#fff",
-                  fontWeight: 700,
-                  cursor:
-                    booking ||
-                    !clinic ||
-                    !vaccine ||
-                    !doseNumber ||
-                    !date ||
-                    !selectedSlot
-                      ? "not-allowed"
-                      : "pointer",
-                }}
-              >
-                {booking ? "Booking..." : "Confirm appointment"}
-              </button>
-            </form>
-          </section>
-
-          {/* Appointment list on the right */}
-          <section
-            style={{
-              minWidth: 0,
-              padding: "22px",
-              borderRadius: "14px",
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "12px",
-                flexWrap: "wrap",
-                marginBottom: "20px",
-              }}
-            >
-              <div>
-                <p className="section-label">MY APPOINTMENTS</p>
-                <h2 style={{ margin: 0 }}>Appointment status</h2>
-              </div>
-              <span className="worker-count">
-                {myAppointments.length} total
-              </span>
             </div>
 
-            {appointmentLoading ? (
-              <div className="empty-workers">
-                <p>Loading appointments...</p>
+            {selectedSlot && (
+              <div className="cz-summary">
+                <h4>Booking summary</h4>
+                <dl>
+                  <dt>Recipient</dt>
+                  <dd>{recipientName}</dd>
+                  <dt>Vaccine</dt>
+                  <dd>{selectedVaccine?.name || "—"}</dd>
+                  <dt>Dose</dt>
+                  <dd>{doseNumber ? `Dose ${doseNumber}` : "—"}</dd>
+                  <dt>Clinic</dt>
+                  <dd>{selectedClinic?.name || "—"}</dd>
+                  <dt>Date</dt>
+                  <dd>{date}</dd>
+                  <dt>Time</dt>
+                  <dd>{selectedSlot}</dd>
+                </dl>
               </div>
-            ) : myAppointments.length === 0 ? (
-              <div className="empty-workers">
-                <div className="empty-icon">📅</div>
-                <h3>No appointments yet</h3>
-                <p>Your booked appointments will appear here.</p>
-              </div>
-            ) : (
-              <>
-                <h3 style={{ color: "#334155", margin: "0 0 12px" }}>
-                  Upcoming
-                </h3>
-
-                <div style={{ display: "grid", gap: "12px" }}>
-                  {upcomingAppointments.length > 0 ? (
-                    upcomingAppointments.map(renderAppointmentCard)
-                  ) : (
-                    <p style={{ color: "#64748b" }}>
-                      No upcoming appointments.
-                    </p>
-                  )}
-                </div>
-
-                <h3 style={{ color: "#334155", margin: "26px 0 12px" }}>
-                  Past and cancelled
-                </h3>
-
-                <div style={{ display: "grid", gap: "12px" }}>
-                  {pastAppointments.length > 0 ? (
-                    pastAppointments.map(renderAppointmentCard)
-                  ) : (
-                    <p style={{ color: "#64748b" }}>
-                      No past appointments.
-                    </p>
-                  )}
-                </div>
-              </>
             )}
-          </section>
-        </div>
-      </main>
+
+            <button
+              type="submit"
+              className="cz-btn cz-btn--primary cz-btn--block"
+              disabled={formIncomplete}
+            >
+              {booking ? "Booking…" : "Confirm appointment"}
+            </button>
+          </form>
+        </section>
+
+        {/* Appointment list on the right */}
+        <section className="cz-card cz-card--soft">
+          <div className="cz-card__head">
+            <div>
+              <p className="cz-eyebrow">My appointments</p>
+              <h2>Appointment status</h2>
+            </div>
+            <span className="cz-badge cz-badge--blue">{myAppointments.length} total</span>
+          </div>
+
+          {appointmentLoading ? (
+            <div className="cz-loading">
+              <div className="cz-spinner" />
+              <p>Loading appointments…</p>
+            </div>
+          ) : myAppointments.length === 0 ? (
+            <EmptyState
+              icon="calendar"
+              title="No appointments yet"
+              text="Your booked appointments will appear here."
+            />
+          ) : (
+            <>
+              <h3 className="cz-subtitle">Upcoming</h3>
+              <div className="cz-stack" style={{ gap: 12 }}>
+                {upcomingAppointments.length > 0 ? (
+                  upcomingAppointments.map(renderAppointmentCard)
+                ) : (
+                  <p className="cz-hint">No upcoming appointments.</p>
+                )}
+              </div>
+
+              <h3 className="cz-subtitle" style={{ marginTop: 26 }}>
+                Past and cancelled
+              </h3>
+              <div className="cz-stack" style={{ gap: 12 }}>
+                {pastAppointments.length > 0 ? (
+                  pastAppointments.map(renderAppointmentCard)
+                ) : (
+                  <p className="cz-hint">No past appointments.</p>
+                )}
+              </div>
+            </>
+          )}
+        </section>
+      </div>
 
       {/* Asks about the booking experience (only when the server created a prompt) */}
       <FeedbackPopup

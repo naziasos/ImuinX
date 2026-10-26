@@ -50,7 +50,7 @@ function whoFor(item) {
   return item.citizenId?.name || "Vaccinated person";
 }
 
-function Feedback({ onBack }) {
+function Feedback() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -176,9 +176,7 @@ function Feedback({ onBack }) {
     <div className="fb-page">
       <div className="fb-shell">
         <header className="fb-top">
-          <button className="fb-back" onClick={onBack}>
-            ← Back to dashboard
-          </button>
+          
           <div className="fb-title">
             <h1>Your feedback</h1>
             <p>Tell us about your visits, bookings and in-house requests and see how clinics respond.</p>
