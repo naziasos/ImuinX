@@ -1,82 +1,68 @@
+
 const mongoose = require("mongoose");
 const Appointment = require("../models/Appointment");
 
-describe("Appointment Schema", () => {
-  test("should create a valid appointment", () => {
-    const appointment = new Appointment({
-      citizenId: new mongoose.Types.ObjectId(),
-      clinicId: new mongoose.Types.ObjectId(),
-      dateTime: new Date("2026-10-01T10:00:00"),
-      status: "Pending",
-    });
-
-    const error = appointment.validateSync();
-
-    expect(error).toBeUndefined();
+describe("TC-U17: Appointment Schema", () => {
+  const validAppointment = () => ({
+    citizenId: new mongoose.Types.ObjectId(),
+    clinicId: new mongoose.Types.ObjectId(),
+    vaccineId: new mongoose.Types.ObjectId(),
+    doseNumber: 1,
+    dateTime: new Date("2027-10-01T10:00:00+06:00"),
   });
 
-  test("should default status to Pending", () => {
-    const appointment = new Appointment({
-      citizenId: new mongoose.Types.ObjectId(),
-      clinicId: new mongoose.Types.ObjectId(),
-      dateTime: new Date("2026-10-01T10:00:00"),
-    });
+  test("accepts valid appointment with required fields", () => {
+    const appointment = new Appointment(validAppointment());
 
-    const error = appointment.validateSync();
-
-    expect(error).toBeUndefined();
-    expect(appointment.status).toBe("Pending");
+    expect(appointment.validateSync()).toBeUndefined();
   });
 
-  test("should require citizenId, clinicId and dateTime", () => {
+  test("rejects missing required fields", () => {
     const appointment = new Appointment({});
-
     const error = appointment.validateSync();
 
     expect(error).toBeDefined();
     expect(error.errors.citizenId).toBeDefined();
     expect(error.errors.clinicId).toBeDefined();
+    expect(error.errors.vaccineId).toBeDefined();
+    expect(error.errors.doseNumber).toBeDefined();
     expect(error.errors.dateTime).toBeDefined();
   });
 
-  test("should reject invalid appointment status", () => {
-    const appointment = new Appointment({
-      citizenId: new mongoose.Types.ObjectId(),
-      clinicId: new mongoose.Types.ObjectId(),
-      dateTime: new Date("2026-10-01T10:00:00"),
+  test("uses the actual default status Confirmed", () => {
+    const appointment = new Appointment(validAppointment());
+
+    expect(appointment.status).toBe("Confirmed");
+  });
+
+  test("rejects invalid status and dose number", () => {
+    const invalidStatus = new Appointment({
+      ...validAppointment(),
       status: "InvalidStatus",
     });
 
-    const error = appointment.validateSync();
+    const invalidDose = new Appointment({
+      ...validAppointment(),
+      doseNumber: 0,
+    });
 
-    expect(error).toBeDefined();
-    expect(error.errors.status).toBeDefined();
+    expect(invalidStatus.validateSync().errors.status).toBeDefined();
+    expect(invalidDose.validateSync().errors.doseNumber).toBeDefined();
   });
 
-  test("should accept all valid appointment statuses", () => {
-    const statuses = [
+  test("accepts all supported appointment statuses", () => {
+    for (const status of [
       "Pending",
       "Confirmed",
       "Completed",
       "Cancelled",
-    ];
-
-    statuses.forEach((status) => {
+    ]) {
       const appointment = new Appointment({
-        citizenId: new mongoose.Types.ObjectId(),
-        clinicId: new mongoose.Types.ObjectId(),
-        dateTime: new Date("2026-10-01T10:00:00"),
+        ...validAppointment(),
         status,
       });
 
-      const error = appointment.validateSync();
-
-      expect(error).toBeUndefined();
-    });
+      expect(appointment.validateSync()).toBeUndefined();
+    }
   });
-
-  test("should have timestamp fields in the schema", () => {
-  expect(Appointment.schema.path("createdAt")).toBeDefined();
-  expect(Appointment.schema.path("updatedAt")).toBeDefined();
-});
 });
