@@ -31,14 +31,18 @@ function formatDateTime(value) {
   });
 }
 
-function BookAppointment({ onOpenFeedback, recoveryContext = null }) {
+function BookAppointment({
+  onOpenFeedback,
+  recoveryContext = null,
+  preselectedClinicId = "",
+}) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const citizenId = user?.id || user?._id;
   const token = localStorage.getItem("token");
 
   // Booking form
   const [selectedPerson, setSelectedPerson] = useState("self");
-  const [clinic, setClinic] = useState("");
+  const [clinic, setClinic] = useState(preselectedClinicId || "");
   const [vaccine, setVaccine] = useState("");
   const [doseNumber, setDoseNumber] = useState("");
   const [date, setDate] = useState("");

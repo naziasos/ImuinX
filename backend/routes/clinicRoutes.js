@@ -38,7 +38,38 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   );
 }
 
+// Validate an optional latitude/longitude pair.
+// Returns { ok, latitude, longitude, message }. Both empty => ok with nulls.
+function parseCoordinates(rawLat, rawLng) {
+  const isBlank = (v) => v === undefined || v === null || String(v).trim() === "";
+
+  if (isBlank(rawLat) && isBlank(rawLng)) {
+    return { ok: true, latitude: null, longitude: null };
+  }
+
+  if (isBlank(rawLat) || isBlank(rawLng)) {
+    return { ok: false, message: "Provide both latitude and longitude, or neither" };
+  }
+
+  const latitude = Number(rawLat);
+  const longitude = Number(rawLng);
+
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return { ok: false, message: "Latitude must be -90..90 and longitude -180..180" };
+  }
+
+  return { ok: true, latitude, longitude };
+}
+
 // Get nearby active clinics, sorted nearest first.
+// Optional query params: radius (km), limit (max results).
 router.get("/nearby", async (req, res) => {
   try {
     const latitude = Number(req.query.latitude);
@@ -93,8 +124,21 @@ router.get("/nearby", async (req, res) => {
       })
       .sort((a, b) => a.distance - b.distance);
 
+    const radius = Number(req.query.radius);
+    const limit = Number.parseInt(req.query.limit, 10);
+
+    let result = nearbyClinics;
+
+    if (Number.isFinite(radius) && radius > 0) {
+      result = result.filter((clinic) => clinic.distance <= radius);
+    }
+
+    if (Number.isFinite(limit) && limit > 0) {
+      result = result.slice(0, limit);
+    }
+
     return res.status(200).json({
-      clinics: nearbyClinics,
+      clinics: result,
     });
   } catch (error) {
     console.error("Nearby clinics error:", error.message);
@@ -123,6 +167,65 @@ router.get("/", async (req, res) => {
     });
   }
 });
+
+// Admin: clinics that cannot appear in "nearby" because coordinates are missing.
+router.get(
+  "/missing-coordinates",
+  authMiddleware,
+  adminMiddleware,
+  async (req, res) => {
+    try {
+      const clinics = await Clinic.find({
+        $or: [
+          { latitude: { $not: { $type: "number" } } },
+          { longitude: { $not: { $type: "number" } } },
+        ],
+      }).select("name location contact status");
+
+      res.json({ count: clinics.length, clinics });
+    } catch (error) {
+      console.error("Missing coordinates error:", error.message);
+      res.status(500).json({ message: "Failed to fetch clinics" });
+    }
+  }
+);
+
+// Admin: set or fix a clinic's coordinates.
+router.patch(
+  "/:id/coordinates",
+  authMiddleware,
+  adminMiddleware,
+  async (req, res) => {
+    try {
+      if (!require("mongoose").Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ message: "Invalid clinic ID" });
+      }
+
+      const coords = parseCoordinates(req.body.latitude, req.body.longitude);
+
+      if (!coords.ok || coords.latitude === null) {
+        return res.status(400).json({
+          message: coords.message || "Valid latitude and longitude are required",
+        });
+      }
+
+      const clinic = await Clinic.findByIdAndUpdate(
+        req.params.id,
+        { $set: { latitude: coords.latitude, longitude: coords.longitude } },
+        { new: true }
+      ).select("name location latitude longitude");
+
+      if (!clinic) {
+        return res.status(404).json({ message: "Clinic not found" });
+      }
+
+      res.json({ message: "Clinic coordinates updated", clinic });
+    } catch (error) {
+      console.error("Update coordinates error:", error.message);
+      res.status(500).json({ message: "Failed to update coordinates" });
+    }
+  }
+);
 
 // Test route
 router.get(
@@ -153,7 +256,16 @@ router.post(
         contact,
         adminName,
         adminEmail,
+        latitude: rawLatitude,
+        longitude: rawLongitude,
       } = req.body;
+
+      // Optional coordinates (used by the nearby-clinic finder)
+      const coords = parseCoordinates(rawLatitude, rawLongitude);
+
+      if (!coords.ok) {
+        return res.status(400).json({ message: coords.message });
+      }
 
       // 1. Validate required fields
       if (
@@ -213,6 +325,8 @@ router.post(
         name: cleanClinicName,
         location: cleanLocation,
         contact: cleanContact,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
         clinicAdmin: createdUser._id,
         status: "Active",
       });
@@ -239,6 +353,8 @@ router.post(
           name: createdClinic.name,
           location: createdClinic.location,
           contact: createdClinic.contact,
+          latitude: createdClinic.latitude,
+          longitude: createdClinic.longitude,
           status: createdClinic.status,
           clinicAdmin: {
             id: createdUser._id,

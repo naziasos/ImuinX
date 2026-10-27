@@ -41,6 +41,7 @@ function CitizenDashboard({
   onEditProfile,
   onFamilyAccount,
   onAppointments,
+  onNearbyClinics,
   onCertificate,
   onVaccinations,
   onFeedback,
@@ -126,6 +127,7 @@ function CitizenDashboard({
   const firstName = (user?.name || "there").split(" ")[0];
 
   const quickActions = [
+    { label: "Nearby clinics", icon: "pin", onClick: onNearbyClinics },
     { label: "Book appointment", icon: "calendar", onClick: onAppointments },
     { label: "My certificate", icon: "badge", onClick: onCertificate },
     { label: "Family account", icon: "users", onClick: onFamilyAccount },

@@ -23,6 +23,7 @@ const NAV_GROUPS = [
     title: "Vaccination",
     items: [
       { page: "myVaccinations", label: "My Vaccinations", icon: "syringe" },
+      { page: "nearbyClinics", label: "Nearby Clinics", icon: "pin" },
       { page: "bookAppointment", label: "Appointments", icon: "calendar" },
       { page: "myCertificate", label: "My Certificate", icon: "badge" },
     ],

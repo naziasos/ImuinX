@@ -27,6 +27,7 @@ import VaccineInventory from "./pages/VaccineInventory";
 import FamilyAccount from "./pages/citizen/FamilyAccount";
 import EditProfile from "./pages/citizen/EditProfile";
 import MyCertificate from "./pages/citizen/MyCertificate";
+import NearbyClinics from "./pages/citizen/NearbyClinics";
 import MyVaccinationRecord from "./pages/citizen/MyVaccinationRecord";
 import Verify from "./pages/Verify";
 
@@ -55,6 +56,9 @@ function App() {
 
   // Shared context for worker dose logging and citizen recovery booking.
   const [appointmentForDose, setAppointmentForDose] = useState(null);
+
+  // Clinic chosen on the Nearby Clinics page, pre-selected in the booking form.
+  const [bookingClinicId, setBookingClinicId] = useState("");
 
   const [currentUser, setCurrentUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
@@ -96,6 +100,14 @@ function App() {
   // Normal appointment booking must not reuse an old recovery record.
   const handleOpenAppointments = () => {
     setAppointmentForDose(null);
+    setBookingClinicId("");
+    setPage("bookAppointment");
+  };
+
+  // "Book" on a nearby clinic card: open booking with that clinic selected.
+  const handleBookNearbyClinic = (clinic) => {
+    setAppointmentForDose(null);
+    setBookingClinicId(clinic?.id || "");
     setPage("bookAppointment");
   };
 
@@ -104,6 +116,7 @@ function App() {
   const CITIZEN_PAGES = [
     "citizenDashboard",
     "myVaccinations",
+    "nearbyClinics",
     "bookAppointment",
     "myCertificate",
     "familyAccount",
@@ -182,6 +195,7 @@ function App() {
             page !== "familyAccount" &&
             page !== "editProfile" &&
             page !== "bookAppointment" &&
+            page !== "nearbyClinics" &&
             page !== "myCertificate" &&
             page !== "myVaccinations" &&
             page !== "verifyCertificate" &&
@@ -311,6 +325,7 @@ function App() {
                   onEditProfile={() => setPage("editProfile")}
                   onFamilyAccount={() => setPage("familyAccount")}
                   onAppointments={handleOpenAppointments}
+                  onNearbyClinics={() => setPage("nearbyClinics")}
                   onCertificate={() => setPage("myCertificate")}
                   onVaccinations={() => setPage("myVaccinations")}
                   onFeedback={() => setPage("feedback")}
@@ -329,8 +344,13 @@ function App() {
               {page === "bookAppointment" && (
                 <BookAppointment
                   recoveryContext={appointmentForDose}
+                  preselectedClinicId={bookingClinicId}
                   onOpenFeedback={() => setPage("feedback")}
                 />
+              )}
+
+              {page === "nearbyClinics" && (
+                <NearbyClinics onBookAppointment={handleBookNearbyClinic} />
               )}
 
               {page === "myCertificate" && (

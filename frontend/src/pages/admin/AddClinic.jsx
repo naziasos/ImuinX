@@ -6,6 +6,8 @@ function AddClinic({ onBack, onClinicCreated }) {
     clinicName: "",
     location: "",
     contact: "",
+    latitude: "",
+    longitude: "",
     adminName: "",
     adminEmail: "",
   });
@@ -53,6 +55,8 @@ function AddClinic({ onBack, onClinicCreated }) {
         clinicName: "",
         location: "",
         contact: "",
+        latitude: "",
+        longitude: "",
         adminName: "",
         adminEmail: "",
       });
@@ -211,6 +215,48 @@ function AddClinic({ onBack, onClinicCreated }) {
               </div>
             </div>
 
+
+            {/* MAP COORDINATES (optional, powers "Nearby Clinics") */}
+            <div className="form-grid">
+              <div className="input-group">
+                <label>Latitude (optional)</label>
+                <div className="input-wrapper">
+                  <span>⌖</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="-90"
+                    max="90"
+                    name="latitude"
+                    value={formData.latitude}
+                    onChange={handleChange}
+                    placeholder="e.g. 23.8103"
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label>Longitude (optional)</label>
+                <div className="input-wrapper">
+                  <span>⌖</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="-180"
+                    max="180"
+                    name="longitude"
+                    value={formData.longitude}
+                    onChange={handleChange}
+                    placeholder="e.g. 90.4125"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <p className="coordinate-hint">
+              Right-click the clinic on Google Maps and click the numbers to copy
+              them. Clinics without coordinates will not appear in Nearby Clinics.
+            </p>
 
             {/* CLINIC ADMIN */}
             <div className="form-section-title admin-title">

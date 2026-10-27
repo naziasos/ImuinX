@@ -1,0 +1,108 @@
+/* Nearby Clinics: blue -> green theme, built on the citizen (cz-) tokens */
+
+.nc-toolbar { display: grid; gap: 14px; padding: 16px; margin-bottom: 16px; }
+
+.nc-search {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 6px 6px 14px;
+  border: 1.5px solid var(--cz-line); border-radius: 14px; background: #fff;
+  color: var(--cz-teal-600);
+  transition: border-color .15s, box-shadow .15s;
+}
+.nc-search:focus-within { border-color: var(--cz-teal-600); box-shadow: 0 0 0 4px rgba(13,148,136,.14); }
+.nc-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 15px; color: var(--cz-ink); padding: 8px 0; }
+
+.nc-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; justify-content: space-between; }
+.nc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.nc-chip {
+  padding: 7px 14px; border-radius: 999px; border: 1.5px solid var(--cz-line);
+  background: #fff; color: var(--cz-text); font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: all .15s ease;
+}
+.nc-chip:hover { border-color: var(--cz-teal-600); color: var(--cz-teal-700); transform: translateY(-1px); }
+.nc-chip.is-active { background: var(--cz-grad); border-color: transparent; color: #fff; box-shadow: 0 8px 16px -8px rgba(37,99,235,.6); }
+.nc-filter-input { min-width: 200px; flex: 1; max-width: 280px; padding: 9px 14px; border: 1.5px solid var(--cz-line); border-radius: 12px; font-size: 14px; outline: 0; }
+.nc-filter-input:focus { border-color: var(--cz-teal-600); }
+.nc-origin { margin: 0; font-size: 13px; color: var(--cz-muted); }
+.nc-origin strong { color: var(--cz-teal-700); }
+
+.nc-alert {
+  display: flex; gap: 10px; align-items: flex-start; margin-bottom: 16px; padding: 12px 16px;
+  border-radius: 12px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 14px;
+}
+
+.nc-layout { display: grid; grid-template-columns: minmax(320px, 420px) 1fr; gap: 18px; align-items: start; }
+.nc-list { display: grid; gap: 12px; max-height: 640px; overflow-y: auto; padding: 2px 6px 6px 2px; scroll-behavior: smooth; }
+.nc-count { margin: 0; font-size: 13px; font-weight: 700; color: var(--cz-muted); letter-spacing: .02em; }
+
+.nc-card {
+  position: relative; display: flex; gap: 14px; padding: 16px;
+  background: #fff; border: 1.5px solid var(--cz-line); border-radius: var(--cz-radius);
+  box-shadow: var(--cz-shadow); cursor: pointer;
+  animation: nc-rise .4s ease both;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.nc-card:hover { transform: translateY(-2px); border-color: #bfe3dc; box-shadow: var(--cz-shadow-lg); }
+.nc-card.is-active { border-color: var(--cz-teal-600); box-shadow: 0 0 0 4px rgba(13,148,136,.14), var(--cz-shadow-lg); background: linear-gradient(135deg,#f8fbff,#f3fdf9); }
+.nc-card__num {
+  flex-shrink: 0; width: 34px; height: 34px; display: grid; place-items: center;
+  border-radius: 10px; background: var(--cz-grad); color: #fff; font-weight: 800; font-size: 14px;
+}
+.nc-card__body { min-width: 0; flex: 1; }
+.nc-card__top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.nc-card h3 { margin: 0; font-size: 16px; font-weight: 800; color: var(--cz-ink); line-height: 1.3; }
+.nc-distance {
+  flex-shrink: 0; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 800;
+  background: var(--cz-green-50); color: var(--cz-green-600); border: 1px solid #bbf0d9;
+}
+.nc-card__addr { margin: 6px 0 4px; font-size: 14px; color: var(--cz-text); line-height: 1.45; }
+.nc-card__time { margin: 0 0 12px; display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--cz-muted); }
+.nc-card__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.nc-skeleton {
+  height: 128px; border-radius: var(--cz-radius);
+  background: linear-gradient(100deg,#eef3f8 30%,#f9fcff 50%,#eef3f8 70%); background-size: 200% 100%;
+  animation: nc-shimmer 1.2s linear infinite;
+}
+
+.nc-map-wrap { position: sticky; top: calc(var(--cz-nav-h) + 16px); border-radius: 20px; overflow: hidden; border: 1.5px solid var(--cz-line); box-shadow: var(--cz-shadow-lg); background: #e8f1f6; }
+.nc-map { height: 640px; width: 100%; z-index: 0; }
+.nc-map-loading {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 500;
+  display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px;
+  background: #fff; box-shadow: var(--cz-shadow); font-size: 13px; font-weight: 700; color: var(--cz-teal-700);
+}
+.nc-pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--cz-green-500); animation: nc-ping 1s ease-out infinite; }
+
+/* Leaflet markers */
+.nc-marker-wrap { background: transparent; border: 0; }
+.nc-marker {
+  position: relative; display: grid; place-items: center; width: 38px; height: 38px;
+  border-radius: 50% 50% 50% 0; transform: rotate(-45deg); transform-origin: 50% 50%;
+  background: var(--cz-grad); border: 3px solid #fff; box-shadow: 0 8px 16px -4px rgba(15,23,42,.45);
+  transition: transform .2s ease;
+}
+.nc-marker b { transform: rotate(45deg); color: #fff; font-size: 13px; font-weight: 800; }
+.nc-marker.is-active { transform: rotate(-45deg) scale(1.25); background: linear-gradient(135deg,#059669,#0d9488); }
+.nc-you { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: rgba(37,99,235,.2); animation: nc-ping-lg 1.8s ease-out infinite; }
+.nc-you i { width: 14px; height: 14px; border-radius: 50%; background: var(--cz-blue-600); border: 3px solid #fff; box-shadow: 0 2px 6px rgba(37,99,235,.6); }
+
+.nc-spin { animation: nc-rotate .9s linear infinite; }
+
+@keyframes nc-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes nc-shimmer { to { background-position: -200% 0; } }
+@keyframes nc-ping { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,.6); } 100% { box-shadow: 0 0 0 10px rgba(16,185,129,0); } }
+@keyframes nc-ping-lg { 0% { box-shadow: 0 0 0 0 rgba(37,99,235,.45); } 100% { box-shadow: 0 0 0 16px rgba(37,99,235,0); } }
+@keyframes nc-rotate { to { transform: rotate(360deg); } }
+
+@media (max-width: 960px) {
+  .nc-layout { grid-template-columns: 1fr; }
+  .nc-map-wrap { position: relative; top: 0; order: -1; }
+  .nc-map { height: 340px; }
+  .nc-list { max-height: none; overflow: visible; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nc-card, .nc-skeleton, .nc-pulse, .nc-you, .nc-spin { animation: none; }
+  .nc-card, .nc-chip, .nc-marker { transition: none; }
+}
