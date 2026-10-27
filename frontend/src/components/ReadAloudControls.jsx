@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import useTextToSpeech from "../hooks/useTextToSpeech";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 export default function ReadAloudControls({ guidance = "" }) {
   const {
@@ -14,13 +15,20 @@ export default function ReadAloudControls({ guidance = "" }) {
     error,
   } = useTextToSpeech();
 
-  const [language, setLanguage] = useState("en");
+  // Starts in the language the app is currently shown in; the picker below
+  // lets the user read the same guidance in English or Bangla.
+  const { language: appLanguage } = useLanguage();
+  const [pickedLanguage, setPickedLanguage] = useState(null);
+  const language = pickedLanguage ?? appLanguage;
 
   const handleRead = () => {
-    const instruction =
-      typeof guidance === "string"
-        ? guidance.trim()
-        : guidance[language]?.trim();
+    // A plain string is English-only guidance, so it is always read in English.
+    if (typeof guidance === "string") {
+      speak(guidance.trim() || "Instructions for this page have not been added yet.", "en");
+      return;
+    }
+
+    const instruction = guidance[language]?.trim();
 
     if (!instruction) {
       speak(
@@ -44,7 +52,7 @@ export default function ReadAloudControls({ guidance = "" }) {
         <span>Language</span>
         <select
           value={language}
-          onChange={(event) => setLanguage(event.target.value)}
+          onChange={(event) => setPickedLanguage(event.target.value)}
           className="rounded-md border border-slate-300 p-2"
           disabled={speaking}
         >

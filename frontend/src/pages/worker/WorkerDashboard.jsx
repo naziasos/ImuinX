@@ -1,6 +1,17 @@
-import React, { useEffect, useState } from "react";
-import "../clinicAdmin/ClinicAdminDashboard.css";
+import { useEffect, useState } from "react";
 import { api, errorMessage } from "../../services/api";
+import { useLanguage } from "../../i18n/LanguageProvider";
+import DashboardLayout from "../../components/DashboardLayout";
+import Icon from "../../components/Icons";
+import StatCard from "../../components/StatCard";
+import EmptyState from "../../components/EmptyState";
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
 
 
 function WorkerDashboard({
@@ -11,6 +22,7 @@ function WorkerDashboard({
   onGuestCheckIn,
   onEditProfile,
 }) {
+  const { t } = useLanguage();
 
   const [pendingRequests, setPendingRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
@@ -57,362 +69,208 @@ function WorkerDashboard({
     }
   };
 
+  const displayName = user?.name || "Worker";
+
+  const menuGroups = [
+    {
+      title: "Main Menu",
+      items: [
+        { key: "dashboard", label: "Dashboard", icon: "dashboard" },
+        { key: "editProfile", label: "Edit Profile", icon: "user", onClick: onEditProfile },
+      ],
+    },
+    {
+      title: "Vaccination",
+      items: [
+        { key: "appointments", label: "Appointments", icon: "calendar", onClick: onAppointments },
+        { key: "guestCheckIn", label: "Campaign Check-in", icon: "idcard", onClick: onGuestCheckIn },
+        { key: "logDose", label: "Log Dose", icon: "syringe", onClick: onLogDose },
+        { key: "showWork", label: "Show Work", icon: "clipboard", onClick: onShowWork },
+      ],
+    },
+  ];
+
+  const quickActions = [
+    { label: "Log Dose", icon: "syringe", onClick: onLogDose },
+    { label: "Appointments", icon: "calendar", onClick: onAppointments },
+    { label: "Campaign Check-in", icon: "idcard", onClick: onGuestCheckIn },
+    { label: "Show Work", icon: "clipboard", onClick: onShowWork },
+    { label: "Edit Profile", icon: "user", onClick: onEditProfile },
+  ];
+
   return (
-    <div className="clinic-dashboard">
-
-      {/* Sidebar */}
-      <aside className="clinic-sidebar">
-
-        <div>
-          {/* Logo */}
-          <div className="clinic-logo">
-            <div className="clinic-logo-icon">
-              +
-            </div>
-
-            <div>
-              <strong>ImuniX</strong>
-              <span>Vaccination System</span>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="clinic-nav">
-
-            <p className="clinic-nav-title">
-              MAIN MENU
-            </p>
-
-            <button className="clinic-nav-item active">
-              <span>📊</span>
-              Dashboard
-            </button>
-
-            <button
-              className="clinic-nav-item"
-              onClick={onEditProfile}
-            >
-              <span>👤</span>
-              Edit Profile
-            </button>
-
-
-            <button className="clinic-nav-item" onClick={onAppointments}>
-              <span>📅</span>
-              Appointments
-            </button>
-
-            <button className="clinic-nav-item" onClick={onGuestCheckIn}>
-              <span>🪪</span>
-              Campaign Check-in
-            </button>
-
-            <button className="clinic-nav-item" onClick={onLogDose}>
-              <span>💉</span>
-              Log Dose
-            </button>
-
-
-            <button
-              className="clinic-nav-item"
-              onClick={onShowWork}
-            >
-              <span>📋</span>
-              Show Work
-            </button>
-
-
-
-
-
-
-
-            <p className="clinic-nav-title system-title">
-              SYSTEM
-            </p>
-
-            <button className="clinic-nav-item">
-              <span>⚙️</span>
-              Settings
-            </button>
-
-          </nav>
+    <DashboardLayout
+      ariaLabel={t("Health worker menu")}
+      user={{ name: displayName, subtitle: t("Health Worker") }}
+      onProfileClick={onEditProfile}
+      groups={menuGroups}
+      activeKey="dashboard"
+      onLogout={handleLogout}
+    >
+      {/* ---------- Welcome banner ---------- */}
+      <section className="cz-hero">
+        <div className="cz-hero__text">
+          <p className="cz-hero__eyebrow">{t(getGreeting())} 👋</p>
+          <h1>{t("Worker Dashboard")}</h1>
+          <p>
+            {t("View today's appointments and manage vaccinations for your clinic.")}
+          </p>
         </div>
 
-        <button
-          className="clinic-logout"
-          onClick={handleLogout}
-        >
-          <span>↪</span>
-          Logout
-        </button>
+        <div className="cz-hero__actions">
+          <button type="button" className="cz-btn cz-btn--light" onClick={onLogDose}>
+            <Icon name="syringe" size={18} /> {t("Log Dose")}
+          </button>
+          <button type="button" className="cz-btn cz-btn--outline-light" onClick={onAppointments}>
+            <Icon name="calendar" size={16} /> {t("Appointments")}
+          </button>
+        </div>
+      </section>
 
-      </aside>
+      {/* ---------- Stats ---------- */}
+      <section className="cz-stats" aria-label={t("Summary")}>
+        <StatCard
+          icon="calendar"
+          tone="blue"
+          label={t("Today's Appointments")}
+          value={0}
+          hint={t("Nothing scheduled today")}
+        />
+        <StatCard
+          icon="syringe"
+          tone="teal"
+          label={t("Doses Administered")}
+          value={0}
+          hint={t("No records yet")}
+        />
+        <StatCard
+          icon="home"
+          tone="amber"
+          label={t("Pending In-House Requests")}
+          value={pendingRequests.length}
+          hint={t("Waiting for you")}
+          loading={loadingRequests}
+        />
+      </section>
 
-      {/* Main */}
-      <main className="clinic-main">
-
-        {/* Header */}
-        <header className="clinic-header">
-
-          <div>
-            <p className="clinic-breadcrumb">
-              Dashboard
-            </p>
-
-            <h1>
-              Worker Dashboard
-            </h1>
-
-            <p className="clinic-description">
-              View today's appointments and manage vaccinations for your
-              clinic.
-            </p>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-
-            <div className="clinic-profile">
-              <div className="clinic-profile-avatar">
-                {user?.name?.charAt(0)?.toUpperCase() || "W"}
-              </div>
-
+      <div className="cz-grid-main">
+        <div className="cz-stack">
+          {/* ---------- Pending in-house requests ---------- */}
+          <section className="cz-card">
+            <div className="cz-card__head">
               <div>
-                <strong>{user?.name || "Worker"}</strong>
-                <span>Health Worker</span>
+                <p className="cz-eyebrow">{t("IN-HOUSE SERVICE")}</p>
+                <h2>{t("Pending In-House Requests")}</h2>
+                <p>{t("Citizens waiting for a health worker to accept their request.")}</p>
               </div>
             </div>
-          </div>
 
-        </header>
-
-        {/* Statistics */}
-        <section className="clinic-stats">
-
-          <div className="clinic-stat-card">
-            <div className="clinic-stat-icon">
-              📅
-            </div>
-
-            <div>
-              <p>Today's Appointments</p>
-              <h2>0</h2>
-              <span>
-                Nothing scheduled today
-              </span>
-            </div>
-          </div>
-
-          <div className="clinic-stat-card">
-            <div className="clinic-stat-icon">
-              💉
-            </div>
-
-            <div>
-              <p>Doses Administered</p>
-              <h2>0</h2>
-              <span>
-                No records yet
-              </span>
-            </div>
-          </div>
-
-        </section>
-        {/* Pending In-House Requests */}
-        <section className="workers-section">
-
-          <div className="workers-header">
-
-            <div>
-              <p className="section-label">
-                IN-HOUSE SERVICE
-              </p>
-
-              <h2>
-                Pending In-House Requests
-              </h2>
-
-              <p>
-                Citizens waiting for a health worker to accept their request.
-              </p>
-            </div>
-
-          </div>
-
-          {loadingRequests ? (
-            <div className="empty-workers">
-              <div className="empty-icon">
-                ⏳
+            {loadingRequests ? (
+              <div className="cz-loading">
+                <div className="cz-spinner" />
+                <p>{t("Loading requests...")}</p>
               </div>
-
-              <h3>
-                Loading requests...
-              </h3>
-
-              <p>
-                Please wait while we fetch pending requests.
-              </p>
-            </div>
-          ) : requestError ? (
-            <div className="empty-workers">
-              <div className="empty-icon">
-                ⚠️
-              </div>
-
-              <h3>
-                Unable to load requests
-              </h3>
-
-              <p>
-                {requestError}
-              </p>
-            </div>
-          ) : pendingRequests.length === 0 ? (
-            <div className="empty-workers">
-
-              <div className="empty-icon">
-                🏠
-              </div>
-
-              <h3>
-                No pending requests
-              </h3>
-
-              <p>
-                There are no in-house vaccination requests waiting for you.
-              </p>
-
-            </div>
-          ) : (
-            <div
-              style={{
-                display: "grid",
-                gap: "16px",
-              }}
-            >
-              {pendingRequests.map((request) => (
-                <div
-                  key={request._id}
-                  style={{
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "14px",
-                    padding: "20px",
-                    background: "#ffffff",
-                  }}
-                >
-
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      gap: "20px",
-                    }}
-                  >
-
-                    <div>
-                      <h3 style={{ marginBottom: "8px" }}>
-                        {request.citizen?.name || "Citizen"}
-                      </h3>
-
-                      <p>
-                        <strong>Address:</strong>{" "}
-                        {request.address || "Not provided"}
-                      </p>
-
-                      <p>
-                        <strong>Preferred Date:</strong>{" "}
-                        {request.preferredDate
-                          ? new Date(request.preferredDate).toLocaleDateString()
-                          : "Not specified"}
-                      </p>
-
-                      <p>
-                        <strong>Vaccine / Reason:</strong>{" "}
-                        {request.vaccineOrReason || "Not provided"}
-                      </p>
-
+            ) : requestError ? (
+              <EmptyState
+                icon="alert"
+                title={t("Unable to load requests")}
+                text={requestError}
+              />
+            ) : pendingRequests.length === 0 ? (
+              <EmptyState
+                icon="home"
+                title={t("No pending requests")}
+                text={t("There are no in-house vaccination requests waiting for you.")}
+              />
+            ) : (
+              <div className="cz-request-list">
+                {pendingRequests.map((request) => (
+                  <div className="cz-item" key={request._id}>
+                    <div className="cz-item__top">
+                      <div>
+                        <h3>{request.citizen?.name || t("Citizen")}</h3>
+                      </div>
+                      <span className="cz-badge cz-badge--amber">{t("Pending")}</span>
                     </div>
 
-                    <span
-                      style={{
-                        padding: "6px 12px",
-                        borderRadius: "20px",
-                        background: "#fff7ed",
-                        color: "#c2410c",
-                        fontSize: "13px",
-                        fontWeight: "600",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      Pending
-                    </span>
+                    <dl className="cz-facts">
+                      <div>
+                        <dt>{t("Address")}</dt>
+                        <dd>{request.address || t("Not provided")}</dd>
+                      </div>
+                      <div>
+                        <dt>{t("Preferred Date")}</dt>
+                        <dd>
+                          {request.preferredDate
+                            ? new Date(request.preferredDate).toLocaleDateString()
+                            : t("Not specified")}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{t("Vaccine / Reason")}</dt>
+                        <dd>{request.vaccineOrReason || t("Not provided")}</dd>
+                      </div>
+                    </dl>
 
+                    <div className="cz-item__foot">
+                      <button
+                        type="button"
+                        className="cz-btn cz-btn--primary cz-btn--sm"
+                        onClick={() => handleAcceptRequest(request._id)}
+                      >
+                        {t("Accept Request")}
+                      </button>
+                    </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </section>
 
-                  <div style={{ marginTop: "16px" }}>
-                    <button
-                      className="clinic-nav-item"
-                      style={{
-                        width: "auto",
-                        padding: "10px 18px",
-                        borderRadius: "8px",
-                      }}
-                      onClick={() => handleAcceptRequest(request._id)}
-                    >
-                      Accept Request
-                    </button>
-                  </div>
+          {/* ---------- Appointments ---------- */}
+          <section className="cz-card">
+            <div className="cz-card__head">
+              <div>
+                <p className="cz-eyebrow">{t("SCHEDULE")}</p>
+                <h2>{t("Upcoming Appointments")}</h2>
+                <p>{t("Appointments assigned to you will appear here.")}</p>
+              </div>
+            </div>
 
-                </div>
+            <EmptyState
+              icon="calendar"
+              title={t("No appointments yet")}
+              text={t("You're all caught up for now.")}
+            />
+          </section>
+        </div>
+
+        <div className="cz-stack">
+          {/* ---------- Quick actions ---------- */}
+          <section className="cz-card">
+            <div className="cz-card__head">
+              <h2>{t("Quick actions")}</h2>
+            </div>
+
+            <div className="cz-quick">
+              {quickActions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  className="cz-quick__tile"
+                  onClick={action.onClick}
+                >
+                  <span>
+                    <Icon name={action.icon} size={20} />
+                  </span>
+                  {t(action.label)}
+                </button>
               ))}
             </div>
-          )}
-
-        </section>
-
-        {/* Appointments */}
-        <section className="workers-section">
-
-          <div className="workers-header">
-
-            <div>
-              <p className="section-label">
-                SCHEDULE
-              </p>
-
-              <h2>
-                Upcoming Appointments
-              </h2>
-
-              <p>
-                Appointments assigned to you will appear here.
-              </p>
-            </div>
-
-          </div>
-
-          <div className="empty-workers">
-
-            <div className="empty-icon">
-              📅
-            </div>
-
-            <h3>
-              No appointments yet
-            </h3>
-
-            <p>
-              You're all caught up for now.
-            </p>
-
-          </div>
-
-        </section>
-
-      </main>
-
-    </div>
+          </section>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }
 

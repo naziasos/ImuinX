@@ -204,7 +204,10 @@ function MyCertificate({ onOpenFeedback }) {
 
   return (
     <div className="certificate-page">
-       <ReadAloudControls guidance="Welcome to My Vaccination Certificate. On this page, you can view your available vaccination certificate. First, check that the certificate belongs to the correct person. Review the vaccination details to make sure the information is accurate. If a Download Certificate button is available, click it to download and save your certificate to your device. After downloading, open the file to check that it is readable. If your certificate is missing or unavailable, contact your healthcare provider for assistance." />
+       <ReadAloudControls guidance={{
+        en: "Welcome to My Vaccination Certificate. On this page, you can view your available vaccination certificate. First, check that the certificate belongs to the correct person. Review the vaccination details to make sure the information is accurate. If a Download Certificate button is available, click it to download and save your certificate to your device. After downloading, open the file to check that it is readable. If your certificate is missing or unavailable, contact your healthcare provider for assistance.",
+        bn: "আমার টিকাদান সনদ পেজে আপনাকে স্বাগতম। এই পেজে আপনি আপনার উপলব্ধ টিকাদান সনদ দেখতে পারবেন। প্রথমে দেখুন সনদটি সঠিক ব্যক্তির কি না। তথ্য ঠিক আছে কি না, তা নিশ্চিত করতে টিকাদানের বিবরণ ভালোভাবে দেখুন। ডাউনলোড সার্টিফিকেট বাটন থাকলে সেটিতে ক্লিক করে আপনার ডিভাইসে সনদ সংরক্ষণ করুন। ডাউনলোডের পর ফাইলটি খুলে দেখুন এটি পড়া যাচ্ছে কি না। সনদ না পেলে বা সনদ অনুপলব্ধ থাকলে আপনার স্বাস্থ্যসেবা প্রদানকারীর সাথে যোগাযোগ করুন।",
+      }} />
       <div 
       className="certificate-shell"
       id="read-aloud-certificate"

@@ -515,7 +515,10 @@ function BookAppointment({
 
   return (
     <div id="read-aloud-booking">
-      <ReadAloudControls guidance="Welcome to the vaccination booking page. To book an appointment, select the citizen who needs vaccination. Choose the required vaccine, select a clinic, and choose an available date and time. Review your selections carefully, then submit your booking request. Check your appointment status after submitting. Make sure all the details are correct before confirming your booking." />
+      <ReadAloudControls guidance={{
+        en: "Welcome to the vaccination booking page. To book an appointment, select the citizen who needs vaccination. Choose the required vaccine, select a clinic, and choose an available date and time. Review your selections carefully, then submit your booking request. Check your appointment status after submitting. Make sure all the details are correct before confirming your booking.",
+        bn: "টিকাদান বুকিং পেজে আপনাকে স্বাগতম। অ্যাপয়েন্টমেন্ট বুক করতে প্রথমে যার টিকা প্রয়োজন, তাকে নির্বাচন করুন। এরপর প্রয়োজনীয় ভ্যাকসিন বেছে নিন, একটি ক্লিনিক নির্বাচন করুন এবং উপলব্ধ তারিখ ও সময় বেছে নিন। আপনার নির্বাচনগুলো মনোযোগ দিয়ে দেখে বুকিং অনুরোধ জমা দিন। জমা দেওয়ার পর অ্যাপয়েন্টমেন্টের অবস্থা যাচাই করুন। বুকিং নিশ্চিত করার আগে সব তথ্য সঠিক কি না, তা ভালোভাবে দেখে নিন।",
+      }} />
 
       <PageHeader
         icon="calendar"

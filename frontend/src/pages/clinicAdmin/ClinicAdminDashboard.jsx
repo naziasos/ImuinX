@@ -1,6 +1,17 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../services/api";
-import "./ClinicAdminDashboard.css";
+import { useLanguage } from "../../i18n/LanguageProvider";
+import DashboardLayout from "../../components/DashboardLayout";
+import Icon from "../../components/Icons";
+import StatCard from "../../components/StatCard";
+import EmptyState from "../../components/EmptyState";
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
 
 function ClinicAdminDashboard({
   onLogout,
@@ -11,6 +22,7 @@ function ClinicAdminDashboard({
   onFeedback,
   onEditProfile,
 }) {
+  const { t } = useLanguage();
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const [clinic, setClinic] = useState(null);
@@ -92,283 +104,223 @@ function ClinicAdminDashboard({
     }
   };
 
-  if (loading) {
-    return (
-      <div className="clinic-dashboard-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading your clinic dashboard...</p>
-      </div>
-    );
-  }
+  const menuGroups = [
+    {
+      title: "Main Menu",
+      items: [
+        { key: "dashboard", label: "Dashboard", icon: "dashboard" },
+        { key: "editProfile", label: "Edit Profile", icon: "user", onClick: onEditProfile },
+      ],
+    },
+    {
+      title: "Clinic",
+      items: [
+        { key: "addWorker", label: "Add Worker", icon: "plus", onClick: onAddWorker },
+        { key: "workers", label: "Workers List", icon: "users", onClick: onWorkers },
+        { key: "duties", label: "Daily Duties", icon: "clipboard", onClick: onAssignDuty },
+        { key: "inventory", label: "Inventory", icon: "box", onClick: onOpenInventory },
+        {
+          key: "feedback",
+          label: "Feedback",
+          icon: "message",
+          onClick: onFeedback,
+          badge: feedbackSummary?.newCount || 0,
+        },
+      ],
+    },
+  ];
+
+  const quickActions = [
+    { label: "Add Worker", icon: "plus", onClick: onAddWorker },
+    { label: "Workers List", icon: "users", onClick: onWorkers },
+    { label: "Daily Duties", icon: "clipboard", onClick: onAssignDuty },
+    { label: "Inventory", icon: "box", onClick: onOpenInventory },
+    { label: "Feedback", icon: "message", onClick: onFeedback },
+    { label: "Edit Profile", icon: "user", onClick: onEditProfile },
+  ];
+
+  const displayName = user?.name || "Clinic Admin";
+  const previewWorkers = workers.slice(0, 5);
+
+  const feedbackHint = feedbackSummary
+    ? `${
+        feedbackSummary.total ? `★ ${feedbackSummary.averageRating.toFixed(1)} avg · ` : ""
+      }${feedbackSummary.newCount} new · ${feedbackSummary.awaitingCitizen} awaiting patient`
+    : "Loading…";
 
   return (
-    <div className="clinic-dashboard">
-
-      {/* Sidebar */}
-      <aside className="clinic-sidebar">
-
-        <div>
-          {/* Logo */}
-          <div className="clinic-logo">
-            <div className="clinic-logo-icon">
-              +
-            </div>
-
-            <div>
-              <strong>ImuniX</strong>
-              <span>Vaccination System</span>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="clinic-nav">
-
-            <p className="clinic-nav-title">
-              MAIN MENU
-            </p>
-
-            <button className="clinic-nav-item active">
-              <span>📊</span>
-              Dashboard
-            </button>
-
-            <button
-              className="clinic-nav-item"
-              onClick={onEditProfile}
-            >
-              <span>👤</span>
-              Edit Profile
-            </button>
-            
-            <button
-              className="clinic-nav-item"
-              onClick={onAddWorker}
-            >
-              <span>👥</span>
-              Add Worker
-            </button>
-
-            <button
-              className="clinic-nav-item"
-              onClick={onWorkers}
-            >
-              <span>👥</span>
-              Workers List
-            </button>
-
-            
-
-
-
-            <button
-              className="clinic-nav-item"
-              onClick={onAssignDuty}
-            >
-              <span>📝</span>
-              Daily Duties
-            </button>
-
-
-            <button
-              className="clinic-nav-item"
-              onClick={onOpenInventory}
-            >
-              <span>📦</span>
-              Inventory
-            </button>
-
-            <button
-              className="clinic-nav-item"
-              onClick={onFeedback}
-            >
-              <span>💬</span>
-              Feedback
-              {feedbackSummary?.newCount > 0 && (
-                <em
-                  style={{
-                    marginLeft: "auto",
-                    fontStyle: "normal",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    background: "#2563eb",
-                    color: "#fff",
-                    borderRadius: 999,
-                    padding: "2px 8px",
-                  }}
-                >
-                  {feedbackSummary.newCount}
-                </em>
-              )}
-            </button>
-
-            <p className="clinic-nav-title system-title">
-              SYSTEM
-            </p>
-
-            <button className="clinic-nav-item">
-              <span>⚙️</span>
-              Settings
-            </button>
-
-          </nav>
+    <DashboardLayout
+      ariaLabel={t("Clinic admin menu")}
+      user={{ name: displayName, subtitle: t("Clinic Administrator") }}
+      onProfileClick={onEditProfile}
+      groups={menuGroups}
+      activeKey="dashboard"
+      onLogout={handleLogout}
+    >
+      {/* ---------- Welcome banner ---------- */}
+      <section className="cz-hero">
+        <div className="cz-hero__text">
+          <p className="cz-hero__eyebrow">{t(getGreeting())} 👋</p>
+          <h1>{t("Clinic Admin Dashboard")}</h1>
+          <p>{t("Manage your clinic and view your assigned workers.")}</p>
         </div>
 
-        <button
-          className="clinic-logout"
-          onClick={handleLogout}
-        >
-          <span>↪</span>
-          Logout
-        </button>
+        <div className="cz-hero__actions">
+          <button type="button" className="cz-btn cz-btn--light" onClick={onAddWorker}>
+            <Icon name="plus" size={18} /> {t("Add Worker")}
+          </button>
+          <button type="button" className="cz-btn cz-btn--outline-light" onClick={onAssignDuty}>
+            <Icon name="clipboard" size={16} /> {t("Daily Duties")}
+          </button>
+        </div>
+      </section>
 
-      </aside>
+      {/* ---------- Error ---------- */}
+      {error && (
+        <div className="cz-alert cz-alert--error" role="alert">
+          {error}
+        </div>
+      )}
 
-      {/* Main */}
-      <main className="clinic-main">
-
-        {/* Header */}
-        <header className="clinic-header">
+      {/* ---------- Clinic information ---------- */}
+      {clinic && (
+        <section className="cz-clinic">
+          <span className="cz-clinic__icon">
+            <Icon name="building" size={26} />
+          </span>
 
           <div>
-            <p className="clinic-breadcrumb">
-              Dashboard
-            </p>
+            <p className="cz-eyebrow">{t("MY CLINIC")}</p>
+            <h2>{clinic.name}</h2>
 
-            <h1>
-              Clinic Admin Dashboard
-            </h1>
-
-            <p className="clinic-description">
-              Manage your clinic and view your assigned workers.
-            </p>
-          </div>
-
-          <div className="clinic-header-actions">
-
-            <div className="clinic-profile">
-            <div className="clinic-profile-avatar">
-              C
-            </div>
-
-            <div>
-
-              <strong>{user?.name || "Clinic Admin"}</strong>
-              <span>Clinic Administrator</span>
-
-            </div>
-            </div>
-          </div>
-
-        </header>
-
-        {/* Error */}
-        {error && (
-          <div className="clinic-error">
-            {error}
-          </div>
-        )}
-
-        {/* Clinic Information */}
-        {clinic && (
-          <section className="clinic-info-card">
-
-            <div className="clinic-info-icon">
-              🏥
-            </div>
-
-            <div className="clinic-info-content">
-              <p>MY CLINIC</p>
-
-              <h2>{clinic.name}</h2>
-
-              <div className="clinic-details">
-                <span>
-                  📍 {clinic.location}
-                </span>
-
-                <span>
-                  📞 {clinic.contact}
-                </span>
-
-                <span className="clinic-status">
-                  ● {clinic.status}
-                </span>
-              </div>
-            </div>
-
-          </section>
-        )}
-
-        {/* Statistics */}
-        <section className="clinic-stats">
-
-          <div
-            className="clinic-stat-card clinic-stat-card-clickable"
-            onClick={onWorkers}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") onWorkers();
-            }}
-          >
-            <div className="clinic-stat-icon">
-              👥
-            </div>
-
-            <div>
-              <p>Total Workers</p>
-              <h2>{workers.length}</h2>
+            <div className="cz-clinic__meta">
               <span>
-                Workers in your clinic
+                <Icon name="pin" size={16} /> {clinic.location}
+              </span>
+              <span>
+                <Icon name="phone" size={16} /> {clinic.contact}
+              </span>
+              <span
+                className={`cz-badge ${
+                  String(clinic.status).toLowerCase() === "active"
+                    ? "cz-badge--green"
+                    : "cz-badge--gray"
+                }`}
+              >
+                ● {clinic.status}
               </span>
             </div>
           </div>
-
-          <div className="clinic-stat-card">
-            <div className="clinic-stat-icon">
-              🏥
-            </div>
-
-            <div>
-              <p>Clinic Status</p>
-              <h2>
-                {clinic?.status || "—"}
-              </h2>
-              <span>
-                Current clinic status
-              </span>
-            </div>
-          </div>
-
-          <div
-            className="clinic-stat-card"
-            onClick={onFeedback}
-            style={{ cursor: "pointer" }}
-          >
-            <div className="clinic-stat-icon">
-              💬
-            </div>
-
-            <div>
-              <p>Patient Feedback</p>
-              <h2>{feedbackSummary ? feedbackSummary.total : "—"}</h2>
-              <span>
-                {feedbackSummary
-                  ? `${feedbackSummary.total
-                    ? `★ ${feedbackSummary.averageRating.toFixed(1)} avg · `
-                    : ""
-                  }${feedbackSummary.newCount} new · ${feedbackSummary.awaitingCitizen
-                  } awaiting patient`
-                  : "Loading…"}
-              </span>
-            </div>
-          </div>
-
         </section>
+      )}
 
-      </main>
+      {/* ---------- Stats ---------- */}
+      <section className="cz-stats" aria-label={t("Summary")}>
+        <StatCard
+          icon="users"
+          tone="blue"
+          label={t("Total Workers")}
+          value={workers.length}
+          hint={t("Workers in your clinic")}
+          loading={loading}
+          onClick={onWorkers}
+        />
+        <StatCard
+          icon="building"
+          tone="teal"
+          label={t("Clinic Status")}
+          value={clinic?.status || "—"}
+          hint={t("Current clinic status")}
+          loading={loading}
+        />
+        <StatCard
+          icon="message"
+          tone="amber"
+          label={t("Patient Feedback")}
+          value={feedbackSummary ? feedbackSummary.total : "—"}
+          hint={feedbackHint}
+          loading={loading}
+          onClick={onFeedback}
+        />
+      </section>
 
-    </div>
+      <div className="cz-grid-main">
+        <div className="cz-stack">
+          {/* ---------- Team ---------- */}
+          <section className="cz-card">
+            <div className="cz-card__head">
+              <div>
+                <p className="cz-eyebrow">{t("My team")}</p>
+                <h2>{t("Workers")}</h2>
+              </div>
+
+              {workers.length > 0 && (
+                <button type="button" className="cz-btn cz-btn--secondary cz-btn--sm" onClick={onWorkers}>
+                  {t("View all")} <Icon name="arrowRight" size={15} />
+                </button>
+              )}
+            </div>
+
+            {loading ? (
+              <div className="cz-loading">
+                <div className="cz-spinner" />
+                <p>{t("Loading your clinic dashboard...")}</p>
+              </div>
+            ) : previewWorkers.length === 0 ? (
+              <EmptyState
+                icon="users"
+                title={t("No workers yet")}
+                text={t("Add a health worker to start assigning duties.")}
+                action={
+                  <button type="button" className="cz-btn cz-btn--primary cz-btn--sm" onClick={onAddWorker}>
+                    <Icon name="plus" size={16} /> {t("Add Worker")}
+                  </button>
+                }
+              />
+            ) : (
+              <div>
+                {previewWorkers.map((worker) => (
+                  <div className="cz-list-row" key={worker._id || worker.id || worker.email}>
+                    <div className="cz-cell-main">
+                      <span>{(worker.name || "W").charAt(0).toUpperCase()}</span>
+                      <div>
+                        <strong>{worker.name}</strong>
+                        <small>{worker.email}</small>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+
+        <div className="cz-stack">
+          {/* ---------- Quick actions ---------- */}
+          <section className="cz-card">
+            <div className="cz-card__head">
+              <h2>{t("Quick actions")}</h2>
+            </div>
+
+            <div className="cz-quick">
+              {quickActions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  className="cz-quick__tile"
+                  onClick={action.onClick}
+                >
+                  <span>
+                    <Icon name={action.icon} size={20} />
+                  </span>
+                  {t(action.label)}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }
 

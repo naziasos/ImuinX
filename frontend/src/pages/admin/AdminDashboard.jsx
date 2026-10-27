@@ -1,5 +1,12 @@
-import React from "react";
-import "./AdminDashboard.css";
+import { useMemo, useState } from "react";
+import { useLanguage } from "../../i18n/LanguageProvider";
+import DashboardLayout from "../../components/DashboardLayout";
+import Icon from "../../components/Icons";
+import StatCard from "../../components/StatCard";
+import EmptyState from "../../components/EmptyState";
+
+// NOTE: the layout (sidebar, theme toggle) lives in components/DashboardLayout.jsx
+// and shares its styles with the citizen area (styles/citizen.css).
 
 const clinics = [
   {
@@ -28,470 +35,282 @@ const clinics = [
   },
 ];
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
 function AdminDashboard({ onAddClinic, onManageVaccines, onManageSchedules, onManageCampaigns }) {
+  const { t } = useLanguage();
+  const [search, setSearch] = useState("");
+
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const adminName = user?.name || "Admin";
+
+  const activeClinics = clinics.filter((clinic) => clinic.status === "Active").length;
+  const activePercent = clinics.length ? Math.round((activeClinics / clinics.length) * 100) : 0;
+
+  const filteredClinics = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return clinics;
+
+    return clinics.filter(
+      (clinic) =>
+        clinic.name.toLowerCase().includes(query) ||
+        clinic.location.toLowerCase().includes(query) ||
+        clinic.contact.toLowerCase().includes(query)
+    );
+  }, [search]);
+
+  const menuGroups = [
+    {
+      title: "Main Menu",
+      items: [
+        { key: "dashboard", label: "Dashboard", icon: "dashboard" },
+        { key: "addClinic", label: "Add New Clinic", icon: "building", onClick: onAddClinic },
+      ],
+    },
+    {
+      title: "Vaccination",
+      items: [
+        { key: "vaccines", label: "Manage Vaccines", icon: "syringe", onClick: onManageVaccines },
+        {
+          key: "schedules",
+          label: "Manage Vaccine Schedules",
+          icon: "calendar",
+          onClick: onManageSchedules,
+        },
+        {
+          key: "campaigns",
+          label: "Vaccine Campaigns",
+          icon: "megaphone",
+          onClick: onManageCampaigns,
+        },
+      ],
+    },
+  ];
+
+  const quickActions = [
+    {
+      label: "Add New Clinic",
+      text: "Register a vaccination clinic",
+      icon: "building",
+      onClick: onAddClinic,
+    },
+    {
+      label: "Manage Vaccines",
+      text: "Add a new vaccine to the catalogue",
+      icon: "syringe",
+      onClick: onManageVaccines,
+    },
+    {
+      label: "Manage Vaccine Schedules",
+      text: "Set vaccine ages and dose intervals",
+      icon: "calendar",
+      onClick: onManageSchedules,
+    },
+    {
+      label: "Vaccine Campaigns",
+      text: "Publish campaigns to the notification bell",
+      icon: "megaphone",
+      onClick: onManageCampaigns,
+    },
+  ];
+
   return (
-    <div className="dashboard">
-
-      {/* ================= SIDEBAR ================= */}
-      <aside className="sidebar">
-
-        <div className="sidebar-top">
-
-          {/* Logo */}
-          <div className="logo">
-            <div className="logo-icon">+</div>
-
-            <div>
-              <span>ImuniX</span>
-              <small>Vaccination System</small>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="sidebar-nav">
-
-            <p className="nav-label">MAIN MENU</p>
-
-            <a href="#" className="nav-item active">
-              <span>📊</span>
-              Dashboard
-            </a>
-
-            <a href="#" className="nav-item">
-              <span>🏥</span>
-              Clinics
-            </a>
-
-
-
-            <button
-              className="quick-card"
-              onClick={onManageVaccines}
-            >
-              <span>💉</span>
-              Add Vaccine
-            </button>
-
-
-
-            
-          <button
-            className="quick-card"
-            onClick={onManageCampaigns}
-          >
-            <div className="quick-icon cyan-bg">📢</div>
-
-            <div>
-              <strong>Vaccine Campaigns</strong>
-              <span>Publish campaigns to the notification bell</span>
-            </div>
-          </button>
-
-          <button
-            className="quick-card"
-            onClick={onManageSchedules}
-          >
-            <div className="quick-icon cyan-bg">📅</div>
-
-            <div>
-              <strong>Manage Vaccine Schedules</strong>
-              <span>Set vaccine ages and dose intervals</span>
-            </div>
-
-            <span className="quick-arrow">→</span>
-          </button>
-
-
-            
-
-            <a href="#" className="nav-item">
-              <span>👥</span>
-              Citizens
-            </a>
-
-            <a href="#" className="nav-item">
-              <span>💉</span>
-              Vaccinations
-            </a>
-
-            <a href="#" className="nav-item">
-              <span>📅</span>
-              Appointments
-            </a>
-
-            <p className="nav-label settings-label">SYSTEM</p>
-
-            <a href="#" className="nav-item">
-              <span>📈</span>
-              Reports
-            </a>
-
-            <a href="#" className="nav-item">
-              <span>⚙️</span>
-              Settings
-            </a>
-
-          </nav>
-
+    <DashboardLayout
+      ariaLabel={t("Admin menu")}
+      user={{ name: adminName, subtitle: t("Administrator") }}
+      groups={menuGroups}
+      activeKey="dashboard"
+    >
+      {/* ---------- Welcome banner ---------- */}
+      <section className="cz-hero">
+        <div className="cz-hero__text">
+          <p className="cz-hero__eyebrow">{t(getGreeting())} 👋</p>
+          <h1>{t("Admin Dashboard")}</h1>
+          <p>{t("Welcome back! Here's what's happening with your vaccination system.")}</p>
         </div>
 
-        {/* Logout */}
-        <button className="logout">
-          <span>↪</span>
-          Logout
-        </button>
-
-      </aside>
-
-
-      {/* ================= MAIN CONTENT ================= */}
-      <main className="main-content">
-
-        {/* Header */}
-        <header className="top-header">
-
-          <div>
-            <p className="breadcrumb">Dashboard</p>
-
-            <h1>Admin Dashboard</h1>
-
-            <p className="header-description">
-              Welcome back! Here's what's happening with your vaccination system.
-            </p>
-          </div>
-
-          <div className="header-right">
-
-            {/* Notification */}
-            <button className="notification-btn">
-              🔔
-              <span className="notification-dot"></span>
-            </button>
-
-            {/* Profile */}
-            <div className="admin-profile">
-
-              <div className="profile-avatar">
-                A
-              </div>
-
-              <div className="profile-info">
-                <strong>Admin</strong>
-                <small>Administrator</small>
-              </div>
-
-              <span className="profile-arrow">⌄</span>
-
-            </div>
-
-          </div>
-
-        </header>
-
-
-        {/* ================= STATISTICS ================= */}
-        <section className="stats">
-
-          <div className="stat-card">
-
-            <div className="stat-icon blue">
-              🏥
-            </div>
-
-            <div className="stat-content">
-              <p>Total Clinics</p>
-              <h2>4</h2>
-              <span className="stat-note">Registered clinics</span>
-            </div>
-
-          </div>
-
-
-          <div className="stat-card">
-
-            <div className="stat-icon green">
-              ✓
-            </div>
-
-            <div className="stat-content">
-              <p>Active Clinics</p>
-              <h2>3</h2>
-              <span className="stat-note positive">
-                ● 75% active
-              </span>
-            </div>
-
-          </div>
-
-
-          <div className="stat-card">
-
-            <div className="stat-icon purple">
-              👥
-            </div>
-
-            <div className="stat-content">
-              <p>Total Citizens</p>
-              <h2>0</h2>
-              <span className="stat-note">Registered citizens</span>
-            </div>
-
-          </div>
-
-
-          <div className="stat-card">
-
-            <div className="stat-icon cyan">
-              💉
-            </div>
-
-            <div className="stat-content">
-              <p>Vaccinations</p>
-              <h2>0</h2>
-              <span className="stat-note">Total vaccinations</span>
-            </div>
-
-          </div>
-
-        </section>
-
-
-        {/* ================= QUICK ACTIONS ================= */}
-        <section className="quick-section">
-
-          <div className="section-title">
-            <div>
-              <h2>Quick Actions</h2>
-              <p>Frequently used administration tools</p>
-            </div>
-          </div>
-
-          <div className="quick-actions">
-
-            {/* ADD CLINIC */}
-            <button
-              className="quick-card"
-              onClick={onAddClinic}
-            >
-              <div className="quick-icon blue-bg">
-                +
-              </div>
-
-              <div>
-                <strong>Add New Clinic</strong>
-                <span>Register a vaccination clinic</span>
-              </div>
-
-              <span className="quick-arrow">→</span>
-            </button>
-
-
-            <button className="quick-card">
-              <div className="quick-icon purple-bg">
-                👥
-              </div>
-
-              <div>
-                <strong>Manage Citizens</strong>
-                <span>View registered citizens</span>
-              </div>
-
-              <span className="quick-arrow">→</span>
-            </button>
-
-
-            
-          <button
-            className="quick-card"
-            onClick={onManageVaccines}
-          >
-            <div className="quick-icon cyan-bg">
-              💉
-            </div>
-
-            <div>
-              <strong>Manage Vaccines</strong>
-              <span>Add a new vaccine to the catalogue</span>
-            </div>
-
-            <span className="quick-arrow">→</span>
+        <div className="cz-hero__actions">
+          <button type="button" className="cz-btn cz-btn--light" onClick={onAddClinic}>
+            <Icon name="plus" size={18} /> {t("Add New Clinic")}
           </button>
+          <button type="button" className="cz-btn cz-btn--outline-light" onClick={onManageVaccines}>
+            <Icon name="syringe" size={16} /> {t("Manage Vaccines")}
+          </button>
+        </div>
+      </section>
 
+      {/* ---------- Stats ---------- */}
+      <section className="cz-stats" aria-label={t("Summary")}>
+        <StatCard
+          icon="building"
+          tone="blue"
+          label={t("Total Clinics")}
+          value={clinics.length}
+          hint={t("Registered clinics")}
+        />
+        <StatCard
+          icon="check"
+          tone="teal"
+          label={t("Active Clinics")}
+          value={activeClinics}
+          hint={`${activePercent}% ${t("active")}`}
+        />
+        <StatCard
+          icon="users"
+          tone="green"
+          label={t("Total Citizens")}
+          value={0}
+          hint={t("Registered citizens")}
+        />
+        <StatCard
+          icon="syringe"
+          tone="amber"
+          label={t("Vaccinations")}
+          value={0}
+          hint={t("Total vaccinations")}
+        />
+      </section>
 
-          </div>
+      <div className="cz-grid-main">
+        <div className="cz-stack">
+          {/* ---------- Clinics ---------- */}
+          <section className="cz-card">
+            <div className="cz-card__head">
+              <div>
+                <p className="cz-eyebrow">{t("CLINIC MANAGEMENT")}</p>
+                <h2>{t("All Clinics")}</h2>
+                <p>{t("Manage registered vaccination clinics")}</p>
+              </div>
 
-        </section>
-
-
-        {/* ================= CLINICS ================= */}
-        <section className="clinic-section">
-
-          <div className="section-header">
-
-            <div>
-              <p className="section-label">CLINIC MANAGEMENT</p>
-
-              <h2>All Clinics</h2>
-
-              <p>
-                Manage registered vaccination clinics
-              </p>
+              <button type="button" className="cz-btn cz-btn--primary cz-btn--sm" onClick={onAddClinic}>
+                <Icon name="plus" size={16} /> {t("Add New Clinic")}
+              </button>
             </div>
 
-            {/* ADD CLINIC */}
-            <button
-              className="add-btn"
-              onClick={onAddClinic}
-            >
-              <span>+</span>
-              Add New Clinic
-            </button>
-
-          </div>
-
-
-          {/* Search */}
-          <div className="table-toolbar">
-
-            <div className="search-box">
-              <span>🔍</span>
-
+            <label className="cz-search">
+              <Icon name="search" size={18} />
               <input
                 type="text"
-                placeholder="Search clinics..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={t("Search clinics...")}
+                aria-label={t("Search clinics...")}
               />
+            </label>
+
+            {filteredClinics.length === 0 ? (
+              <EmptyState
+                icon="search"
+                title={t("No clinics found")}
+                text={t("Try a different search term.")}
+              />
+            ) : (
+              <div className="cz-table-wrap">
+                <table className="cz-table">
+                  <thead>
+                    <tr>
+                      <th>{t("Clinic")}</th>
+                      <th>{t("Location")}</th>
+                      <th>{t("Contact")}</th>
+                      <th>{t("Status")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredClinics.map((clinic) => (
+                      <tr key={clinic.name}>
+                        <td>
+                          <div className="cz-cell-main">
+                            <span>
+                              <Icon name="building" size={18} />
+                            </span>
+                            <div>
+                              <strong>{clinic.name}</strong>
+                              <small>{t("Vaccination Center")}</small>
+                            </div>
+                          </div>
+                        </td>
+                        <td>{clinic.location}</td>
+                        <td style={{ whiteSpace: "nowrap" }}>{clinic.contact}</td>
+                        <td>
+                          <span
+                            className={`cz-badge ${
+                              clinic.status === "Active" ? "cz-badge--green" : "cz-badge--gray"
+                            }`}
+                          >
+                            {t(clinic.status)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <p className="cz-hint" style={{ marginTop: 14 }}>
+              {t("Showing {{shown}} of {{total}} clinics", {
+                shown: filteredClinics.length,
+                total: clinics.length,
+              })}
+            </p>
+          </section>
+        </div>
+
+        <div className="cz-stack">
+          {/* ---------- Quick actions ---------- */}
+          <section className="cz-card">
+            <div className="cz-card__head">
+              <div>
+                <h2>{t("Quick Actions")}</h2>
+                <p>{t("Frequently used administration tools")}</p>
+              </div>
             </div>
 
-            <button className="filter-btn">
-              Filter ▾
-            </button>
-
-          </div>
-
-
-          {/* Table */}
-          <div className="table-container">
-
-            <table>
-
-              <thead>
-                <tr>
-                  <th>Clinic</th>
-                  <th>Location</th>
-                  <th>Contact</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-
-                {clinics.map((clinic, index) => (
-
-                  <tr key={index}>
-
-                    <td>
-
-                      <div className="clinic-name">
-
-                        <div className="clinic-icon">
-                          🏥
-                        </div>
-
-                        <div>
-                          <strong>{clinic.name}</strong>
-                          <small>Vaccination Center</small>
-                        </div>
-
-                      </div>
-
-                    </td>
-
-                    <td>
-                      <span className="location">
-                        📍 {clinic.location}
-                      </span>
-                    </td>
-
-                    <td>
-                      {clinic.contact}
-                    </td>
-
-                    <td>
-
-                      <span
-                        className={
-                          clinic.status === "Active"
-                            ? "status active-status"
-                            : "status inactive-status"
-                        }
-                      >
-                        <span className="status-dot"></span>
-                        {clinic.status}
-                      </span>
-
-                    </td>
-
-                    <td>
-
-                      <button className="view-btn">
-                        View
-                      </button>
-
-                    </td>
-
-                  </tr>
-
-                ))}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-
-          {/* Table Footer */}
-          <div className="table-footer">
-
-            <span>
-              Showing <strong>4</strong> of <strong>4</strong> clinics
-            </span>
-
-            <div className="pagination">
-
-              <button disabled>‹</button>
-              <button className="page-active">1</button>
-              <button disabled>›</button>
-
+            <div className="cz-quick">
+              {quickActions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  className="cz-quick__tile"
+                  onClick={action.onClick}
+                >
+                  <span>
+                    <Icon name={action.icon} size={20} />
+                  </span>
+                  {t(action.label)}
+                </button>
+              ))}
             </div>
+          </section>
 
-          </div>
-
-        </section>
-
-
-        {/* ================= SYSTEM STATUS ================= */}
-        <section className="system-status">
-
-          <div>
-            <div className="system-icon">✓</div>
-
+          {/* ---------- System status ---------- */}
+          <section className="cz-card cz-status-card">
             <div>
-              <strong>System Status</strong>
-              <p>All ImuniX services are currently operational.</p>
+              <span className="cz-empty__icon" style={{ margin: 0, width: 48, height: 48 }}>
+                <Icon name="shield" size={22} />
+              </span>
+              <div>
+                <h3>{t("System Status")}</h3>
+                <p>{t("All ImuniX services are currently operational.")}</p>
+              </div>
             </div>
-          </div>
-
-          <span className="online-status">
-            ● All Systems Operational
-          </span>
-
-        </section>
-
-      </main>
-
-    </div>
+            <span className="cz-badge cz-badge--green">● {t("All Systems Operational")}</span>
+          </section>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }
 

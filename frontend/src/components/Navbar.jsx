@@ -294,7 +294,10 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
       {notificationOpen && (
         <div className="absolute right-0 mt-3 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[100]">
           <div className="px-4 py-3 border-b border-slate-100">
-            <ReadAloudControls  guidance="Welcome to Notifications. This page provides updates related to your vaccination services. Notifications may include appointment confirmations, schedule changes, reminders, and other important updates. Select a notification to view its details when available. Check the date and message carefully so you do not miss an important appointment update. Visit this page regularly to stay informed." />
+            <ReadAloudControls  guidance={{
+        en: "Welcome to Notifications. This page provides updates related to your vaccination services. Notifications may include appointment confirmations, schedule changes, reminders, and other important updates. Select a notification to view its details when available. Check the date and message carefully so you do not miss an important appointment update. Visit this page regularly to stay informed.",
+        bn: "বিজ্ঞপ্তি পেজে আপনাকে স্বাগতম। এই পেজে আপনার টিকাদান সেবা সম্পর্কিত হালনাগাদ তথ্য দেখানো হয়। বিজ্ঞপ্তিতে অ্যাপয়েন্টমেন্ট নিশ্চিতকরণ, সময়সূচির পরিবর্তন, রিমাইন্ডার এবং অন্যান্য গুরুত্বপূর্ণ তথ্য থাকতে পারে। বিস্তারিত দেখতে কোনো বিজ্ঞপ্তি নির্বাচন করুন। তারিখ ও বার্তা মনোযোগ দিয়ে পড়ুন, যাতে অ্যাপয়েন্টমেন্ট সংক্রান্ত কোনো গুরুত্বপূর্ণ হালনাগাদ আপনার চোখ এড়িয়ে না যায়। নিয়মিত এই পেজ দেখুন।",
+      }} />
           </div>
 
           <div id="read-aloud-notifications">
@@ -451,7 +454,7 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
   );
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+    <nav className="imx-navbar sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div className="flex items-center justify-between h-20">

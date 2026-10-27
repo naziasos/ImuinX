@@ -71,7 +71,10 @@ function MyVaccinationRecord({ onAppointments }) {
   return (
     <>
       <ReadAloudControls
-        guidance="Welcome to your vaccination record. This page helps you review your vaccination history. Vaccine Type tells you which vaccine you received. Date shows when you received it. Clinic identifies the clinic where you were vaccinated. Batch Number identifies the vaccine batch. Review each record to check your vaccination details. If your record is missing, contact your clinic or healthcare worker to verify that it has been added."
+        guidance={{
+        en: "Welcome to your vaccination record. This page helps you review your vaccination history. Vaccine Type tells you which vaccine you received. Date shows when you received it. Clinic identifies the clinic where you were vaccinated. Batch Number identifies the vaccine batch. Review each record to check your vaccination details. If your record is missing, contact your clinic or healthcare worker to verify that it has been added.",
+        bn: "আপনার টিকাদান রেকর্ড পেজে স্বাগতম। এই পেজে আপনি আপনার টিকাদানের ইতিহাস দেখতে পারবেন। ভ্যাকসিনের ধরন থেকে বোঝা যায় আপনি কোন টিকা নিয়েছেন। তারিখ থেকে জানা যায় কবে টিকা নিয়েছেন। ক্লিনিক থেকে জানা যায় কোথায় টিকা নিয়েছেন। ব্যাচ নম্বর থেকে ভ্যাকসিনের ব্যাচ শনাক্ত করা যায়। প্রতিটি রেকর্ড দেখে আপনার টিকাদানের তথ্য যাচাই করুন। রেকর্ড না থাকলে আপনার ক্লিনিক বা স্বাস্থ্যকর্মীর সাথে যোগাযোগ করে তথ্য যোগ হয়েছে কি না নিশ্চিত করুন।",
+      }}
       />
 
       <PageHeader
