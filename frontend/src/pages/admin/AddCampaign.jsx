@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import PageHeader from "../../components/PageHeader";
+import Icon from "../../components/Icons";
 
 const API = "http://localhost:5000/api";
 
@@ -96,98 +98,117 @@ export default function AddCampaign({ onBack }) {
     }
   };
 
-  const input = "w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm";
-
   return (
-    <div className="max-w-2xl mx-auto my-10 p-8 bg-white rounded-2xl shadow-lg">
-      <button type="button" onClick={onBack} className="text-sm font-semibold text-blue-600 mb-4">
-        ← Back to Dashboard
-      </button>
+    <>
+      <PageHeader
+        icon="megaphone"
+        eyebrow="Vaccination"
+        title="Publish vaccine campaign"
+        description="Shown in the home page notification bell. Anyone can book without logging in."
+        
+      />
 
-      <h2 className="text-2xl font-extrabold text-slate-800">Publish vaccine campaign</h2>
-      <p className="text-sm text-slate-500 mt-1">
-        Shown in the home page notification bell. Anyone can book without logging in.
-      </p>
+      <div className="cz-stack">
+        <section className="cz-card cz-form-card fx-rise" style={{ "--fx-i": 0 }}>
+          {message && (
+            <div className="cz-alert cz-alert--success" role="status">
+              {message}
+            </div>
+          )}
+          {error && (
+            <div className="cz-alert cz-alert--error" role="alert">
+              {error}
+            </div>
+          )}
 
-      {message && <div className="mt-4 rounded-xl bg-emerald-50 text-emerald-700 text-sm px-4 py-3">{message}</div>}
-      {error && <div className="mt-4 rounded-xl bg-rose-50 text-rose-700 text-sm px-4 py-3">{error}</div>}
+          <form onSubmit={submit}>
+            <div className="cz-field">
+              <input className="cz-input" placeholder="Campaign title *" value={form.title} onChange={set("title")} required maxLength={120} />
+            </div>
+            <div className="cz-field">
+              <textarea className="cz-textarea" placeholder="Short description" value={form.description} onChange={set("description")} maxLength={500} rows={3} />
+            </div>
 
-      <form onSubmit={submit} className="mt-5 space-y-4">
-        <input className={input} placeholder="Campaign title *" value={form.title} onChange={set("title")} required maxLength={120} />
-        <textarea className={input} placeholder="Short description" value={form.description} onChange={set("description")} maxLength={500} rows={3} />
+            <div className="cz-form-grid">
+              <div className="cz-field">
+                <select className="cz-select" value={form.vaccineId} onChange={set("vaccineId")} required>
+                  <option value="">Select vaccine *</option>
+                  {vaccines.map((v) => (
+                    <option key={v._id} value={v._id}>{v.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="cz-field">
+                <input className="cz-input" type="number" min="1" value={form.doseNumber} onChange={set("doseNumber")} placeholder="Dose number" />
+              </div>
+            </div>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <select className={input} value={form.vaccineId} onChange={set("vaccineId")} required>
-            <option value="">Select vaccine *</option>
-            {vaccines.map((v) => (
-              <option key={v._id} value={v._id}>{v.name}</option>
-            ))}
-          </select>
-          <input className={input} type="number" min="1" value={form.doseNumber} onChange={set("doseNumber")} placeholder="Dose number" />
-        </div>
+            <div className="cz-form-grid">
+              <label className="cz-field">
+                <span className="cz-label">Start date *</span>
+                <input className="cz-input" type="date" value={form.startDate} onChange={set("startDate")} required />
+              </label>
+              <label className="cz-field">
+                <span className="cz-label">End date *</span>
+                <input className="cz-input" type="date" value={form.endDate} onChange={set("endDate")} required />
+              </label>
+            </div>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <label className="text-sm text-slate-600">
-            Start date *
-            <input className={input} type="date" value={form.startDate} onChange={set("startDate")} required />
-          </label>
-          <label className="text-sm text-slate-600">
-            End date *
-            <input className={input} type="date" value={form.endDate} onChange={set("endDate")} required />
-          </label>
-        </div>
-
-        <fieldset>
-          <legend className="text-sm font-semibold text-slate-700 mb-2">
-            Clinics (leave empty for all active clinics)
-          </legend>
-          <div className="flex flex-wrap gap-2">
-            {clinics.map((c) => (
-              <button
-                type="button"
-                key={c._id}
-                onClick={() => toggleClinic(c._id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
-                  form.clinicIds.includes(c._id)
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "border-slate-200 text-slate-700"
-                }`}
-              >
-                {c.name}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full py-3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold disabled:opacity-50"
-        >
-          {saving ? "Publishing..." : "Publish campaign"}
-        </button>
-      </form>
-
-      {campaigns.length > 0 && (
-        <div className="mt-8">
-          <h3 className="font-bold text-slate-800 mb-2">Campaigns</h3>
-          <ul className="space-y-2">
-            {campaigns.map((c) => (
-              <li key={c._id} className="flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3 text-sm">
-                <span>
-                  <b>{c.title}</b> · {c.vaccineId?.name} · {c.startDate} → {c.endDate}
-                  {!c.isActive && <em className="text-slate-400"> (ended)</em>}
-                </span>
-                {c.isActive && (
-                  <button onClick={() => endCampaign(c._id)} className="text-rose-600 font-semibold text-xs">
-                    End
+            <fieldset className="cz-fieldset">
+              <legend>Clinics (leave empty for all active clinics)</legend>
+              <div className="cz-chips">
+                {clinics.map((c) => (
+                  <button
+                    type="button"
+                    key={c._id}
+                    onClick={() => toggleClinic(c._id)}
+                    className={`cz-chip ${form.clinicIds.includes(c._id) ? "is-selected" : ""}`}
+                    aria-pressed={form.clinicIds.includes(c._id)}
+                  >
+                    {c.name}
                   </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+                ))}
+              </div>
+            </fieldset>
+
+            <button type="submit" disabled={saving} className="cz-btn cz-btn--primary cz-btn--block">
+              {saving ? "Publishing..." : "Publish campaign"}
+            </button>
+          </form>
+        </section>
+
+        {campaigns.length > 0 && (
+          <section className="cz-card fx-rise" style={{ "--fx-i": 1 }}>
+            <div className="cz-card__head">
+              <h2>Campaigns</h2>
+            </div>
+            <div className="cz-request-list">
+              {campaigns.map((c) => (
+                <div key={c._id} className="cz-item" data-tilt>
+                  <div className="cz-item__top">
+                    <div>
+                      <h3>{c.title}</h3>
+                      <p>
+                        {c.vaccineId?.name} · {c.startDate} → {c.endDate}
+                      </p>
+                    </div>
+                    {c.isActive ? (
+                      <span className="cz-badge cz-badge--green">Active</span>
+                    ) : (
+                      <span className="cz-badge cz-badge--gray">(ended)</span>
+                    )}
+                  </div>
+                  {c.isActive && (
+                    <button type="button" onClick={() => endCampaign(c._id)} className="cz-link-btn">
+                      End
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </>
   );
 }

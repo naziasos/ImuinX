@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import "./AddWorker.css";
+import PageHeader from "../components/PageHeader";
+import Icon from "../components/Icons";
 
 function AddWorker({ onBack, onWorkerCreated }) {
   const [name, setName] = useState("");
@@ -47,131 +48,105 @@ function AddWorker({ onBack, onWorkerCreated }) {
     }
   };
 
+  const messageTone = message.startsWith("Worker created")
+    ? "success"
+    : message === "Creating worker..."
+      ? "info"
+      : "error";
+
   return (
-  <div className="add-worker-page">
+    <>
+      <PageHeader
+        icon="users"
+        eyebrow="Clinic team"
+        title="Add New Worker"
+        description="Add a health worker to your clinic and give them access to manage vaccination activities."
+        actions={
+          <button type="button" className="cz-btn cz-btn--secondary" onClick={onBack}>
+            <Icon name="arrowLeft" size={16} /> Back to Dashboard
+          </button>
+        }
+      />
 
-    {/* LEFT SIDE */}
-    <div className="add-worker-left">
+      <div className="cz-grid-main">
+        <section className="cz-card cz-form-card fx-rise" style={{ "--fx-i": 0 }}>
+          <h2 className="cz-section-title">
+            <span>
+              <Icon name="user" size={20} />
+            </span>
+            Worker Information
+          </h2>
 
-      <div className="add-worker-icon">
-        👩‍⚕️
+          <form onSubmit={handleSubmit}>
+            <div className="cz-field">
+              <label className="cz-label" htmlFor="add-worker-name">
+                Worker Name
+              </label>
+              <input
+                id="add-worker-name"
+                className="cz-input"
+                type="text"
+                placeholder="Enter worker name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="cz-field">
+              <label className="cz-label" htmlFor="add-worker-email">
+                Worker Email
+              </label>
+              <input
+                id="add-worker-email"
+                className="cz-input"
+                type="email"
+                placeholder="Enter worker email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <p className="cz-note cz-note--blue">
+              A temporary password will be generated automatically and sent to the
+              worker's email.
+            </p>
+
+            {message && (
+              <div
+                className={`cz-alert cz-alert--${messageTone}`}
+                role={messageTone === "error" ? "alert" : "status"}
+                style={{ marginTop: 16 }}
+              >
+                {message}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="cz-btn cz-btn--primary cz-btn--block"
+              style={{ marginTop: 18 }}
+            >
+              <Icon name="plus" size={18} /> Create Worker
+            </button>
+          </form>
+        </section>
+
+        <aside className="cz-card cz-card--soft fx-rise" style={{ "--fx-i": 1 }} data-tilt>
+          <div className="cz-worker">
+            <span className="cz-worker__avatar">
+              <Icon name="users" size={20} />
+            </span>
+            <div>
+              <strong>Clinic Team</strong>
+              <p>The worker will be automatically assigned to your clinic.</p>
+            </div>
+          </div>
+        </aside>
       </div>
-
-      <h1>Add New Worker</h1>
-
-      <p>
-        Add a health worker to your clinic and give them
-        access to manage vaccination activities.
-      </p>
-
-      <div className="add-worker-side-card">
-        <div className="side-card-icon">
-          +
-        </div>
-
-        <div>
-          <strong>Clinic Team</strong>
-          <span>
-            The worker will be automatically assigned
-            to your clinic.
-          </span>
-        </div>
-      </div>
-
-    </div>
-
-    {/* RIGHT SIDE */}
-    <div className="add-worker-right">
-
-      <button
-        type="button"
-        className="add-worker-back"
-        onClick={onBack}
-      >
-        ← Back to Dashboard
-      </button>
-
-      <h2>Add Worker</h2>
-
-      <p className="add-worker-subtitle">
-        Fill in the details below to create a new Health Worker account.
-      </p>
-
-      <div className="add-worker-section-title">
-
-        <div className="add-worker-section-icon">
-          👤
-        </div>
-
-        <h3>Worker Information</h3>
-
-      </div>
-
-      <form onSubmit={handleSubmit}>
-
-        <div className="add-worker-field">
-          <label>Worker Name</label>
-
-          <div className="add-worker-input">
-            <span>👤</span>
-
-            <input
-              type="text"
-              placeholder="Enter worker name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="add-worker-field">
-          <label>Worker Email</label>
-
-          <div className="add-worker-input">
-            <span>✉</span>
-
-            <input
-              type="email"
-              placeholder="Enter worker email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="add-worker-info">
-          <div className="add-worker-info-icon">
-            i
-          </div>
-
-          <p>
-            A temporary password will be generated automatically
-            and sent to the worker's email.
-          </p>
-        </div>
-
-        {message && (
-          <div className="add-worker-message">
-            {message}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          className="create-worker-button"
-        >
-          <span>+</span>
-          Create Worker
-        </button>
-
-      </form>
-
-    </div>
-
-  </div>
-);
+    </>
+  );
 }
 
 export default AddWorker;

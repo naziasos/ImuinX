@@ -1,48 +1,107 @@
-import { useCallback, useEffect, useState } from "react";
+
+import { useCallback, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "imunixTheme";
 
+const listeners = new Set();
+
 function readStoredTheme() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved === "dark" ? "dark" : "light";
+    return localStorage.getItem(STORAGE_KEY) === "dark"
+      ? "dark"
+      : "light";
   } catch {
     return "light";
   }
 }
 
-/**
- * Light / dark theme for the staff dashboards (admin, clinic admin, worker).
- *
- * The chosen theme is remembered in localStorage and applied as
- * `data-theme` on <html> only while a dashboard is mounted, so every other
- * page (including the citizen area) keeps its normal light look.
- */
+let preference = readStoredTheme();
+
+function applyTheme() {
+  if (typeof document === "undefined") return;
+
+  document.documentElement.setAttribute(
+    "data-theme",
+    preference
+  );
+
+  document.documentElement.style.colorScheme = preference;
+}
+
+function setPreference(nextTheme) {
+  if (nextTheme !== "light" && nextTheme !== "dark") {
+    return;
+  }
+
+  if (preference === nextTheme) {
+    applyTheme();
+    return;
+  }
+
+  preference = nextTheme;
+
+  try {
+    localStorage.setItem(STORAGE_KEY, nextTheme);
+  } catch {
+    // Theme switching still works for this session.
+  }
+
+  applyTheme();
+
+  listeners.forEach((listener) => listener());
+}
+
+function subscribe(listener) {
+  listeners.add(listener);
+
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot() {
+  return preference;
+}
+
+function getServerSnapshot() {
+  return "light";
+}
+
+// Apply saved theme immediately and synchronize other tabs.
+if (typeof window !== "undefined") {
+  applyTheme();
+
+  window.addEventListener("storage", (event) => {
+    if (event.key === STORAGE_KEY) {
+      const nextTheme =
+        event.newValue === "dark" ? "dark" : "light";
+
+      setPreference(nextTheme);
+    }
+  });
+}
+
 export default function useTheme() {
-  const [theme, setTheme] = useState(readStoredTheme);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.setAttribute("data-theme", theme);
-
-    return () => {
-      root.removeAttribute("data-theme");
-    };
-  }, [theme]);
+  const theme = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
+  );
 
   const toggleTheme = useCallback(() => {
-    setTheme((current) => {
-      const next = current === "dark" ? "light" : "dark";
-
-      try {
-        localStorage.setItem(STORAGE_KEY, next);
-      } catch {
-        // Storage may be blocked; the theme still switches for this visit.
-      }
-
-      return next;
-    });
+    setPreference(
+      preference === "dark" ? "light" : "dark"
+    );
   }, []);
 
-  return { theme, isDark: theme === "dark", toggleTheme };
+  const changeTheme = useCallback((nextTheme) => {
+    setPreference(nextTheme);
+  }, []);
+
+  return {
+    theme,
+    isDark: theme === "dark",
+    toggleTheme,
+    changeTheme,
+  };
 }

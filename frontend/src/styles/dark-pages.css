@@ -1,0 +1,618 @@
+/* =====================================================================
+   ImuniX - dark theme for the older, page-specific stylesheets
+
+   dashboard-theme.css already darkens everything built from the shared
+   cz-* classes. The pages below still use their own CSS files with
+   hard-coded light colours, so each light colour is remapped here
+   (generated from those files; one block per file). Only active while
+   <html data-theme="dark"> is set - see hooks/useTheme.js.
+
+   Every selector is wrapped in :where(...) so it has the SAME specificity
+   as the original rule: base colours switch to dark, while the originals'
+   hover / active / selected variants still win.
+
+   The Homepage, Registration and sign-in pages never get data-theme, so
+   they are not affected.
+   ===================================================================== */
+/* pages/admin/AddClinic.css */
+:where(html[data-theme="dark"]) .add-clinic-page{background:linear-gradient(
+    135deg,
+    rgba(37,99,235,0.18) 0%,
+    rgba(37,99,235,0.18) 50%,
+    rgba(37,99,235,0.18) 100%
+  )}
+:where(html[data-theme="dark"]) .add-clinic-card{background:#111b2e}
+:where(html[data-theme="dark"]) .intro-icon{background:rgba(17,27,46,0.90)}
+:where(html[data-theme="dark"]) .building-main{background:linear-gradient(
+    135deg,
+    #111b2e,
+    rgba(37,99,235,0.18)
+  )}
+:where(html[data-theme="dark"]) .clinic-sign{background:#111b2e}
+:where(html[data-theme="dark"]) .clinic-plus-badge{background:linear-gradient(
+    145deg,
+    #111b2e,
+    rgba(37,99,235,0.18)
+  );border:4px solid #25324a}
+:where(html[data-theme="dark"]) .clinic-form-section{background:#111b2e}
+:where(html[data-theme="dark"]) .form-header h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .form-header p{color:#93c5fd}
+:where(html[data-theme="dark"]) .section-icon{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .form-section-title h3{color:#93c5fd}
+:where(html[data-theme="dark"]) .input-wrapper{background:#111b2e;border:1.5px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .input-wrapper span{color:#93c5fd}
+:where(html[data-theme="dark"]) .input-wrapper input{color:#93c5fd}
+:where(html[data-theme="dark"]) .input-wrapper input::placeholder{color:#93c5fd}
+:where(html[data-theme="dark"]) .password-info{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .info-icon{color:#93c5fd}
+:where(html[data-theme="dark"]) .password-info p{color:#93c5fd}
+:where(html[data-theme="dark"]) .form-message{background:#0e182b}
+:where(html[data-theme="dark"]) .back-button{color:#93c5fd}
+:where(html[data-theme="dark"]) .back-button:hover{color:#93c5fd}
+:where(html[data-theme="dark"]) .coordinate-hint{color:#8b9bb2}
+/* pages/citizen/EditProfile.css */
+:where(html[data-theme="dark"]) .edit-profile-page{background:#0e182b}
+:where(html[data-theme="dark"]) .edit-profile-back{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .edit-profile-back:hover{background:#0e182b}
+:where(html[data-theme="dark"]) .edit-profile-eyebrow{color:#5eead4}
+:where(html[data-theme="dark"]) .edit-profile-heading h1{color:#93c5fd}
+:where(html[data-theme="dark"]) .edit-profile-heading p,:where(html[data-theme="dark"]) .edit-profile-section-heading p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .edit-profile-card{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .edit-profile-message{color:#b4c0d3}
+:where(html[data-theme="dark"]) .edit-profile-icon{background:rgba(8,145,178,0.18)}
+:where(html[data-theme="dark"]) .edit-profile-section-heading h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .edit-profile-field label{color:#e8eef8}
+:where(html[data-theme="dark"]) .edit-profile-field input{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .edit-profile-field input:disabled{background:#0e182b}
+:where(html[data-theme="dark"]) .edit-profile-field small{color:#8b9bb2}
+:where(html[data-theme="dark"]) .edit-profile-divider{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .edit-profile-error{background:#0e182b;border:1px solid rgba(244,63,94,0.38)}
+:where(html[data-theme="dark"]) .edit-profile-success{background:rgba(16,185,129,0.18);border:1px solid rgba(16,185,129,0.38);color:#6ee7b7}
+:where(html[data-theme="dark"]) .edit-profile-actions{border-top:1px solid #25324a}
+:where(html[data-theme="dark"]) .edit-profile-cancel{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .edit-profile-cancel:hover:not(:disabled){background:#0e182b}
+/* pages/citizen/FamilyAccount.css */
+:where(html[data-theme="dark"]) .family-page{background:#0e182b}
+:where(html[data-theme="dark"]) .family-back{color:#8b9bb2}
+:where(html[data-theme="dark"]) .family-back:hover{color:#5eead4}
+:where(html[data-theme="dark"]) .family-heading h1{color:#93c5fd}
+:where(html[data-theme="dark"]) .family-heading p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .family-section-header h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .family-avatar{background:rgba(13,148,136,0.18);color:#5eead4}
+:where(html[data-theme="dark"]) .family-member-card{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .family-member-info h3{color:#93c5fd}
+:where(html[data-theme="dark"]) .family-member-info p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .family-view-button{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .family-view-button:hover{background:#0e182b;border-color:rgba(16,185,129,0.38)}
+:where(html[data-theme="dark"]) .family-form-card{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .family-form-card h3{color:#93c5fd}
+:where(html[data-theme="dark"]) .family-form-group label{color:#b4c0d3}
+:where(html[data-theme="dark"]) .family-form-group input,:where(html[data-theme="dark"]) .family-form-group select{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .family-cancel-button{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .family-close-button{color:#8b9bb2}
+:where(html[data-theme="dark"]) .family-close-button:hover{color:#5eead4}
+:where(html[data-theme="dark"]) .family-profile-card{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .family-profile-header{border-bottom:1px solid #25324a}
+:where(html[data-theme="dark"]) .family-detail{background:#0e182b}
+:where(html[data-theme="dark"]) .family-detail strong{color:#e8eef8}
+:where(html[data-theme="dark"]) .family-empty{background:#111b2e;border:1px dashed rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .family-empty h3{color:#e8eef8}
+:where(html[data-theme="dark"]) .family-empty p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .family-profile-actions{border-top:1px solid #25324a}
+:where(html[data-theme="dark"]) .family-profile-page{background:linear-gradient(
+    135deg,
+    #0e182b 0%,
+    #0e182b 48%,
+    rgba(37,99,235,0.18) 100%
+  )}
+:where(html[data-theme="dark"]) .family-profile-back{background:rgba(17,27,46,0.85);border:1px solid #25324a}
+:where(html[data-theme="dark"]) .family-profile-back:hover{background:rgba(16,185,129,0.18);border-color:rgba(16,185,129,0.38)}
+:where(html[data-theme="dark"]) .family-profile-eyebrow{color:#5eead4}
+:where(html[data-theme="dark"]) .family-profile-heading h1{color:#93c5fd}
+:where(html[data-theme="dark"]) .family-profile-heading p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .family-profile-card{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .family-profile-top{background:linear-gradient(
+    115deg,
+    #111b2e 0%,
+    #0e182b 100%
+  )}
+:where(html[data-theme="dark"]) .family-profile-avatar{border:5px solid #25324a}
+:where(html[data-theme="dark"]) .family-profile-label{color:#5eead4}
+:where(html[data-theme="dark"]) .family-profile-name h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .family-profile-relationship{background:rgba(16,185,129,0.18);border:1px solid rgba(16,185,129,0.38);color:#5eead4}
+:where(html[data-theme="dark"]) .family-profile-divider{background:#17243b}
+:where(html[data-theme="dark"]) .family-profile-section-title h3{color:#93c5fd}
+:where(html[data-theme="dark"]) .family-profile-detail{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .family-profile-detail:hover{background:#0e182b;border-color:rgba(16,185,129,0.38)}
+:where(html[data-theme="dark"]) .family-detail-icon{background:rgba(16,185,129,0.18)}
+:where(html[data-theme="dark"]) .family-profile-detail span{color:#8b9bb2}
+:where(html[data-theme="dark"]) .family-profile-detail strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .family-profile-footer{background:#0e182b;border-top:1px solid #25324a}
+:where(html[data-theme="dark"]) .family-profile-footer > div > strong{color:#e8eef8}
+:where(html[data-theme="dark"]) .family-profile-footer p{color:#8b9bb2}
+/* pages/citizen/Feedback.css */
+:where(html[data-theme="dark"]) .fb-page{--fb-blue-soft:rgba(37,99,235,0.18);--fb-ink:#93c5fd;--fb-muted:#8b9bb2;--fb-line:#25324a;background:#0e182b}
+:where(html[data-theme="dark"]) .fb-tabs{background:#111b2e}
+:where(html[data-theme="dark"]) .fb-count{background:rgba(37,99,235,0.18);color:#b4c0d3}
+:where(html[data-theme="dark"]) .fb-visit{background:#111b2e}
+:where(html[data-theme="dark"]) .fb-visit:hover{border-color:rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .fb-form{background:#111b2e}
+:where(html[data-theme="dark"]) .fb-summary{background:#0e182b}
+:where(html[data-theme="dark"]) .fb-chips button{background:#111b2e}
+:where(html[data-theme="dark"]) .fb-chips button:hover{border-color:rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .fb-anon{border:1px dashed rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .fb-alert{background:#0e182b;border:1px solid rgba(244,63,94,0.38)}
+:where(html[data-theme="dark"]) .fb-btn.ghost{background:#111b2e}
+:where(html[data-theme="dark"]) .fb-btn.ghost:hover:not(:disabled){background:#0e182b}
+:where(html[data-theme="dark"]) .fb-state{background:#111b2e}
+:where(html[data-theme="dark"]) .fb-error-text{color:#fda4af}
+:where(html[data-theme="dark"]) .fb-spinner{border:3px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .fb-card{background:#111b2e}
+:where(html[data-theme="dark"]) .fb-tagrow span{background:#0e182b}
+:where(html[data-theme="dark"]) .fb-comment{color:#e8eef8}
+:where(html[data-theme="dark"]) .fb-status.new{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .fb-status.responded{background:rgba(234,179,8,0.18);color:#fcd34d}
+:where(html[data-theme="dark"]) .fb-status.resolved{background:rgba(16,185,129,0.18);color:#6ee7b7}
+:where(html[data-theme="dark"]) .fb-reply p{color:#93c5fd}
+/* pages/citizen/MissedDoses.css */
+:where(html[data-theme="dark"]) .missed-doses-section{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .missed-doses-eyebrow{color:#93c5fd}
+:where(html[data-theme="dark"]) .missed-doses-heading p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .missed-dose-refresh,:where(html[data-theme="dark"]) .missed-dose-secondary{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .missed-dose-refresh:hover,:where(html[data-theme="dark"]) .missed-dose-secondary:hover{background:#0e182b}
+:where(html[data-theme="dark"]) .missed-dose-group > h3{color:#93c5fd}
+:where(html[data-theme="dark"]) .missed-dose-card{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .missed-dose-card-top{border-bottom:1px solid #25324a}
+:where(html[data-theme="dark"]) .missed-dose-number{color:#8b9bb2}
+:where(html[data-theme="dark"]) .missed-dose-status{background:rgba(245,158,11,0.18);color:#fcd34d}
+:where(html[data-theme="dark"]) .missed-dose-status.status-review{background:rgba(245,158,11,0.18);color:#fcd34d}
+:where(html[data-theme="dark"]) .missed-dose-status.status-booked{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .missed-dose-details span{color:#8b9bb2}
+:where(html[data-theme="dark"]) .missed-dose-details strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .missed-dose-review-note{background:rgba(245,158,11,0.18);color:#fcd34d}
+:where(html[data-theme="dark"]) .missed-dose-actions{border-top:1px solid #25324a}
+:where(html[data-theme="dark"]) .missed-dose-empty{background:#0e182b;border:1px dashed rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .missed-dose-empty h3{color:#93c5fd}
+:where(html[data-theme="dark"]) .missed-dose-empty-icon{background:rgba(16,185,129,0.18);color:#6ee7b7}
+:where(html[data-theme="dark"]) .missed-dose-error{background:#0e182b;border:1px solid rgba(244,63,94,0.38)}
+:where(html[data-theme="dark"]) .missed-dose-error button{color:#fda4af}
+:where(html[data-theme="dark"]) .missed-dose-success{background:#0e182b;border:1px solid rgba(16,185,129,0.38)}
+:where(html[data-theme="dark"]) .missed-dose-modal{background:#111b2e}
+:where(html[data-theme="dark"]) .missed-dose-modal-header p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .missed-dose-close{color:#8b9bb2}
+:where(html[data-theme="dark"]) .missed-dose-modal form label{color:#e8eef8}
+:where(html[data-theme="dark"]) .missed-dose-modal form label span{color:#fda4af}
+:where(html[data-theme="dark"]) .missed-dose-modal select,:where(html[data-theme="dark"]) .missed-dose-modal textarea{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .missed-dose-modal select:focus,:where(html[data-theme="dark"]) .missed-dose-modal textarea:focus{outline:2px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .missed-dose-character-count{color:#8b9bb2}
+/* pages/citizen/NearbyClinics.css */
+:where(html[data-theme="dark"]) .nc-search{background:#111b2e}
+:where(html[data-theme="dark"]) .nc-chip{background:#111b2e}
+:where(html[data-theme="dark"]) .nc-alert{background:rgba(245,158,11,0.18);border:1px solid rgba(245,158,11,0.38);color:#fcd34d}
+:where(html[data-theme="dark"]) .nc-card{background:#111b2e}
+:where(html[data-theme="dark"]) .nc-card:hover{border-color:rgba(16,185,129,0.38)}
+:where(html[data-theme="dark"]) .nc-card.is-active{background:linear-gradient(135deg,#0e182b,#0e182b)}
+:where(html[data-theme="dark"]) .nc-distance{border:1px solid rgba(16,185,129,0.38)}
+:where(html[data-theme="dark"]) .nc-skeleton{background:linear-gradient(100deg,#17243b 30%,#0e182b 50%,#17243b 70%)}
+:where(html[data-theme="dark"]) .nc-map-wrap{background:rgba(8,145,178,0.18)}
+:where(html[data-theme="dark"]) .nc-map-loading{background:#111b2e}
+:where(html[data-theme="dark"]) .nc-marker{border:3px solid #25324a}
+:where(html[data-theme="dark"]) .nc-you i{border:3px solid #25324a}
+/* pages/citizen/MyCertificate.css */
+:where(html[data-theme="dark"]) .certificate-page{background:#0e182b}
+:where(html[data-theme="dark"]) .certificate-back{color:#93c5fd}
+:where(html[data-theme="dark"]) .certificate-eyebrow,:where(html[data-theme="dark"]) .certificate-label{color:#93c5fd}
+:where(html[data-theme="dark"]) .certificate-page-header h1{color:#93c5fd}
+:where(html[data-theme="dark"]) .certificate-page-header p:last-child{color:#8b9bb2}
+:where(html[data-theme="dark"]) .certificate-header-badge{background:#0e182b;border:1px solid rgba(16,185,129,0.38)}
+:where(html[data-theme="dark"]) .certificate-subtitle{color:#8b9bb2}
+:where(html[data-theme="dark"]) .certificate-number{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .certificate-person{border-bottom:1px solid #25324a}
+:where(html[data-theme="dark"]) .certificate-avatar{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .certificate-person span,:where(html[data-theme="dark"]) .certificate-field span,:where(html[data-theme="dark"]) .certificate-clinic span{color:#8b9bb2}
+:where(html[data-theme="dark"]) .certificate-person strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .certificate-field strong,:where(html[data-theme="dark"]) .certificate-clinic strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .certificate-clinic{border-left:3px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .certificate-clinic small{color:#8b9bb2}
+:where(html[data-theme="dark"]) .certificate-footer{background:#0e182b;border-top:1px solid #25324a}
+:where(html[data-theme="dark"]) .certificate-footer span:last-child{color:#6ee7b7}
+:where(html[data-theme="dark"]) .certificate-state{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .certificate-state h3{color:#93c5fd}
+:where(html[data-theme="dark"]) .certificate-state p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .certificate-state-icon{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .certificate-error .certificate-state-icon{background:#0e182b}
+:where(html[data-theme="dark"]) .certificate-spinner{border:4px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .certificate-page{background:#111b2e}
+:where(html[data-theme="dark"]) .certificate-page{background:#111b2e !important}
+/* pages/clinicAdmin/AssignDuty.css */
+:where(html[data-theme="dark"]) .assign-duty-main{--ad-ink:#93c5fd;--ad-text:#e8eef8;--ad-muted:#8b9bb2;--ad-canvas:#0e182b;--ad-surface:#111b2e;--ad-line:rgba(37,99,235,0.38);--ad-line-strong:rgba(37,99,235,0.38);--ad-wash:#0e182b}
+:where(html[data-theme="dark"]) .assign-duty-back{border:1px solid #25324a}
+:where(html[data-theme="dark"]) .assign-duty-back:hover{border-color:#25324a}
+:where(html[data-theme="dark"]) .assign-duty-profile{border:1px solid #25324a}
+:where(html[data-theme="dark"]) .assign-duty-profile-avatar{background:#111b2e}
+:where(html[data-theme="dark"]) .assign-duty-stats{border:1px solid #25324a}
+:where(html[data-theme="dark"]) .assign-duty-stat + .assign-duty-stat{border-left:1px solid #25324a}
+:where(html[data-theme="dark"]) .assign-duty-search input{background:#111b2e}
+:where(html[data-theme="dark"]) .assign-duty-search input:disabled{background:#0e182b}
+:where(html[data-theme="dark"]) .assign-duty-search-clear:hover{background:#17243b}
+:where(html[data-theme="dark"]) .assign-duty-tabs{background:#17243b}
+:where(html[data-theme="dark"]) .assign-duty-tab.is-active{background:#111b2e}
+:where(html[data-theme="dark"]) .assign-duty-tab.is-active span{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .assign-duty-group{background:#111b2e}
+:where(html[data-theme="dark"]) .assign-duty-date-tile{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .assign-duty-when{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .assign-duty-when.is-today{background:rgba(245,158,11,0.18);color:#fcd34d}
+:where(html[data-theme="dark"]) .assign-duty-group.is-today{border-color:rgba(245,158,11,0.38)}
+:where(html[data-theme="dark"]) .assign-duty-group.is-today .assign-duty-group-head{background:rgba(245,158,11,0.18);border-bottom-color:rgba(245,158,11,0.38)}
+:where(html[data-theme="dark"]) .assign-duty-group.is-past .assign-duty-group-head{background:#0e182b}
+:where(html[data-theme="dark"]) .assign-duty-group.is-past .assign-duty-date-tile strong,:where(html[data-theme="dark"]) .assign-duty-group.is-past .assign-duty-group-title h3{color:#b4c0d3}
+:where(html[data-theme="dark"]) .assign-duty-group.is-past .assign-duty-when{background:#17243b}
+:where(html[data-theme="dark"]) .assign-duty-row + .assign-duty-row{border-top:1px solid #25324a}
+:where(html[data-theme="dark"]) .assign-duty-chip-vaccine{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .assign-duty-chip-visit{background:rgba(16,185,129,0.18);color:#5eead4}
+:where(html[data-theme="dark"]) .assign-duty-chip-other{background:#17243b}
+:where(html[data-theme="dark"]) .ad-avatar-tone-0{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .ad-avatar-tone-1{background:rgba(13,148,136,0.18);color:#67e8f9}
+:where(html[data-theme="dark"]) .ad-avatar-tone-2{background:rgba(16,185,129,0.18);color:#6ee7b7}
+:where(html[data-theme="dark"]) .ad-avatar-tone-3{background:rgba(124,58,237,0.18);color:#c4b5fd}
+:where(html[data-theme="dark"]) .ad-avatar-tone-4{background:rgba(244,63,94,0.18);color:#fda4af}
+:where(html[data-theme="dark"]) .ad-avatar-tone-5{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .ad-skel{background:linear-gradient(
+    90deg,
+    #17243b 25%,
+    #0e182b 50%,
+    #17243b 75%
+  )}
+:where(html[data-theme="dark"]) .assign-duty-empty-icon{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .assign-duty-link-btn{background:#111b2e}
+:where(html[data-theme="dark"]) .assign-duty-link-btn:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .assign-duty-step:not(:nth-last-child(2))::before{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .assign-duty-step-num{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .assign-duty-input{background:#111b2e}
+:where(html[data-theme="dark"]) .assign-duty-duty{background:#111b2e;border:1.5px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .assign-duty-duty-vaccine .assign-duty-duty-icon{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .assign-duty-duty-visit .assign-duty-duty-icon{background:rgba(16,185,129,0.18);color:#5eead4}
+:where(html[data-theme="dark"]) .assign-duty-duty-vaccine.is-selected{background:#0e182b}
+:where(html[data-theme="dark"]) .assign-duty-duty-visit.is-selected{background:#0e182b}
+:where(html[data-theme="dark"]) .assign-duty-worker{background:#111b2e;border:1.5px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .assign-duty-worker:hover:not(.is-taken):not(.is-selected){background:#0e182b;border-color:rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .assign-duty-worker.is-selected{background:#0e182b}
+:where(html[data-theme="dark"]) .assign-duty-worker.is-taken{background:#0e182b}
+:where(html[data-theme="dark"]) .assign-duty-worker-check{border:1.5px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .assign-duty-worker-tag{background:#17243b}
+:where(html[data-theme="dark"]) .assign-duty-submit:disabled{background:rgba(37,99,235,0.18);color:#8b9bb2}
+:where(html[data-theme="dark"]) .assign-duty-btn-spinner{border:2.5px solid #25324a;border-top-color:#25324a}
+:where(html[data-theme="dark"]) .assign-duty-back:focus-visible{outline-color:#25324a}
+:where(html[data-theme="dark"]) .assign-duty-row.is-new{background:rgba(16,185,129,0.18)}
+/* pages/clinicAdmin/ClinicAdminDashboard.css */
+:where(html[data-theme="dark"]) .clinic-dashboard{background:#0e182b}
+:where(html[data-theme="dark"]) .clinic-sidebar{background:#111b2e;border-right:1px solid #25324a}
+:where(html[data-theme="dark"]) .clinic-logo strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .clinic-nav-item{color:#8b9bb2}
+:where(html[data-theme="dark"]) .clinic-nav-item:hover{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .clinic-nav-item.active{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .clinic-logout{background:rgba(244,63,94,0.18);color:#fda4af}
+:where(html[data-theme="dark"]) .clinic-logout:hover{background:rgba(244,63,94,0.18)}
+:where(html[data-theme="dark"]) .clinic-breadcrumb{color:#8b9bb2}
+:where(html[data-theme="dark"]) .clinic-header h1{color:#93c5fd}
+:where(html[data-theme="dark"]) .clinic-description{color:#8b9bb2}
+:where(html[data-theme="dark"]) .clinic-profile{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .clinic-profile-avatar{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .clinic-profile strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .clinic-stat-card-clickable:hover{border-color:rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .clinic-error{background:rgba(244,63,94,0.18);border:1px solid rgba(244,63,94,0.38);color:#fda4af}
+:where(html[data-theme="dark"]) .clinic-info-card{background:linear-gradient(
+    135deg,
+    rgba(37,99,235,0.18),
+    #111b2e
+  );border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .clinic-info-icon{background:#111b2e}
+:where(html[data-theme="dark"]) .clinic-info-content p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .clinic-info-content h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .clinic-details{color:#8b9bb2}
+:where(html[data-theme="dark"]) .clinic-status{color:#6ee7b7}
+:where(html[data-theme="dark"]) .clinic-stat-card{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .clinic-stat-icon{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .clinic-stat-card p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .clinic-stat-card h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .workers-section{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .section-label{color:#93c5fd}
+:where(html[data-theme="dark"]) .workers-header h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .workers-header p:not(.section-label){color:#8b9bb2}
+:where(html[data-theme="dark"]) .worker-count{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-card{border:1px solid #25324a}
+:where(html[data-theme="dark"]) .worker-card:hover{border-color:rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .worker-avatar{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-info h3{color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-info p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .worker-role{background:rgba(16,185,129,0.18);color:#6ee7b7}
+:where(html[data-theme="dark"]) .empty-workers{background:#0e182b;border:1px dashed rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .empty-workers h3{color:#e8eef8}
+:where(html[data-theme="dark"]) .clinic-dashboard-loading{background:#0e182b}
+:where(html[data-theme="dark"]) .loading-spinner{border:4px solid rgba(37,99,235,0.38)}
+/* pages/clinicAdmin/ClinicFeedback.css */
+:where(html[data-theme="dark"]) .cf-summary{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .cf-score strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .cf-score small{color:#8b9bb2}
+:where(html[data-theme="dark"]) .cf-low-rating{background:#0e182b}
+:where(html[data-theme="dark"]) .cf-low-rating-text{color:#fda4af}
+:where(html[data-theme="dark"]) .cf-reply-box{border-top:1px solid #25324a}
+:where(html[data-theme="dark"]) .cf-reply-box label{color:#b4c0d3}
+:where(html[data-theme="dark"]) .cf-reply-box textarea{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+/* pages/clinicAdmin/WorkerList.css */
+:where(html[data-theme="dark"]) .worker-list-page{background:#0e182b}
+:where(html[data-theme="dark"]) .worker-list-back{color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-list-header p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .worker-list-clinic-bar{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .worker-list-clinic-bar b{color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-list-error{background:rgba(244,63,94,0.18);color:#fda4af;border:1px solid rgba(244,63,94,0.38)}
+:where(html[data-theme="dark"]) .worker-search{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .worker-sort{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .worker-management-card{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .worker-management-avatar,:where(html[data-theme="dark"]) .worker-profile-avatar-large{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-management-main p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .new-worker-badge{background:rgba(16,185,129,0.18);color:#6ee7b7}
+:where(html[data-theme="dark"]) .worker-management-meta{border-top:1px solid #25324a;border-bottom:1px solid #25324a;color:#8b9bb2}
+:where(html[data-theme="dark"]) .worker-management-actions button{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .worker-management-actions .worker-delete-btn{background:#0e182b;border-color:rgba(244,63,94,0.38)}
+:where(html[data-theme="dark"]) .worker-management-actions button:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .worker-management-actions .worker-delete-btn:hover{background:rgba(244,63,94,0.18)}
+:where(html[data-theme="dark"]) .worker-list-empty{background:#111b2e;border:1px dashed rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .worker-list-empty h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-list-spinner{border:3px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .worker-profile-modal{background:#111b2e}
+:where(html[data-theme="dark"]) .worker-modal-close{background:#0e182b}
+:where(html[data-theme="dark"]) .worker-profile-hero p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .worker-profile-grid>div{background:#0e182b;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .worker-profile-grid strong{color:#e8eef8}
+:where(html[data-theme="dark"]) .worker-readonly-note{background:rgba(37,99,235,0.18);color:#b4c0d3}
+:where(html[data-theme="dark"]) .worker-profile-footer button{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .worker-profile-delete{background:#0e182b!important;border-color:rgba(244,63,94,0.38)!important}
+:where(html[data-theme="dark"]) .delete-confirm-modal{background:#111b2e}
+:where(html[data-theme="dark"]) .delete-warning-icon{background:rgba(245,158,11,0.18)}
+:where(html[data-theme="dark"]) .delete-confirm-modal h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .delete-confirm-modal p{color:#b4c0d3}
+:where(html[data-theme="dark"]) .delete-warning-text{background:#0e182b}
+:where(html[data-theme="dark"]) .delete-cancel-btn{background:#0e182b}
+:where(html[data-theme="dark"]) .delete-cancel-btn:hover:not(:disabled){background:rgba(37,99,235,0.18)}
+/* pages/worker/LogDose.css */
+:where(html[data-theme="dark"]) .logdose-hero-glow{background:radial-gradient(
+    circle,
+    rgba(17,27,46,0.35),
+    transparent 65%
+  )}
+:where(html[data-theme="dark"]) .logdose-badge-face{border:1px solid #25324a}
+:where(html[data-theme="dark"]) .logdose-rail-step{background:#111b2e;border:1.5px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .logdose-rail-dot{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .logdose-rail-step.done{background:rgba(13,148,136,0.18);color:#5eead4;border-color:rgba(13,148,136,0.38)}
+:where(html[data-theme="dark"]) .logdose-rail-line{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .logdose-panel-inner{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .logdose-panel-icon{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .logdose-panel-head h3{color:#93c5fd}
+:where(html[data-theme="dark"]) .logdose-panel-head p{color:#b4c0d3}
+:where(html[data-theme="dark"]) .logdose-muted{color:#b4c0d3}
+:where(html[data-theme="dark"]) .logdose-input{background:#0e182b;border:1.5px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .logdose-input:focus{background:#111b2e}
+:where(html[data-theme="dark"]) .logdose-input.has-error{background:#0e182b}
+:where(html[data-theme="dark"]) .logdose-error-text{color:#fda4af}
+:where(html[data-theme="dark"]) .logdose-dropdown{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .logdose-dropdown-empty{color:#8b9bb2}
+:where(html[data-theme="dark"]) .logdose-dropdown-item{border-bottom:1px solid #25324a}
+:where(html[data-theme="dark"]) .logdose-dropdown-item:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .logdose-dropdown-avatar{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .logdose-dropdown-text strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .logdose-dropdown-text span{color:#8b9bb2}
+:where(html[data-theme="dark"]) .logdose-selected-citizen{background:linear-gradient(
+      135deg,
+      rgba(37,99,235,0.18),
+      #111b2e
+    );border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .logdose-citizen-info strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .logdose-citizen-info span{color:#b4c0d3}
+:where(html[data-theme="dark"]) .logdose-chip-clear{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .logdose-chip-clear:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .logdose-history{border-top:1px dashed rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .logdose-history-title{color:#8b9bb2}
+:where(html[data-theme="dark"]) .logdose-history-empty{color:#8b9bb2}
+:where(html[data-theme="dark"]) .logdose-history li{background:#0e182b}
+:where(html[data-theme="dark"]) .logdose-age-banner{background:rgba(37,99,235,0.18);border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .logdose-age-banner strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .logdose-age-banner span{color:#67e8f9}
+:where(html[data-theme="dark"]) .logdose-tile{background:#17243b;border:1.5px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .logdose-tile:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .logdose-tile:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .logdose-batch-card{background:#0e182b;border:1.5px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .logdose-batch-card:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .logdose-batch-card.active{background:rgba(13,148,136,0.18)}
+:where(html[data-theme="dark"]) .logdose-batch-card strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .logdose-batch-card span{color:#e8eef8}
+:where(html[data-theme="dark"]) .logdose-batch-card:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .logdose-batch-card.active{background:rgba(13,148,136,0.18)}
+:where(html[data-theme="dark"]) .logdose-batch-card.active strong,:where(html[data-theme="dark"]) .logdose-batch-card.active span{color:#67e8f9}
+:where(html[data-theme="dark"]) .logdose-review{background:#0e182b;border:1.5px dashed rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .logdose-review-row{color:#b4c0d3}
+:where(html[data-theme="dark"]) .logdose-review-row strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .logdose-btn-secondary{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .logdose-btn-secondary:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .logdose-success-card{background:#111b2e}
+:where(html[data-theme="dark"]) .logdose-success-card h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .logdose-success-card p{color:#b4c0d3}
+:where(html[data-theme="dark"]) .logdose-success-details{background:#0e182b}
+:where(html[data-theme="dark"]) .logdose-success-details span{color:#8b9bb2}
+:where(html[data-theme="dark"]) .logdose-success-details strong{color:#93c5fd}
+/* pages/worker/ShowWork.css */
+:where(html[data-theme="dark"]) .show-work-page{background:#0e182b}
+:where(html[data-theme="dark"]) .show-work-header{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .show-work-label{color:#93c5fd}
+:where(html[data-theme="dark"]) .show-work-header h1{color:#93c5fd}
+:where(html[data-theme="dark"]) .show-work-header p:last-child{color:#8b9bb2}
+:where(html[data-theme="dark"]) .show-work-icon{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .show-work-card{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .show-work-card-header h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .show-work-card-header p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .show-work-duty{border:1px solid #25324a}
+:where(html[data-theme="dark"]) .show-work-duty:hover{border-color:rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .show-work-duty-icon{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .show-work-duty-info strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .show-work-status{background:rgba(16,185,129,0.18);color:#6ee7b7}
+:where(html[data-theme="dark"]) .show-work-empty{background:#0e182b;border:1px dashed #25324a}
+:where(html[data-theme="dark"]) .show-work-empty h3{color:#93c5fd}
+:where(html[data-theme="dark"]) .show-work-empty p{color:#8b9bb2}
+/* pages/worker/WorkerAppointments.css */
+:where(html[data-theme="dark"]) .worker-appointments-page{background:#0e182b}
+:where(html[data-theme="dark"]) .worker-sidebar{background:#111b2e;border-right:1px solid #25324a}
+:where(html[data-theme="dark"]) .worker-logo strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-nav-item{color:#8b9bb2}
+:where(html[data-theme="dark"]) .worker-nav-item:hover{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-nav-item.active{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-logout{background:rgba(244,63,94,0.18);color:#fda4af}
+:where(html[data-theme="dark"]) .worker-logout:hover{background:rgba(244,63,94,0.18)}
+:where(html[data-theme="dark"]) .worker-breadcrumb{color:#8b9bb2}
+:where(html[data-theme="dark"]) .worker-header h1{color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-description{color:#8b9bb2}
+:where(html[data-theme="dark"]) .worker-profile{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .worker-avatar{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-profile strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-date-card,:where(html[data-theme="dark"]) .worker-count-card{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .worker-date-icon{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .worker-date-card h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-count-card strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .worker-duty-warning{background:rgba(245,158,11,0.18);border:1px solid rgba(245,158,11,0.38)}
+:where(html[data-theme="dark"]) .worker-duty-warning strong{color:#fcd34d}
+:where(html[data-theme="dark"]) .worker-duty-warning p{color:#fcd34d}
+:where(html[data-theme="dark"]) .worker-error,:where(html[data-theme="dark"]) .modal-error{background:rgba(244,63,94,0.18);border:1px solid rgba(244,63,94,0.38);color:#fda4af}
+:where(html[data-theme="dark"]) .appointment-section{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .section-label{color:#93c5fd}
+:where(html[data-theme="dark"]) .appointment-section-header h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .appointment-section-header p:not(.section-label){color:#8b9bb2}
+:where(html[data-theme="dark"]) .refresh-btn{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .refresh-btn:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .appointment-card{border:1px solid #25324a}
+:where(html[data-theme="dark"]) .appointment-card:hover{border-color:rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .appointment-time strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .appointment-divider{background:#17243b}
+:where(html[data-theme="dark"]) .citizen-avatar,:where(html[data-theme="dark"]) .patient-avatar{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .appointment-citizen h3{color:#93c5fd}
+:where(html[data-theme="dark"]) .appointment-status span{background:rgba(16,185,129,0.18);color:#6ee7b7}
+:where(html[data-theme="dark"]) .appointment-empty{background:#0e182b;border:1px dashed rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .appointment-empty h3{color:#e8eef8}
+:where(html[data-theme="dark"]) .completion-modal{background:#111b2e}
+:where(html[data-theme="dark"]) .modal-header p{color:#93c5fd}
+:where(html[data-theme="dark"]) .modal-header h2{color:#93c5fd}
+:where(html[data-theme="dark"]) .modal-close{background:#0e182b}
+:where(html[data-theme="dark"]) .modal-close:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .patient-box{background:#0e182b;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .patient-box strong{color:#93c5fd}
+:where(html[data-theme="dark"]) .patient-box small{color:#8b9bb2}
+:where(html[data-theme="dark"]) .form-field label{color:#e8eef8}
+:where(html[data-theme="dark"]) .form-field select{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .form-field select:disabled{background:#0e182b}
+:where(html[data-theme="dark"]) .modal-info{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .modal-info span{color:#93c5fd}
+:where(html[data-theme="dark"]) .modal-info p{color:#b4c0d3}
+:where(html[data-theme="dark"]) .cancel-modal-btn{background:#0e182b}
+:where(html[data-theme="dark"]) .cancel-modal-btn:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .worker-appointments-loading{background:#0e182b}
+:where(html[data-theme="dark"]) .worker-spinner{border:4px solid rgba(37,99,235,0.38)}
+/* components/FeedbackPopup.css */
+:where(html[data-theme="dark"]) .fbp-modal{background:#111b2e}
+:where(html[data-theme="dark"]) .fbp-x{background:#0e182b}
+:where(html[data-theme="dark"]) .fbp-x:hover{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .fbp-emoji{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .fbp-head p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .fbp-rate button.on{color:#fcd34d}
+:where(html[data-theme="dark"]) .fbp-rate-label{color:#8b9bb2}
+:where(html[data-theme="dark"]) .fbp-chips button{background:#111b2e;border:1px solid #25324a}
+:where(html[data-theme="dark"]) .fbp-chips button.selected{background:rgba(37,99,235,0.18);color:#93c5fd}
+:where(html[data-theme="dark"]) .fbp-more textarea{border:1px solid #25324a}
+:where(html[data-theme="dark"]) .fbp-anon{color:#b4c0d3}
+:where(html[data-theme="dark"]) .fbp-error{background:#0e182b;border:1px solid rgba(244,63,94,0.38)}
+:where(html[data-theme="dark"]) .fbp-actions .ghost{background:#111b2e;border-color:#25324a}
+:where(html[data-theme="dark"]) .fbp-actions .ghost:hover:not(:disabled){background:#0e182b}
+:where(html[data-theme="dark"]) .fbp-link{color:#93c5fd}
+:where(html[data-theme="dark"]) .fbp-done p{color:#8b9bb2}
+:where(html[data-theme="dark"]) .fbp-check{background:rgba(16,185,129,0.18);color:#6ee7b7}
+/* styles/citizen.css */
+:where(html[data-theme="dark"]) .cz-input:disabled,:where(html[data-theme="dark"]) .cz-select:disabled{background:#0e182b}
+:where(html[data-theme="dark"]) .cz-hint--warn{color:#fcd34d}
+:where(html[data-theme="dark"]) .cz-hint--error{color:#fda4af}
+:where(html[data-theme="dark"]) .cz-check{background:#0e182b}
+:where(html[data-theme="dark"]) .cz-slot{background:#111b2e;border:1px solid rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .cz-summary{border:1px solid rgba(16,185,129,0.38)}
+:where(html[data-theme="dark"]) .cz-note--amber{background:rgba(245,158,11,0.18);color:#fcd34d}
+:where(html[data-theme="dark"]) .cz-note--blue{color:#93c5fd}
+:where(html[data-theme="dark"]) .cz-note--green{color:#6ee7b7}
+:where(html[data-theme="dark"]) .cz-steps li{background:#0e182b}
+:where(html[data-theme="dark"]) .cz-steps li span{background:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .cz-steps li.is-done{color:#6ee7b7}
+:where(html[data-theme="dark"]) .cz-worker{border:1px solid rgba(16,185,129,0.38)}
+
+/* Tailwind utility classes used by the pages */
+:where(html[data-theme="dark"]) .bg-amber-50{background-color:rgba(245,158,11,0.18)}
+:where(html[data-theme="dark"]) .bg-blue-200{background-color:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .bg-blue-50{background-color:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .bg-cyan-200{background-color:rgba(13,148,136,0.18)}
+:where(html[data-theme="dark"]) .bg-emerald-50{background-color:rgba(16,185,129,0.18)}
+:where(html[data-theme="dark"]) .bg-green-50{background-color:#0e182b}
+:where(html[data-theme="dark"]) .bg-red-50{background-color:#0e182b}
+:where(html[data-theme="dark"]) .bg-rose-50{background-color:rgba(244,63,94,0.18)}
+:where(html[data-theme="dark"]) .bg-slate-100{background-color:#0e182b}
+:where(html[data-theme="dark"]) .bg-slate-200{background-color:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .bg-slate-50{background-color:#0e182b}
+:where(html[data-theme="dark"]) .bg-white{background-color:#111b2e}
+:where(html[data-theme="dark"]) .border-amber-200{border-color:rgba(245,158,11,0.38)}
+:where(html[data-theme="dark"]) .border-amber-300{border-color:rgba(245,158,11,0.38)}
+:where(html[data-theme="dark"]) .border-blue-100{border-color:rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .border-blue-200{border-color:rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .border-emerald-200{border-color:rgba(16,185,129,0.38)}
+:where(html[data-theme="dark"]) .border-green-300{border-color:rgba(16,185,129,0.38)}
+:where(html[data-theme="dark"]) .border-red-200{border-color:rgba(244,63,94,0.38)}
+:where(html[data-theme="dark"]) .border-slate-100{border-color:#25324a}
+:where(html[data-theme="dark"]) .border-slate-200{border-color:#25324a}
+:where(html[data-theme="dark"]) .border-slate-300{border-color:rgba(37,99,235,0.38)}
+:where(html[data-theme="dark"]) .border-white{border-color:#25324a}
+:where(html[data-theme="dark"]) .hover\:bg-blue-50:hover{background-color:rgba(37,99,235,0.18)}
+:where(html[data-theme="dark"]) .hover\:bg-slate-100:hover{background-color:#0e182b}
+:where(html[data-theme="dark"]) .hover\:bg-slate-50:hover{background-color:#0e182b}
+:where(html[data-theme="dark"]) .hover\:bg-white:hover{background-color:#111b2e}
+:where(html[data-theme="dark"]) .hover\:text-slate-700:hover{color:#e8eef8}
+:where(html[data-theme="dark"]) .text-amber-600{color:#fcd34d}
+:where(html[data-theme="dark"]) .text-amber-700{color:#fcd34d}
+:where(html[data-theme="dark"]) .text-amber-800{color:#fcd34d}
+:where(html[data-theme="dark"]) .text-blue-600{color:#93c5fd}
+:where(html[data-theme="dark"]) .text-blue-700{color:#93c5fd}
+:where(html[data-theme="dark"]) .text-cyan-600{color:#67e8f9}
+:where(html[data-theme="dark"]) .text-emerald-700{color:#6ee7b7}
+:where(html[data-theme="dark"]) .text-green-800{color:#6ee7b7}
+:where(html[data-theme="dark"]) .text-red-600{color:#fda4af}
+:where(html[data-theme="dark"]) .text-red-700{color:#fda4af}
+:where(html[data-theme="dark"]) .text-red-800{color:#fda4af}
+:where(html[data-theme="dark"]) .text-rose-700{color:#fda4af}
+:where(html[data-theme="dark"]) .text-slate-500{color:#8b9bb2}
+:where(html[data-theme="dark"]) .text-slate-600{color:#b4c0d3}
+:where(html[data-theme="dark"]) .text-slate-700{color:#e8eef8}
+:where(html[data-theme="dark"]) .text-slate-800{color:#93c5fd}
+:where(html[data-theme="dark"]) .text-slate-900{color:#93c5fd}
+
+/* ---------------------------------------------------------------------
+   Base text colour + hand-written exceptions
+   --------------------------------------------------------------------- */
+html[data-theme="dark"] body {
+  color: var(--cz-text);
+}
+
+/* The certificate is a document: it stays "paper" (and its QR code stays
+   scannable) in dark mode, so give it the light colour tokens back. */
+html[data-theme="dark"] .certificate-card,
+html[data-theme="dark"] .certificate-download {
+  --cz-ink: #0f172a;
+  --cz-text: #334155;
+  --cz-muted: #64748b;
+  --cz-line: #e2e8f0;
+  color: #334155;
+}
+
+/* Maps keep their light tiles; just tone the frame down a little */
+html[data-theme="dark"] .leaflet-container {
+  filter: brightness(0.92) contrast(1.02);
+}

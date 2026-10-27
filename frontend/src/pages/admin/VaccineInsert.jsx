@@ -1,6 +1,7 @@
 
 import { useState } from "react";
-import "./VaccineInsert.css";
+import PageHeader from "../../components/PageHeader";
+import Icon from "../../components/Icons";
 
 const VaccineInsert = ({ onBack, onVaccineCreated }) => {
   const [formData, setFormData] = useState({
@@ -82,71 +83,82 @@ const VaccineInsert = ({ onBack, onVaccineCreated }) => {
   };
 
   return (
-    <div className="vaccine-insert-page">
+    <>
+      <PageHeader
+        icon="syringe"
+        eyebrow="Vaccination"
+        title="Add New Vaccine"
+        description="Enter the vaccine information below."
+        
+      />
 
-        <button type="button" onClick={onBack}>
-            Back to Dashboard
-            </button>
-            
-      <h2>Add New Vaccine</h2>
-      <p>Enter the vaccine information below.</p>
+      <section className="cz-card cz-form-card cz-form-card--narrow fx-rise" style={{ "--fx-i": 0 }}>
+        {message && (
+          <div className="cz-alert cz-alert--success" role="status">
+            {message}
+          </div>
+        )}
 
-      {message && (
-        <div className="success-message" role="status">
-          {message}
-        </div>
-      )}
+        {error && (
+          <div className="cz-alert cz-alert--error" role="alert">
+            {error}
+          </div>
+        )}
 
-      {error && (
-        <div className="error-message" role="alert">
-          {error}
-        </div>
-      )}
+        <form onSubmit={handleSubmit}>
+          <div className="cz-field">
+            <label className="cz-label" htmlFor="name">
+              Vaccine Name *
+            </label>
+            <input
+              id="name"
+              className="cz-input"
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="e.g. Hepatitis B"
+              required
+            />
+          </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="name">Vaccine Name *</label>
-          <input
-            id="name"
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="e.g. Hepatitis B"
-            required
-          />
-        </div>
+          <div className="cz-field">
+            <label className="cz-label" htmlFor="code">
+              Vaccine Code *
+            </label>
+            <input
+              id="code"
+              className="cz-input"
+              type="text"
+              name="code"
+              value={formData.code}
+              onChange={handleChange}
+              placeholder="e.g. HEPB"
+              required
+            />
+          </div>
 
-        <div className="form-group">
-          <label htmlFor="code">Vaccine Code *</label>
-          <input
-            id="code"
-            type="text"
-            name="code"
-            value={formData.code}
-            onChange={handleChange}
-            placeholder="e.g. HEPB"
-            required
-          />
-        </div>
+          <div className="cz-field">
+            <label className="cz-label" htmlFor="description">
+              Description
+            </label>
+            <textarea
+              id="description"
+              className="cz-textarea"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Enter a short description"
+              rows="4"
+            />
+          </div>
 
-        <div className="form-group">
-          <label htmlFor="description">Description</label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            placeholder="Enter a short description"
-            rows="4"
-          />
-        </div>
-
-        <button type="submit" disabled={loading}>
-          {loading ? "Adding Vaccine..." : "Add Vaccine"}
-        </button>
-      </form>
-    </div>
+          <button type="submit" className="cz-btn cz-btn--primary cz-btn--block" disabled={loading}>
+            {loading ? "Adding Vaccine..." : "Add Vaccine"}
+          </button>
+        </form>
+      </section>
+    </>
   );
 };
 

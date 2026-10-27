@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { api, errorMessage } from "../../services/api";
+import PageHeader from "../../components/PageHeader";
+import Icon from "../../components/Icons";
 
 const ID_TYPES = ["National ID", "Birth Registration", "Passport", "Driving License", "Other"];
-
-const field =
-  "w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 
 function age(dob) {
   const years = Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 86400000));
@@ -75,135 +74,139 @@ export default function GuestCheckIn({ onBack }) {
   const blocked = a && (a.status === "Completed" || a.status === "Cancelled" || a.alreadyVaccinated);
 
   return (
-    <div className="max-w-xl mx-auto my-10 p-8 bg-white rounded-2xl shadow-lg">
-      <button type="button" onClick={onBack} className="text-sm font-semibold text-blue-600 mb-4">
-        ← Back to Dashboard
-      </button>
-
-      <h2 className="text-2xl font-extrabold text-slate-800">Campaign check-in</h2>
-      <p className="text-sm text-slate-500 mt-1">
-        Enter the guest's Appointment ID, check their photo ID, then log the dose.
-      </p>
-
-      {error && (
-        <div className="mt-4 rounded-xl bg-rose-50 text-rose-700 text-sm px-4 py-3" role="alert">
-          {error}
-        </div>
-      )}
-
-      {done ? (
-        <div className="mt-6 text-center">
-          <div className="text-5xl mb-2">✅</div>
-          <p className="font-semibold text-slate-800">{done}</p>
-          <p className="text-sm text-slate-500 mt-1">The guest was emailed how to get the certificate.</p>
-          <button
-            onClick={reset}
-            className="mt-5 px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold"
-          >
-            Check in next guest
+    <>
+      <PageHeader
+        icon="idcard"
+        eyebrow="Vaccination"
+        title="Campaign check-in"
+        description="Enter the guest's Appointment ID, check their photo ID, then log the dose."
+        actions={
+          <button type="button" onClick={onBack} className="cz-btn cz-btn--secondary">
+            <Icon name="arrowLeft" size={16} /> Back to Dashboard
           </button>
-        </div>
-      ) : !data ? (
-        <form onSubmit={lookup} className="mt-5 flex gap-2">
-          <input
-            className={`${field} uppercase tracking-widest font-bold`}
-            placeholder="IMX-XXXXXX"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-            autoFocus
-          />
-          <button
-            type="submit"
-            disabled={busy}
-            className="px-5 rounded-xl bg-blue-600 text-white font-bold disabled:opacity-50"
-          >
-            {busy ? "..." : "Find"}
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={submit} className="mt-5 space-y-4">
-          <div className="rounded-2xl bg-blue-50 border border-blue-100 p-4 text-sm space-y-1">
-            <p className="text-lg font-bold text-slate-800">{g.name}</p>
-            <p>
-              Age {age(g.dateOfBirth)} · {g.gender} · DOB{" "}
-              {new Date(g.dateOfBirth).toLocaleDateString("en-GB")}
-            </p>
-            <p>{g.email}{g.phone ? ` · ${g.phone}` : ""}</p>
-            <p>
-              <b>{a.vaccine}</b> · Dose {a.doseNumber} · {a.bookingCode}
-            </p>
-            <p>
-              {new Date(a.dateTime).toLocaleString("en-GB", { timeZone: "Asia/Dhaka" })} ·{" "}
-              Status: <b>{a.status}</b>
-            </p>
+        }
+      />
+
+      <section className="cz-card cz-form-card cz-form-card--narrow fx-rise" style={{ "--fx-i": 0 }}>
+        {error && (
+          <div className="cz-alert cz-alert--error" role="alert">
+            {error}
           </div>
+        )}
 
-          {blocked ? (
-            <div className="rounded-xl bg-amber-50 text-amber-800 text-sm px-4 py-3">
-              This appointment is {a.alreadyVaccinated ? "already vaccinated" : a.status.toLowerCase()}.
-              No further action is needed.
+        {done ? (
+          <div className="cz-success-panel">
+            <span className="cz-success-panel__icon">
+              <Icon name="check" size={30} />
+            </span>
+            <h3>{done}</h3>
+            <p>The guest was emailed how to get the certificate.</p>
+            <button onClick={reset} className="cz-btn cz-btn--primary" style={{ marginTop: 14 }}>
+              Check in next guest
+            </button>
+          </div>
+        ) : !data ? (
+          <form onSubmit={lookup} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <input
+              className="cz-input cz-upper"
+              style={{ flex: "1 1 220px", width: "auto" }}
+              placeholder="IMX-XXXXXX"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              required
+              autoFocus
+            />
+            <button type="submit" disabled={busy} className="cz-btn cz-btn--primary">
+              {busy ? "..." : "Find"}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={submit}>
+            <div className="cz-summary" style={{ marginBottom: 18 }}>
+              <h4>{g.name}</h4>
+              <p className="cz-hint">
+                Age {age(g.dateOfBirth)} · {g.gender} · DOB{" "}
+                {new Date(g.dateOfBirth).toLocaleDateString("en-GB")}
+              </p>
+              <p className="cz-hint">
+                {g.email}
+                {g.phone ? ` · ${g.phone}` : ""}
+              </p>
+              <p className="cz-hint">
+                <b>{a.vaccine}</b> · Dose {a.doseNumber} · {a.bookingCode}
+              </p>
+              <p className="cz-hint">
+                {new Date(a.dateTime).toLocaleString("en-GB", { timeZone: "Asia/Dhaka" })} · Status:{" "}
+                <b>{a.status}</b>
+              </p>
             </div>
-          ) : (
-            <>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Photo ID type</label>
-                  <select className={field} value={idType} onChange={(e) => setIdType(e.target.value)}>
-                    {ID_TYPES.map((t) => (
-                      <option key={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">ID number</label>
-                  <input
-                    className={field}
-                    value={idNumber}
-                    onChange={(e) => setIdNumber(e.target.value)}
-                    required
-                    minLength={4}
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1">Only the last 4 characters are saved.</p>
-                </div>
+
+            {blocked ? (
+              <div className="cz-note cz-note--amber">
+                This appointment is {a.alreadyVaccinated ? "already vaccinated" : a.status.toLowerCase()}.
+                No further action is needed.
               </div>
+            ) : (
+              <>
+                <div className="cz-form-grid">
+                  <div className="cz-field">
+                    <label className="cz-label">Photo ID type</label>
+                    <select className="cz-select" value={idType} onChange={(e) => setIdType(e.target.value)}>
+                      {ID_TYPES.map((t) => (
+                        <option key={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="cz-field">
+                    <label className="cz-label">ID number</label>
+                    <input
+                      className="cz-input"
+                      value={idNumber}
+                      onChange={(e) => setIdNumber(e.target.value)}
+                      required
+                      minLength={4}
+                    />
+                    <p className="cz-hint">Only the last 4 characters are saved.</p>
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Vaccine batch</label>
-                {data.batches.length === 0 ? (
-                  <p className="text-sm text-rose-600">No in-date stock for this vaccine at your clinic.</p>
-                ) : (
-                  <select className={field} value={batch} onChange={(e) => setBatch(e.target.value)} required>
-                    {data.batches.map((b) => (
-                      <option key={b.batchNumber} value={b.batchNumber}>
-                        {b.batchNumber} — {b.quantity} left · exp{" "}
-                        {new Date(b.expiryDate).toLocaleDateString("en-GB")}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
+                <div className="cz-field">
+                  <label className="cz-label">Vaccine batch</label>
+                  {data.batches.length === 0 ? (
+                    <p className="cz-hint cz-hint--error">No in-date stock for this vaccine at your clinic.</p>
+                  ) : (
+                    <select className="cz-select" value={batch} onChange={(e) => setBatch(e.target.value)} required>
+                      {data.batches.map((b) => (
+                        <option key={b.batchNumber} value={b.batchNumber}>
+                          {b.batchNumber} — {b.quantity} left · exp{" "}
+                          {new Date(b.expiryDate).toLocaleDateString("en-GB")}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
 
-              <label className="flex items-start gap-2 text-sm text-slate-700">
-                <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} className="mt-1" />
-                I checked the photo ID and it matches the name and date of birth above.
-              </label>
+                <label className="cz-check">
+                  <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} />
+                  <span>I checked the photo ID and it matches the name and date of birth above.</span>
+                </label>
 
-              <button
-                type="submit"
-                disabled={busy || !checked || !batch}
-                className="w-full py-3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold disabled:opacity-50"
-              >
-                {busy ? "Saving..." : "Verify identity & log dose"}
-              </button>
-            </>
-          )}
+                <button
+                  type="submit"
+                  disabled={busy || !checked || !batch}
+                  className="cz-btn cz-btn--primary cz-btn--block"
+                >
+                  {busy ? "Saving..." : "Verify identity & log dose"}
+                </button>
+              </>
+            )}
 
-          <button type="button" onClick={reset} className="w-full text-sm font-semibold text-slate-500">
-            Search another ID
-          </button>
-        </form>
-      )}
-    </div>
+            <button type="button" onClick={reset} className="cz-btn cz-btn--ghost cz-btn--block" style={{ marginTop: 10 }}>
+              Search another ID
+            </button>
+          </form>
+        )}
+      </section>
+    </>
   );
 }

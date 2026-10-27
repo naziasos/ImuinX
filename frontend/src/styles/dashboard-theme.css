@@ -2,9 +2,10 @@
    ImuniX – staff dashboards (admin, clinic admin, health worker)
 
    1. Small additions on top of the citizen theme (citizen.css)
-   2. Dark theme. It only applies while a staff dashboard is mounted:
-      useTheme() sets data-theme="dark" on <html> and removes it again
-      when the dashboard unmounts, so the citizen area is never affected.
+   2. Dark theme for every page built from the cz-* classes. It applies
+      whenever <html data-theme="dark"> is set (see hooks/useTheme.js, which
+      keeps one app-wide choice). Older page-specific CSS is covered in
+      dark-pages.css.
    ===================================================================== */
 
 /* ---------------------------------------------------------------------

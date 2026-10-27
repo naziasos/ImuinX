@@ -1,6 +1,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import ReadAloudControls from "./ReadAloudControls";
+import ThemeToggle from "./ThemeToggle";
 import { useLanguage } from "../i18n/LanguageProvider";
 
 const API_BASE_URL = "http://localhost:5000";
@@ -9,13 +10,11 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { language, setLanguage, t } = useLanguage();
 
-  // Notification states
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [notificationLoading, setNotificationLoading] = useState(false);
 
-  // Public vaccine campaigns (visible without login)
   const [campaigns, setCampaigns] = useState([]);
   const [seenCampaignIds, setSeenCampaignIds] = useState(() => {
     try {
@@ -27,29 +26,26 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
 
   const navItems = [
     { label: "Home", value: "home" },
-    { label: "Who it's for", value: "whoFor", section: "who-its-for" },
     { label: "About", value: "about" },
     { label: "Services", value: "services" },
     { label: "Verify", value: "verifyCertificate" },
-    // Visitors without an account can collect a campaign certificate
-    ...(currentUser ? [] : [{ label: "Get Certificate", value: "guestCertificate" }]),
+    ...(!currentUser
+      ? [{ label: "Get Certificate", value: "guestCertificate" }]
+      : []),
   ];
 
-  // Get JWT token from localStorage
-  const getToken = () => {
-    return (
-      localStorage.getItem("token") ||
-      localStorage.getItem("accessToken") ||
-      localStorage.getItem("jwt")
-    );
-  };
+  const getToken = () =>
+    localStorage.getItem("token") ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("jwt");
 
-  // Fetch public campaigns (no login required)
   const fetchCampaigns = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/campaigns/active`);
 
-      if (!response.ok) throw new Error("Failed to fetch campaigns");
+      if (!response.ok) {
+        throw new Error("Failed to fetch campaigns");
+      }
 
       const data = await response.json();
       setCampaigns(data.campaigns || []);
@@ -58,7 +54,6 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
     }
   }, []);
 
-  // Fetch notifications (campaigns for everyone, personal ones when logged in)
   const fetchNotifications = useCallback(async () => {
     fetchCampaigns();
 
@@ -73,16 +68,13 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
     try {
       setNotificationLoading(true);
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/notifications`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/notifications`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch notifications");
@@ -99,18 +91,15 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
     }
   }, [fetchCampaigns]);
 
-  // Fetch notifications when Navbar loads
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications, currentUser]);
 
-  // Pick up new campaigns / notifications without a page reload
   useEffect(() => {
     const id = setInterval(fetchNotifications, 60000);
     return () => clearInterval(id);
   }, [fetchNotifications]);
 
-  // Each role has its own dashboard page (same names App.jsx uses after login)
   const getDashboardPage = (user) => {
     switch (user?.role) {
       case "admin":
@@ -125,10 +114,10 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
     }
   };
 
-  const goToMyDashboard = () => handleNavigation(getDashboardPage(currentUser));
   const handleNavigation = (value) => {
     setPage(value);
     setMobileMenuOpen(false);
+    setNotificationOpen(false);
 
     window.scrollTo({
       top: 0,
@@ -136,16 +125,18 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
     });
   };
 
+  const goToMyDashboard = () => {
+    handleNavigation(getDashboardPage(currentUser));
+  };
+
   const goToSection = (id) => {
     setMobileMenuOpen(false);
 
     const scroll = () =>
-      document
-        .getElementById(id)
-        ?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+      document.getElementById(id)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
 
     if (page === "home") {
       scroll();
@@ -155,11 +146,9 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
     }
   };
 
-  // Open / close notification dropdown
   const handleNotificationClick = () => {
     setNotificationOpen((previous) => !previous);
 
-    // Refresh notification data whenever bell is opened
     if (!notificationOpen) {
       fetchNotifications();
     }
@@ -168,49 +157,29 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
   const unseenCampaigns = campaigns.filter(
     (campaign) => !seenCampaignIds.includes(campaign._id)
   );
+
   const badgeCount = unreadCount + unseenCampaigns.length;
 
   const markCampaignsSeen = () => {
     const ids = campaigns.map((campaign) => campaign._id);
     setSeenCampaignIds(ids);
+
     localStorage.setItem("seenCampaigns", JSON.stringify(ids));
   };
 
-  // Book a campaign directly - no login or registration needed
   const openCampaign = (campaign) => {
     markCampaignsSeen();
     setNotificationOpen(false);
     setMobileMenuOpen(false);
     onOpenCampaign?.(campaign);
+
     window.scrollTo({ top: 0, behavior: "auto" });
   };
 
-  // Jump to the screen a notification is about
-  const openNotification = (notification) => {
-    if (!notification.isRead) markAsRead(notification._id);
-
-    if (notification.type === "certificate") {
-      setNotificationOpen(false);
-      handleNavigation("myCertificate");
-    }
-  };
-
-  const NOTIFICATION_ICONS = {
-    appointment: "📅",
-    appointment_reminder: "⏰",
-    certificate: "📜",
-    dose: "💉",
-    missed_dose: "⚠️",
-    campaign: "📢",
-  };
-
-  // Mark notification as read
   const markAsRead = async (notificationId) => {
     const token = getToken();
 
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     try {
       const response = await fetch(
@@ -228,27 +197,39 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
         throw new Error("Failed to mark notification as read");
       }
 
-      // Update UI immediately
-      setNotifications((previousNotifications) =>
-        previousNotifications.map((notification) =>
+      setNotifications((previous) =>
+        previous.map((notification) =>
           notification._id === notificationId
-            ? {
-                ...notification,
-                isRead: true,
-              }
+            ? { ...notification, isRead: true }
             : notification
         )
       );
 
-      setUnreadCount((previousCount) =>
-        Math.max(0, previousCount - 1)
-      );
+      setUnreadCount((previous) => Math.max(0, previous - 1));
     } catch (error) {
       console.error("Mark notification as read error:", error);
     }
   };
 
-  // Format notification time
+  const openNotification = (notification) => {
+    if (!notification.isRead) {
+      markAsRead(notification._id);
+    }
+
+    if (notification.type === "certificate") {
+      handleNavigation("myCertificate");
+    }
+  };
+
+  const NOTIFICATION_ICONS = {
+    appointment: "📅",
+    appointment_reminder: "⏰",
+    certificate: "📜",
+    dose: "💉",
+    missed_dose: "⚠️",
+    campaign: "📢",
+  };
+
   const formatNotificationTime = (date) => {
     if (!date) return "";
 
@@ -261,10 +242,10 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
     return notificationDate.toLocaleString();
   };
 
-  // Bell + dropdown. Rendered in the desktop bar and next to the mobile menu button.
   const renderBell = (wrapperClass = "") => (
     <div className={`relative ${wrapperClass}`}>
       <button
+        type="button"
         onClick={handleNotificationClick}
         className="relative w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition"
         aria-label="Notifications"
@@ -294,10 +275,12 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
       {notificationOpen && (
         <div className="absolute right-0 mt-3 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-[100]">
           <div className="px-4 py-3 border-b border-slate-100">
-            <ReadAloudControls  guidance={{
-        en: "Welcome to Notifications. This page provides updates related to your vaccination services. Notifications may include appointment confirmations, schedule changes, reminders, and other important updates. Select a notification to view its details when available. Check the date and message carefully so you do not miss an important appointment update. Visit this page regularly to stay informed.",
-        bn: "বিজ্ঞপ্তি পেজে আপনাকে স্বাগতম। এই পেজে আপনার টিকাদান সেবা সম্পর্কিত হালনাগাদ তথ্য দেখানো হয়। বিজ্ঞপ্তিতে অ্যাপয়েন্টমেন্ট নিশ্চিতকরণ, সময়সূচির পরিবর্তন, রিমাইন্ডার এবং অন্যান্য গুরুত্বপূর্ণ তথ্য থাকতে পারে। বিস্তারিত দেখতে কোনো বিজ্ঞপ্তি নির্বাচন করুন। তারিখ ও বার্তা মনোযোগ দিয়ে পড়ুন, যাতে অ্যাপয়েন্টমেন্ট সংক্রান্ত কোনো গুরুত্বপূর্ণ হালনাগাদ আপনার চোখ এড়িয়ে না যায়। নিয়মিত এই পেজ দেখুন।",
-      }} />
+            <ReadAloudControls
+              guidance={{
+                en: "Welcome to Notifications. This page provides updates related to your vaccination services. Notifications may include appointment confirmations, schedule changes, reminders, and other important updates. Select a notification to view its details when available. Check the date and message carefully so you do not miss an important appointment update. Visit this page regularly to stay informed.",
+                bn: "বিজ্ঞপ্তি পেজে আপনাকে স্বাগতম। এই পেজে আপনার টিকাদান সেবা সম্পর্কিত হালনাগাদ তথ্য দেখানো হয়। বিজ্ঞপ্তিতে অ্যাপয়েন্টমেন্ট নিশ্চিতকরণ, সময়সূচির পরিবর্তন, রিমাইন্ডার এবং অন্যান্য গুরুত্বপূর্ণ তথ্য থাকতে পারে। বিস্তারিত দেখতে কোনো বিজ্ঞপ্তি নির্বাচন করুন। তারিখ ও বার্তা মনোযোগ দিয়ে পড়ুন।",
+              }}
+            />
           </div>
 
           <div id="read-aloud-notifications">
@@ -305,11 +288,14 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
               <div>
                 <h3 className="font-bold text-slate-800">Notifications</h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  {badgeCount > 0 ? `${badgeCount} new` : "You're all caught up"}
+                  {badgeCount > 0
+                    ? `${badgeCount} new`
+                    : "You're all caught up"}
                 </p>
               </div>
 
               <button
+                type="button"
                 onClick={fetchNotifications}
                 className="text-xs font-semibold text-blue-600 hover:text-blue-700"
               >
@@ -318,7 +304,6 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
             </div>
 
             <div className="max-h-96 overflow-y-auto">
-              {/* ---------- Vaccine campaigns (public) ---------- */}
               {campaigns.length > 0 && (
                 <div className="border-b border-slate-100 bg-emerald-50/50">
                   <p className="px-5 pt-3 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
@@ -334,11 +319,16 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
                         className="px-5 py-3 border-b border-emerald-100 last:border-b-0"
                       >
                         <div className="flex gap-3">
-                          <span className="text-xl leading-none pt-0.5">📢</span>
+                          <span className="text-xl leading-none pt-0.5">
+                            📢
+                          </span>
 
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                              <span className="truncate">{campaign.title}</span>
+                              <span className="truncate">
+                                {campaign.title}
+                              </span>
+
                               {isNew && (
                                 <span className="text-[10px] font-bold text-emerald-700">
                                   New
@@ -348,7 +338,9 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
 
                             <p className="text-xs text-slate-600 mt-0.5">
                               {campaign.vaccine?.name}
-                              {campaign.doseNumber ? ` · Dose ${campaign.doseNumber}` : ""}
+                              {campaign.doseNumber
+                                ? ` · Dose ${campaign.doseNumber}`
+                                : ""}
                               {" · "}
                               {campaign.startDate} to {campaign.endDate}
                             </p>
@@ -374,7 +366,6 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
                 </div>
               )}
 
-              {/* ---------- Personal notifications ---------- */}
               {!currentUser ? (
                 campaigns.length === 0 && (
                   <div className="px-5 py-10 text-center">
@@ -406,6 +397,7 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
               ) : (
                 notifications.map((notification) => (
                   <button
+                    type="button"
                     key={notification._id}
                     onClick={() => openNotification(notification)}
                     className={`w-full text-left px-5 py-4 border-b border-slate-100 transition ${
@@ -456,23 +448,18 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
   return (
     <nav className="imx-navbar sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
         <div className="flex items-center justify-between h-20">
-
           {/* Logo */}
           <button
+            type="button"
             onClick={() => handleNavigation("home")}
             className="flex items-center gap-3 group"
           >
             <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-200">
-              <span className="text-white text-xl font-extrabold">
-                I
-              </span>
+              <span className="text-white text-xl font-extrabold">I</span>
 
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full shadow-sm flex items-center justify-center">
-                <span className="text-blue-600 text-xs font-bold">
-                  +
-                </span>
+                <span className="text-blue-600 text-xs font-bold">+</span>
               </span>
             </div>
 
@@ -480,7 +467,6 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
               <h1 className="text-xl font-extrabold tracking-tight text-slate-800">
                 Imuin<span className="text-blue-600">X</span>
               </h1>
-
               <p className="text-[10px] font-medium tracking-wide text-slate-400 uppercase">
                 Vaccination Management
               </p>
@@ -489,9 +475,9 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
-
             {navItems.map((item) => (
               <button
+                type="button"
                 key={item.value}
                 onClick={() =>
                   item.section
@@ -512,6 +498,13 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
               </button>
             ))}
 
+            {/* Theme toggle: Home Page only */}
+            {page === "home" && (
+              <div className="ml-2">
+                <ThemeToggle />
+              </div>
+            )}
+
             <div className="h-7 w-px bg-slate-200 mx-3" />
 
             {currentUser ? (
@@ -523,14 +516,23 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
                   className="hidden lg:flex items-center gap-2 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2 text-left hover:bg-blue-100 hover:border-blue-200 transition cursor-pointer"
                 >
                   <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
-                    {(currentUser.name || currentUser.email || "U").charAt(0).toUpperCase()}
+                    {(currentUser.name || currentUser.email || "U")
+                      .charAt(0)
+                      .toUpperCase()}
                   </div>
+
                   <div className="leading-tight">
-                    <p className="text-sm font-semibold text-slate-800 max-w-36 truncate">{currentUser.name || currentUser.email || "User"}</p>
-                    <p className="text-[10px] uppercase tracking-wide text-blue-600">{currentUser.role || "User"}</p>
+                    <p className="text-sm font-semibold text-slate-800 max-w-36 truncate">
+                      {currentUser.name || currentUser.email || "User"}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-wide text-blue-600">
+                      {currentUser.role || "User"}
+                    </p>
                   </div>
                 </button>
+
                 <button
+                  type="button"
                   onClick={onLogout}
                   className="px-4 py-2.5 rounded-full border border-rose-200 text-rose-600 text-sm font-semibold hover:bg-rose-50 transition"
                 >
@@ -540,16 +542,28 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
             ) : (
               <>
                 <button
+                  type="button"
                   onClick={() => handleNavigation("register")}
-                  className={`px-5 py-2.5 rounded-full border text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 ${page === "register" ? "text-blue-600 bg-blue-50 border-blue-200" : "text-slate-700 border-slate-200 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"}`}
-                >Register</button>
+                  className={`px-5 py-2.5 rounded-full border text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 ${
+                    page === "register"
+                      ? "text-blue-600 bg-blue-50 border-blue-200"
+                      : "text-slate-700 border-slate-200 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
+                  }`}
+                >
+                  Register
+                </button>
+
                 <button
+                  type="button"
                   onClick={() => handleNavigation("login")}
                   className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold shadow-md shadow-blue-500/30 hover:-translate-y-0.5 transition-all duration-200"
-                >Login</button>
+                >
+                  Login
+                </button>
               </>
             )}
 
+            {/* Language selector */}
             <div
               data-i18n-ignore="true"
               className="ml-2 flex items-center rounded-full border border-slate-200 bg-slate-50 p-1"
@@ -567,6 +581,7 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
               >
                 {t("English")}
               </button>
+
               <button
                 type="button"
                 onClick={() => setLanguage("bn")}
@@ -584,13 +599,17 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
             {renderBell("ml-2")}
           </div>
 
-          {/* Mobile: bell + menu button */}
+          {/* Mobile header */}
           <div className="md:hidden flex items-center gap-1">
+            {page === "home" && <ThemeToggle />}
             {renderBell()}
+
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 transition"
               aria-label="Toggle menu"
+              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? (
                 <svg
@@ -630,11 +649,10 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-slate-100 py-4">
-
             <div className="flex flex-col gap-1">
-
               {navItems.map((item) => (
                 <button
+                  type="button"
                   key={item.value}
                   onClick={() =>
                     item.section
@@ -655,7 +673,10 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
                 data-i18n-ignore="true"
                 className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-4 px-4"
               >
-                <span className="text-xs font-semibold text-slate-500">Language</span>
+                <span className="text-xs font-semibold text-slate-500">
+                  Language
+                </span>
+
                 <button
                   type="button"
                   onClick={() => setLanguage("en")}
@@ -667,6 +688,7 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
                 >
                   English
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setLanguage("bn")}
@@ -682,34 +704,57 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
 
               {currentUser ? (
                 <div className="mt-3 border-t border-slate-100 pt-4 px-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <button
-                      type="button"
-                      onClick={goToMyDashboard}
-                      className="w-full flex items-center gap-3 mb-3 text-left rounded-xl hover:bg-blue-50 transition"
-                    >
-                      <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
-                        {(currentUser.name || currentUser.email || "U").charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-slate-800 truncate">{currentUser.name || currentUser.email || "User"}</p>
-                        <p className="text-xs text-blue-600 capitalize">{currentUser.role || "User"}</p>
-                      </div>
-                    </button>
-                  </div>
-                  <button onClick={onLogout} className="w-full px-4 py-3 rounded-xl border border-rose-200 text-rose-600 text-sm font-semibold hover:bg-rose-50 transition">Logout</button>
+                  <button
+                    type="button"
+                    onClick={goToMyDashboard}
+                    className="w-full flex items-center gap-3 mb-3 text-left rounded-xl hover:bg-blue-50 transition"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                      {(currentUser.name || currentUser.email || "U")
+                        .charAt(0)
+                        .toUpperCase()}
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 truncate">
+                        {currentUser.name || currentUser.email || "User"}
+                      </p>
+                      <p className="text-xs text-blue-600 capitalize">
+                        {currentUser.role || "User"}
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    className="w-full px-4 py-3 rounded-xl border border-rose-200 text-rose-600 text-sm font-semibold hover:bg-rose-50 transition"
+                  >
+                    Logout
+                  </button>
                 </div>
               ) : (
                 <>
-                  <button onClick={() => handleNavigation("register")} className="text-left px-4 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50">Register</button>
-                  <button onClick={() => handleNavigation("login")} className="mt-2 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold shadow-md shadow-blue-500/30 active:scale-95 transition">Login</button>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigation("register")}
+                    className="text-left px-4 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Register
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleNavigation("login")}
+                    className="mt-2 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold shadow-md shadow-blue-500/30 active:scale-95 transition"
+                  >
+                    Login
+                  </button>
                 </>
               )}
-
             </div>
           </div>
         )}
-
       </div>
     </nav>
   );

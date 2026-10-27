@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { api } from "../services/api";
+import useTheme from "../hooks/useTheme";
 import Icon from "./Icons";
 import "../styles/citizen.css";
+import "../styles/dashboard-theme.css";
 
 /**
  * One sidebar for the whole citizen area.
@@ -50,6 +52,7 @@ const ALL_ITEMS = NAV_GROUPS.flatMap((group) => group.items);
 
 function CitizenLayout({ page, onNavigate, onLogout, children }) {
   const { t } = useLanguage();
+  const { isDark, toggleTheme } = useTheme();
   const user = (() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "null");
@@ -108,6 +111,7 @@ function CitizenLayout({ page, onNavigate, onLogout, children }) {
 
   const currentLabel = ALL_ITEMS.find((item) => item.page === page)?.label || "Dashboard";
   const displayName = user?.name || "Citizen";
+  const themeLabel = isDark ? t("Light mode") : t("Dark mode");
 
   return (
     <div className="cz-shell">
@@ -123,6 +127,15 @@ function CitizenLayout({ page, onNavigate, onLogout, children }) {
           <Icon name="menu" size={22} />
         </button>
         <span className="cz-mobilebar__title">{t(currentLabel)}</span>
+        <button
+          type="button"
+          className="cz-mobilebar__btn cz-mobilebar__theme"
+          onClick={toggleTheme}
+          aria-label={themeLabel}
+          title={themeLabel}
+        >
+          <Icon name={isDark ? "sun" : "moon"} size={20} />
+        </button>
       </div>
 
       {menuOpen && (
@@ -183,6 +196,16 @@ function CitizenLayout({ page, onNavigate, onLogout, children }) {
         </nav>
 
         <div className="cz-sidebar__foot">
+          <button
+            type="button"
+            className="cz-nav__item cz-theme-toggle"
+            onClick={toggleTheme}
+            aria-pressed={isDark}
+          >
+            <Icon name={isDark ? "sun" : "moon"} size={19} />
+            <span>{themeLabel}</span>
+          </button>
+
           <button type="button" className="cz-nav__item cz-nav__item--logout" onClick={onLogout}>
             <Icon name="logout" size={19} />
             <span>{t("Log out")}</span>
