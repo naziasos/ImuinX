@@ -1,11 +1,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import ReadAloudControls from "./ReadAloudControls";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 const API_BASE_URL = "http://localhost:5000";
 
 function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
 
   // Notification states
   const [notifications, setNotifications] = useState([]);
@@ -545,6 +547,37 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
               </>
             )}
 
+            <div
+              data-i18n-ignore="true"
+              className="ml-2 flex items-center rounded-full border border-slate-200 bg-slate-50 p-1"
+              aria-label="Language"
+            >
+              <button
+                type="button"
+                onClick={() => setLanguage("en")}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${
+                  language === "en"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+                aria-pressed={language === "en"}
+              >
+                {t("English")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage("bn")}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${
+                  language === "bn"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+                aria-pressed={language === "bn"}
+              >
+                বাংলা
+              </button>
+            </div>
+
             {renderBell("ml-2")}
           </div>
 
@@ -614,6 +647,35 @@ function Navbar({ page, setPage, currentUser, onLogout, onOpenCampaign }) {
                   {item.label}
                 </button>
               ))}
+
+              <div
+                data-i18n-ignore="true"
+                className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-4 px-4"
+              >
+                <span className="text-xs font-semibold text-slate-500">Language</span>
+                <button
+                  type="button"
+                  onClick={() => setLanguage("en")}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold border ${
+                    language === "en"
+                      ? "bg-blue-50 text-blue-600 border-blue-200"
+                      : "text-slate-500 border-slate-200"
+                  }`}
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLanguage("bn")}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold border ${
+                    language === "bn"
+                      ? "bg-blue-50 text-blue-600 border-blue-200"
+                      : "text-slate-500 border-slate-200"
+                  }`}
+                >
+                  বাংলা
+                </button>
+              </div>
 
               {currentUser ? (
                 <div className="mt-3 border-t border-slate-100 pt-4 px-4">

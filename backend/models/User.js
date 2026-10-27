@@ -67,6 +67,13 @@ const userSchema = new mongoose.Schema(
       default: "citizen",
     },
 
+    // Preferred UI language for the bilingual interface.
+    language: {
+      type: String,
+      enum: ["en", "bn"],
+      default: "en",
+    },
+
     emailVerified: {
       type: Boolean,
       default: false,

@@ -238,6 +238,12 @@ function App() {
                   <Login
                     onLoginSuccess={(user) => {
                       setCurrentUser(user);
+                      if (user?.language === "bn" || user?.language === "en") {
+                        localStorage.setItem("imunixLanguage", user.language);
+                        window.dispatchEvent(
+                          new CustomEvent("imunix-user-updated", { detail: user })
+                        );
+                      }
 
                       if (user.role === "admin") {
                         setPage("dashboard");

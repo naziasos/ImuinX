@@ -1,3 +1,35 @@
+/* Bilingual UI support */
+html[lang="bn"],
+html[lang="bn"] body,
+html[lang="bn"] button,
+html[lang="bn"] input,
+html[lang="bn"] select,
+html[lang="bn"] textarea {
+  font-family: "Noto Sans Bengali", "Nirmala UI", "Vrinda", system-ui, sans-serif;
+}
+
+html[lang="bn"] {
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+html[lang="bn"] button,
+html[lang="bn"] label,
+html[lang="bn"] p,
+html[lang="bn"] h1,
+html[lang="bn"] h2,
+html[lang="bn"] h3,
+html[lang="bn"] h4,
+html[lang="bn"] h5,
+html[lang="bn"] h6,
+html[lang="bn"] span {
+  line-height: 1.5;
+}
+
+.bilingual-language-switcher {
+  white-space: nowrap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

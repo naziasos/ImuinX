@@ -30,7 +30,7 @@ const FEATURES = [
   {
     icon: "🔔",
     title: "Smart reminders",
-    desc: "Timely nudges for upcoming doses, appointments and visits.",
+    desc: "Timely dose for upcoming doses, appointments and visits.",
   },
 ];
 
@@ -495,7 +495,7 @@ export default function Home({ onGetStarted }) {
           <Certificate />
           <Rv>
             <span className="hx-eyebrow">Certificates &amp; reminders</span>
-            <h2>Proof you can trust, nudges you won&apos;t miss</h2>
+            <h2>Proof you can trust, dose you won&apos;t miss</h2>
             <p className="hx-sub">
               Every certificate carries a scannable QR code that anyone can
               verify instantly. Reminders keep the next dose on schedule.

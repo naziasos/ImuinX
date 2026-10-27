@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLanguage } from "../i18n/LanguageProvider";
 import { api } from "../services/api";
 import Icon from "./Icons";
 import "../styles/citizen.css";
@@ -48,6 +49,7 @@ const NAV_GROUPS = [
 const ALL_ITEMS = NAV_GROUPS.flatMap((group) => group.items);
 
 function CitizenLayout({ page, onNavigate, onLogout, children }) {
+  const { t } = useLanguage();
   const user = (() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "null");
@@ -115,12 +117,12 @@ function CitizenLayout({ page, onNavigate, onLogout, children }) {
           type="button"
           className="cz-mobilebar__btn"
           onClick={() => setMenuOpen(true)}
-          aria-label="Open menu"
+          aria-label={t("Open menu")}
           aria-expanded={menuOpen}
         >
           <Icon name="menu" size={22} />
         </button>
-        <span className="cz-mobilebar__title">{currentLabel}</span>
+        <span className="cz-mobilebar__title">{t(currentLabel)}</span>
       </div>
 
       {menuOpen && (
@@ -128,12 +130,12 @@ function CitizenLayout({ page, onNavigate, onLogout, children }) {
       )}
 
       {/* ---------- Sidebar ---------- */}
-      <aside className={`cz-sidebar ${menuOpen ? "is-open" : ""}`} aria-label="Citizen menu">
+      <aside className={`cz-sidebar ${menuOpen ? "is-open" : ""}`} aria-label={t("Citizen menu")}>
         <button
           type="button"
           className="cz-sidebar__close"
           onClick={() => setMenuOpen(false)}
-          aria-label="Close menu"
+          aria-label={t("Close menu")}
         >
           <Icon name="close" size={20} />
         </button>
@@ -142,19 +144,19 @@ function CitizenLayout({ page, onNavigate, onLogout, children }) {
           type="button"
           className="cz-user"
           onClick={() => go("editProfile")}
-          title="Edit my profile"
+          title={t("Edit my profile")}
         >
           <span className="cz-user__avatar">{displayName.charAt(0).toUpperCase()}</span>
           <span className="cz-user__text">
             <strong>{displayName}</strong>
-            <small>{user?.email || "Citizen account"}</small>
+            <small>{user?.email || t("Citizen account")}</small>
           </span>
         </button>
 
         <nav className="cz-nav">
           {NAV_GROUPS.map((group) => (
             <div className="cz-nav__group" key={group.title}>
-              <p className="cz-nav__title">{group.title}</p>
+              <p className="cz-nav__title">{t(group.title)}</p>
 
               {group.items.map((item) => {
                 const active = page === item.page;
@@ -168,7 +170,7 @@ function CitizenLayout({ page, onNavigate, onLogout, children }) {
                     aria-current={active ? "page" : undefined}
                   >
                     <Icon name={item.icon} size={19} />
-                    <span>{item.label}</span>
+                    <span>{t(item.label)}</span>
 
                     {item.badge && pendingFeedback > 0 && (
                       <em className="cz-nav__badge">{pendingFeedback}</em>
@@ -183,7 +185,7 @@ function CitizenLayout({ page, onNavigate, onLogout, children }) {
         <div className="cz-sidebar__foot">
           <button type="button" className="cz-nav__item cz-nav__item--logout" onClick={onLogout}>
             <Icon name="logout" size={19} />
-            <span>Log out</span>
+            <span>{t("Log out")}</span>
           </button>
         </div>
       </aside>

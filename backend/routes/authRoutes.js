@@ -214,6 +214,7 @@ router.post("/login", async (req, res) => {
         email: user.email,
         role: user.role,
         clinicId: user.clinicId,
+        language: user.language || "en",
       },
     });
   } catch (error) {
@@ -528,7 +529,7 @@ router.post("/change-password", authMiddleware, async (req, res) => {
 router.get("/profile", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select(
-      "name email role phoneNumber address dateOfBirth bloodType allergies createdAt updatedAt"
+      "name email role language phoneNumber address dateOfBirth bloodType allergies createdAt updatedAt"
     );
 
     if (!user) {
@@ -560,6 +561,7 @@ router.patch("/profile", authMiddleware, async (req, res) => {
   try {
     const allowedFields = [
       "name",
+      "language",
       "phoneNumber",
       "address",
       "dateOfBirth",
@@ -592,6 +594,17 @@ router.patch("/profile", authMiddleware, async (req, res) => {
       return res.status(404).json({
         message: "User not found",
       });
+    }
+
+    // Preferred interface language
+    if (Object.hasOwn(req.body, "language")) {
+      if (!["en", "bn"].includes(req.body.language)) {
+        return res.status(400).json({
+          message: "Language must be en or bn",
+        });
+      }
+
+      user.language = req.body.language;
     }
 
     // Name
@@ -741,7 +754,7 @@ router.patch("/profile", authMiddleware, async (req, res) => {
 
     // Return the complete updated profile, never the password.
     const updatedProfile = await User.findById(user._id).select(
-      "name email role phoneNumber address dateOfBirth bloodType allergies createdAt updatedAt"
+      "name email role language phoneNumber address dateOfBirth bloodType allergies createdAt updatedAt"
     );
 
     return res.status(200).json({
