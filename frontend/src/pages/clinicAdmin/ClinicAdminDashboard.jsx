@@ -5,6 +5,7 @@ import DashboardLayout from "../../components/DashboardLayout";
 import Icon from "../../components/Icons";
 import StatCard from "../../components/StatCard";
 import EmptyState from "../../components/EmptyState";
+import "../../styles/clinic-theme.css";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -156,6 +157,7 @@ function ClinicAdminDashboard({
       groups={menuGroups}
       activeKey="dashboard"
       onLogout={handleLogout}
+      shellClass="cz-shell--clinic"
     >
       {/* ---------- Welcome banner ---------- */}
       <section className="cz-hero">

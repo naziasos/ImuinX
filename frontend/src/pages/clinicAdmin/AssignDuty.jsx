@@ -62,6 +62,14 @@ const ICON_PATHS = {
       <path d="m6 6 12 12" />
     </>
   ),
+  swap: (
+    <>
+      <path d="M7 4 3 8l4 4" />
+      <path d="M3 8h14a4 4 0 0 1 4 4" />
+      <path d="m17 20 4-4-4-4" />
+      <path d="M21 16H7a4 4 0 0 1-4-4" />
+    </>
+  ),
   lock: (
     <>
       <rect x="4" y="10.5" width="16" height="10" rx="3" />
@@ -168,10 +176,9 @@ const Avatar = ({ name, size = "md" }) => (
    COMPONENT
 ===================================================== */
 
-const AssignDuty = ({ onBack }) => {
+const AssignDuty = () => {
   const [workers, setWorkers] = useState([]);
   const [assignedDuties, setAssignedDuties] = useState([]);
-  const [clinicName, setClinicName] = useState("");
 
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedDuty, setSelectedDuty] = useState("");
@@ -181,6 +188,12 @@ const AssignDuty = ({ onBack }) => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [workerQuery, setWorkerQuery] = useState("");
   const [recent, setRecent] = useState(null);
+
+  // Reassign dialog: the duty being replaced + the chosen replacement
+  const [reassignDuty, setReassignDuty] = useState(null);
+  const [replacementId, setReplacementId] = useState("");
+  const [reassigning, setReassigning] = useState(false);
+  const [reassignError, setReassignError] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [dutiesLoading, setDutiesLoading] = useState(true);
@@ -213,7 +226,6 @@ const AssignDuty = ({ onBack }) => {
       }
 
       setWorkers(data.workers || []);
-      setClinicName(data.clinic?.name || "");
     } catch (error) {
       console.error("Error fetching workers:", error);
     } finally {
@@ -448,6 +460,83 @@ const AssignDuty = ({ onBack }) => {
     }
   };
 
+  // =====================================================
+  // REASSIGN DUTY (worker absent / on leave)
+  // =====================================================
+
+  const openReassign = (duty) => {
+    setReassignDuty(duty);
+    setReplacementId("");
+    setReassignError("");
+  };
+
+  const closeReassign = () => {
+    if (reassigning) return;
+    setReassignDuty(null);
+    setReplacementId("");
+    setReassignError("");
+  };
+
+  // Workers who are free on the duty's day (and not the current worker)
+  const replacementCandidates = reassignDuty
+    ? workers.filter((worker) => {
+        if (worker._id === reassignDuty.workerId?._id) return false;
+        const day = dutyKey(reassignDuty);
+        return !assignedDuties.some(
+          (duty) =>
+            dutyKey(duty) === day && duty.workerId?._id === worker._id
+        );
+      })
+    : [];
+
+  const handleReassign = async () => {
+    if (!reassignDuty || !replacementId) return;
+
+    try {
+      setReassigning(true);
+      setReassignError("");
+
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        `http://localhost:5000/api/clinics/my-clinic/duties/${reassignDuty._id}/reassign`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ newWorkerId: replacementId }),
+        }
+      );
+
+      // The server answers with HTML (not JSON) if the reassign route does not
+      // exist, e.g. the backend was not restarted after the update.
+      const data = await response.json().catch(() => null);
+
+      if (!data) {
+        throw new Error(
+          "The server did not recognise the reassign request. Please restart the backend and try again."
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to reassign duty");
+      }
+
+      setRecent({ workerId: replacementId, key: dutyKey(reassignDuty) });
+      setReassignDuty(null);
+      setReplacementId("");
+
+      await fetchAssignedDuties();
+    } catch (error) {
+      console.error("Error reassigning duty:", error);
+      setReassignError(error.message);
+    } finally {
+      setReassigning(false);
+    }
+  };
+
   const clearFilters = () => {
     setSearchTerm("");
     setStatusFilter("all");
@@ -481,26 +570,6 @@ const AssignDuty = ({ onBack }) => {
             d="M0 70 H220 L240 70 L256 40 L272 96 L292 8 L312 112 L330 70 H560 L576 70 L590 52 L604 82 L616 70 H900 L920 70 L936 40 L952 96 L972 8 L992 112 L1010 70 H1200"
           />
         </svg>
-
-        <div className="assign-duty-banner-top">
-          <button
-            type="button"
-            className="assign-duty-back"
-            onClick={onBack}
-          >
-            <Icon name="arrowLeft" size={16} />
-            Back to Dashboard
-          </button>
-
-          <div className="assign-duty-profile">
-            <div className="assign-duty-profile-avatar">C</div>
-
-            <div>
-              <strong>Clinic Admin</strong>
-              <span>{clinicName || "Administrator"}</span>
-            </div>
-          </div>
-        </div>
 
         <div className="assign-duty-banner-body">
           <div className="assign-duty-banner-text">
@@ -734,6 +803,18 @@ const AssignDuty = ({ onBack }) => {
                               <Icon name={meta.icon} size={14} />
                               {duty.dutyType}
                             </span>
+
+                            {!isPast && (
+                              <button
+                                type="button"
+                                className="assign-duty-reassign"
+                                onClick={() => openReassign(duty)}
+                                title="Give this duty to another worker"
+                              >
+                                <Icon name="swap" size={14} />
+                                Reassign
+                              </button>
+                            )}
                           </li>
                         );
                       })}
@@ -999,6 +1080,103 @@ const AssignDuty = ({ onBack }) => {
           </div>
         </aside>
       </div>
+
+      {/* =====================================================
+          REASSIGN DIALOG
+      ===================================================== */}
+
+      {reassignDuty && (
+        <div
+          className="assign-duty-modal-overlay"
+          onClick={closeReassign}
+          role="presentation"
+        >
+          <div
+            className="assign-duty-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reassign-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="reassign-title">Reassign duty</h3>
+            <p>
+              <strong>{reassignDuty.dutyType}</strong> on{" "}
+              {fmt(dutyKey(reassignDuty), {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}{" "}
+              is currently assigned to{" "}
+              <strong>{reassignDuty.workerId?.name || "a worker"}</strong>.
+              Pick who takes it over.
+            </p>
+
+            {replacementCandidates.length === 0 ? (
+              <div className="assign-duty-modal-empty">
+                Every other worker already has a duty on this day.
+              </div>
+            ) : (
+              <div
+                className="assign-duty-modal-list"
+                role="radiogroup"
+                aria-label="Replacement worker"
+              >
+                {replacementCandidates.map((worker) => (
+                  <label
+                    key={worker._id}
+                    className={`assign-duty-modal-option ${
+                      replacementId === worker._id ? "is-selected" : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="replacement-worker"
+                      value={worker._id}
+                      checked={replacementId === worker._id}
+                      onChange={() => setReplacementId(worker._id)}
+                    />
+                    <Avatar name={worker.name} />
+                    <span>
+                      <strong>{worker.name}</strong>
+                      <small>{worker.email}</small>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            <p className="assign-duty-modal-note">
+              {reassignDuty.workerId?.name || "The current worker"} will be
+              removed from this duty.
+            </p>
+
+            {reassignError && (
+              <p className="assign-duty-modal-error" role="alert">
+                {reassignError}
+              </p>
+            )}
+
+            <div className="assign-duty-modal-actions">
+              <button
+                type="button"
+                onClick={closeReassign}
+                disabled={reassigning}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="is-primary"
+                onClick={handleReassign}
+                disabled={reassigning || !replacementId}
+              >
+                {reassigning ? "Reassigning…" : "Confirm reassign"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

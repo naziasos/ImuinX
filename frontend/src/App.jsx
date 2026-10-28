@@ -126,6 +126,10 @@ function App() {
       "worker",
     ].includes(currentUser.role);
 
+  const isClinicAdminRole =
+    currentUser?.role === "clinicAdmin" ||
+    currentUser?.role === "clinic_admin";
+
   const isCitizenArea =
     CITIZEN_PAGES.includes(page) ||
     (page === "editProfile" && isCitizenRole);
@@ -309,7 +313,19 @@ function App() {
 
           {page === "verifyCertificate" && <Verify />}
 
-          {page === "editProfile" && !isCitizenRole && (
+          {page === "editProfile" && isClinicAdminRole && (
+            <StaffShell
+              role="clinicAdmin"
+              activeKey="editProfile"
+              user={currentUser}
+              onNavigate={handleStaffNavigate}
+              onLogout={handleLogout}
+            >
+              <EditProfile />
+            </StaffShell>
+          )}
+
+          {page === "editProfile" && !isCitizenRole && !isClinicAdminRole && (
             <EditProfile
               onBack={() => {
                 if (
@@ -538,32 +554,64 @@ function App() {
           )}
 
           {page === "workerList" && (
-            <WorkerList
-              onBack={() => setPage("clinicDashboard")}
-              onAddWorker={() => setPage("addWorker")}
-            />
+            <StaffShell
+              role="clinicAdmin"
+              activeKey="workers"
+              user={currentUser}
+              onNavigate={handleStaffNavigate}
+              onLogout={handleLogout}
+            >
+              <WorkerList
+                onBack={() => setPage("clinicDashboard")}
+                onAddWorker={() => setPage("addWorker")}
+              />
+            </StaffShell>
           )}
 
           {page === "inventory" && (
-            <VaccineInventory
-              onBack={() => setPage("clinicDashboard")}
-            />
+            <StaffShell
+              role="clinicAdmin"
+              activeKey="inventory"
+              user={currentUser}
+              onNavigate={handleStaffNavigate}
+              onLogout={handleLogout}
+            >
+              <VaccineInventory
+                onBack={() => setPage("clinicDashboard")}
+              />
+            </StaffShell>
           )}
 
           {page === "clinicFeedback" && (
-            <ClinicFeedback
-              onBack={() => setPage("clinicDashboard")}
-              onWorkers={() => setPage("addWorker")}
-              onDailyDuties={() => setPage("assignDuty")}
-              onInventory={() => setPage("inventory")}
-              onFeedback={() => setPage("clinicFeedback")}
-            />
+            <StaffShell
+              role="clinicAdmin"
+              activeKey="feedback"
+              user={currentUser}
+              onNavigate={handleStaffNavigate}
+              onLogout={handleLogout}
+            >
+              <ClinicFeedback
+                onBack={() => setPage("clinicDashboard")}
+                onWorkers={() => setPage("addWorker")}
+                onDailyDuties={() => setPage("assignDuty")}
+                onInventory={() => setPage("inventory")}
+                onFeedback={() => setPage("clinicFeedback")}
+              />
+            </StaffShell>
           )}
 
           {page === "assignDuty" && (
-            <AssignDuty
-              onBack={() => setPage("clinicDashboard")}
-            />
+            <StaffShell
+              role="clinicAdmin"
+              activeKey="duties"
+              user={currentUser}
+              onNavigate={handleStaffNavigate}
+              onLogout={handleLogout}
+            >
+              <AssignDuty
+                onBack={() => setPage("clinicDashboard")}
+              />
+            </StaffShell>
           )}
         </div>
       </main>
@@ -587,7 +635,10 @@ function App() {
         page !== "addVaccine" &&
         page !== "addVaccineSchedule" &&
         page !== "addCampaign" &&
-        page !== "guestCheckIn" && <Footer />}
+        page !== "guestCheckIn" &&
+        page !== "workerList" &&
+        page !== "inventory" &&
+        page !== "assignDuty" && <Footer />}
     </div>
   );
 }

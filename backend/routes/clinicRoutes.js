@@ -933,6 +933,128 @@ router.get(
 
 
 /* =====================================================
+   REASSIGN A DUTY TO ANOTHER WORKER
+   (worker absent / on leave -> give the same duty to someone else)
+
+   The original assignment is deleted and a new one with the same
+   date + duty type is created for the replacement worker.
+   ===================================================== */
+
+router.patch(
+  "/my-clinic/duties/:dutyId/reassign",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      if (req.user.role !== "clinicAdmin") {
+        return res.status(403).json({
+          message: "Clinic Admin access required",
+        });
+      }
+
+      const mongoose = require("mongoose");
+      const { newWorkerId } = req.body;
+
+      if (!mongoose.Types.ObjectId.isValid(req.params.dutyId)) {
+        return res.status(400).json({ message: "Invalid duty ID" });
+      }
+
+      if (!newWorkerId || !mongoose.Types.ObjectId.isValid(newWorkerId)) {
+        return res.status(400).json({
+          message: "A valid replacement worker is required",
+        });
+      }
+
+      const clinicAdmin = await User.findById(req.user.id);
+
+      if (!clinicAdmin) {
+        return res.status(404).json({ message: "Clinic Admin not found" });
+      }
+
+      if (!clinicAdmin.clinicId) {
+        return res.status(404).json({
+          message: "No clinic is assigned to this Clinic Admin",
+        });
+      }
+
+      // The duty being replaced must belong to this clinic
+      const oldDuty = await DutyAssignment.findOne({
+        _id: req.params.dutyId,
+        clinicId: clinicAdmin.clinicId,
+      });
+
+      if (!oldDuty) {
+        return res.status(404).json({ message: "Duty not found in your clinic" });
+      }
+
+      if (String(oldDuty.workerId) === String(newWorkerId)) {
+        return res.status(400).json({
+          message: "Choose a different worker for this duty",
+        });
+      }
+
+      // Replacement must be a worker of this clinic
+      const newWorker = await User.findOne({
+        _id: newWorkerId,
+        clinicId: clinicAdmin.clinicId,
+        role: "worker",
+      });
+
+      if (!newWorker) {
+        return res.status(404).json({
+          message: "Replacement worker not found in this clinic",
+        });
+      }
+
+      // Replacement must be free on that day (one duty per worker per day)
+      const day = new Date(oldDuty.dutyDate).toISOString().slice(0, 10);
+
+      const busy = await DutyAssignment.findOne({
+        workerId: newWorker._id,
+        clinicId: clinicAdmin.clinicId,
+        dutyDate: {
+          $gte: new Date(`${day}T00:00:00.000Z`),
+          $lte: new Date(`${day}T23:59:59.999Z`),
+        },
+      });
+
+      if (busy) {
+        return res.status(409).json({
+          message: `${newWorker.name} is already assigned to a duty on this date.`,
+        });
+      }
+
+      // Create the new assignment first, then remove the old one.
+      // If the removal fails, the new one is rolled back so nothing is doubled.
+      const newDuty = await DutyAssignment.create({
+        workerId: newWorker._id,
+        clinicId: clinicAdmin.clinicId,
+        dutyDate: oldDuty.dutyDate,
+        dutyType: oldDuty.dutyType,
+      });
+
+      try {
+        await DutyAssignment.deleteOne({ _id: oldDuty._id });
+      } catch (deleteError) {
+        await DutyAssignment.deleteOne({ _id: newDuty._id }).catch(() => {});
+        throw deleteError;
+      }
+
+      res.status(200).json({
+        message: "Duty reassigned successfully",
+        removedDutyId: oldDuty._id,
+        dutyAssignment: newDuty,
+      });
+    } catch (error) {
+      console.error("Duty reassignment error:", error.message);
+
+      res.status(500).json({
+        message: "Server error while reassigning duty",
+      });
+    }
+  }
+);
+
+/* =====================================================
    DELETE DUTY ASSIGNMENT PERMANENTLY
    ===================================================== */
 

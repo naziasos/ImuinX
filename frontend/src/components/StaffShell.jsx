@@ -3,6 +3,7 @@ import { useLanguage } from "../i18n/LanguageProvider";
 import DashboardLayout from "./DashboardLayout";
 import useTilt from "../hooks/useTilt";
 import "../styles/staff-pages.css";
+import "../styles/clinic-theme.css";
 
 /**
  * Puts a staff sub-page (Add Worker, Add Vaccine, ...) inside the same sidebar
@@ -123,6 +124,7 @@ function StaffShell({ role, activeKey, user, onNavigate, onLogout, children }) {
       groups={groups}
       activeKey={activeKey}
       onLogout={role === "admin" ? undefined : onLogout}
+      shellClass={role === "clinicAdmin" ? "cz-shell--clinic" : ""}
     >
       <div className="fx-scope" ref={scopeRef}>
         {children}

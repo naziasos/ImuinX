@@ -1,4 +1,3 @@
-
 const request = require("supertest");
 const express = require("express");
 
@@ -98,5 +97,104 @@ describe("Duty Assignment Routes", () => {
 
     expect(DutyAssignment.create).not.toHaveBeenCalled();
   });
-});
 
+  describe("PATCH /api/clinics/my-clinic/duties/:dutyId/reassign", () => {
+    const dutyId = "64b000000000000000000001";
+    const oldWorkerId = "64b0000000000000000000a1";
+    const newWorkerId = "64b0000000000000000000a2";
+
+    const oldDuty = {
+      _id: dutyId,
+      workerId: oldWorkerId,
+      clinicId: "clinic-123",
+      dutyDate: new Date("2026-09-28T00:00:00.000Z"),
+      dutyType: "Vaccination",
+    };
+
+    beforeEach(() => {
+      User.findById.mockResolvedValue({
+        _id: "clinic-admin-id",
+        role: "clinicAdmin",
+        clinicId: "clinic-123",
+      });
+    });
+
+    test("moves the duty to another worker and deletes the old one", async () => {
+      DutyAssignment.findOne
+        .mockResolvedValueOnce(oldDuty) // the duty being replaced
+        .mockResolvedValueOnce(null); // replacement is free that day
+
+      User.findOne.mockResolvedValue({
+        _id: newWorkerId,
+        name: "Replacement",
+        role: "worker",
+        clinicId: "clinic-123",
+      });
+
+      DutyAssignment.create.mockResolvedValue({
+        _id: "duty-new",
+        workerId: newWorkerId,
+        dutyType: "Vaccination",
+      });
+      DutyAssignment.deleteOne.mockResolvedValue({ deletedCount: 1 });
+
+      const response = await request(app)
+        .patch(`/api/clinics/my-clinic/duties/${dutyId}/reassign`)
+        .send({ newWorkerId });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.message).toBe("Duty reassigned successfully");
+      expect(DutyAssignment.create).toHaveBeenCalledWith({
+        workerId: newWorkerId,
+        clinicId: "clinic-123",
+        dutyDate: oldDuty.dutyDate,
+        dutyType: "Vaccination",
+      });
+      expect(DutyAssignment.deleteOne).toHaveBeenCalledWith({ _id: dutyId });
+    });
+
+    test("rejects a replacement who already has a duty that day", async () => {
+      DutyAssignment.findOne
+        .mockResolvedValueOnce(oldDuty)
+        .mockResolvedValueOnce({ _id: "busy" });
+
+      User.findOne.mockResolvedValue({
+        _id: newWorkerId,
+        name: "Busy Worker",
+        role: "worker",
+        clinicId: "clinic-123",
+      });
+
+      const response = await request(app)
+        .patch(`/api/clinics/my-clinic/duties/${dutyId}/reassign`)
+        .send({ newWorkerId });
+
+      expect(response.statusCode).toBe(409);
+      expect(DutyAssignment.create).not.toHaveBeenCalled();
+      expect(DutyAssignment.deleteOne).not.toHaveBeenCalled();
+    });
+
+    test("rejects reassigning to the same worker", async () => {
+      DutyAssignment.findOne.mockResolvedValueOnce(oldDuty);
+
+      const response = await request(app)
+        .patch(`/api/clinics/my-clinic/duties/${dutyId}/reassign`)
+        .send({ newWorkerId: oldWorkerId });
+
+      expect(response.statusCode).toBe(400);
+      expect(DutyAssignment.create).not.toHaveBeenCalled();
+    });
+
+    test("rejects a worker from another clinic", async () => {
+      DutyAssignment.findOne.mockResolvedValueOnce(oldDuty);
+      User.findOne.mockResolvedValue(null);
+
+      const response = await request(app)
+        .patch(`/api/clinics/my-clinic/duties/${dutyId}/reassign`)
+        .send({ newWorkerId });
+
+      expect(response.statusCode).toBe(404);
+      expect(DutyAssignment.create).not.toHaveBeenCalled();
+    });
+  });
+});

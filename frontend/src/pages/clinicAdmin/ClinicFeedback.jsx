@@ -34,15 +34,7 @@ function Stars({ value }) {
   );
 }
 
-function ClinicFeedback({
-  onBack,
-  onWorkers,
-  onAppointments,
-  onDailyDuties,
-  onVaccinations,
-  onInventory,
-  onFeedback,
-}) {
+function ClinicFeedback() {
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -123,114 +115,8 @@ function ClinicFeedback({
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.reload();
-  };
-
   return (
     <div className="clinic-dashboard">
-
-      <aside className="clinic-sidebar">
-
-        <div>
-
-          <div className="clinic-logo">
-            <div className="clinic-logo-icon">
-              +
-            </div>
-
-            <div>
-              <strong>ImuniX</strong>
-              <span>Vaccination System</span>
-            </div>
-          </div>
-
-          <nav className="clinic-nav">
-
-            <p className="clinic-nav-title">
-              MAIN MENU
-            </p>
-
-            <button
-              className="clinic-nav-item"
-              onClick={onBack}
-            >
-              <span>📊</span>
-              Dashboard
-            </button>
-
-            <button
-              className="clinic-nav-item"
-              onClick={onWorkers}
-            >
-              <span>👥</span>
-              Workers List
-            </button>
-
-            <button
-              className="clinic-nav-item"
-              onClick={onAppointments}
-            >
-              <span>📅</span>
-              Appointments
-            </button>
-
-            <button
-              className="clinic-nav-item"
-              onClick={onDailyDuties}
-            >
-              <span>📝</span>
-              Daily Duties
-            </button>
-
-            <button
-              className="clinic-nav-item"
-              onClick={onVaccinations}
-            >
-              <span>💉</span>
-              Vaccinations
-            </button>
-
-            <button
-              className="clinic-nav-item"
-              onClick={onInventory}
-            >
-              <span>📦</span>
-              Inventory
-            </button>
-
-            <button
-              className="clinic-nav-item active"
-              onClick={onFeedback}
-            >
-              <span>💬</span>
-              Feedback
-            </button>
-
-            <p className="clinic-nav-title system-title">
-              SYSTEM
-            </p>
-
-            <button className="clinic-nav-item">
-              <span>⚙️</span>
-              Settings
-            </button>
-
-          </nav>
-
-        </div>
-
-        <button
-          className="clinic-logout"
-          onClick={handleLogout}
-        >
-          <span>↪</span>
-          Logout
-        </button>
-
-      </aside>
 
       <main className="clinic-main">
 
@@ -249,19 +135,6 @@ function ClinicFeedback({
               See what patients say about your clinic and
               reply to them.
             </p>
-          </div>
-
-          <div className="clinic-profile">
-
-            <div className="clinic-profile-avatar">
-              C
-            </div>
-
-            <div>
-              <strong>Clinic Admin</strong>
-              <span>Administrator</span>
-            </div>
-
           </div>
 
         </header>

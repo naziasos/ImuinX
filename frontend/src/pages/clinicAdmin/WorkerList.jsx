@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./WorkerList.css";
 
-function WorkerList({ onBack, onAddWorker }) {
+function WorkerList({ onAddWorker }) {
   const [workers, setWorkers] = useState([]);
   const [clinic, setClinic] = useState(null);
   const [selectedWorker, setSelectedWorker] = useState(null);
@@ -170,13 +170,6 @@ function WorkerList({ onBack, onAddWorker }) {
       {/* HEADER */}
       <header className="worker-list-header">
         <div>
-          <button
-            className="worker-list-back"
-            onClick={onBack}
-          >
-            ← Dashboard
-          </button>
-
           <p className="worker-list-eyebrow">
             CLINIC TEAM
           </p>

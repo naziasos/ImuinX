@@ -17,6 +17,7 @@ import "../styles/dashboard-theme.css";
  *  - groups:         [{ title, items: [{ key, label, icon, onClick, badge }] }]
  *  - activeKey:      key of the highlighted item
  *  - onLogout:       optional; shows a "Log out" item when provided
+ *  - shellClass:     optional extra class on the shell (e.g. "cz-shell--clinic")
  */
 function DashboardLayout({
   ariaLabel,
@@ -25,6 +26,7 @@ function DashboardLayout({
   groups,
   activeKey,
   onLogout,
+  shellClass = "",
   children,
 }) {
   const { t } = useLanguage();
@@ -70,7 +72,7 @@ function DashboardLayout({
   );
 
   return (
-    <div className="cz-shell">
+    <div className={`cz-shell ${shellClass}`.trim()}>
       {/* ---------- Mobile top bar ---------- */}
       <div className="cz-mobilebar">
         <button

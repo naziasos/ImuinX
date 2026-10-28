@@ -5,7 +5,7 @@ import Button from "../components/Button";
 import Card from "../components/Card";
 import { api, errorMessage } from "../services/api";
 
-function VaccineInventory({ onBack }) {
+function VaccineInventory() {
   const [inventory, setInventory] = useState([]);
   const [vaccines, setVaccines] = useState([]);
 
@@ -329,18 +329,10 @@ function VaccineInventory({ onBack }) {
 
   // UI
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+    <div className="clinic-page">
       <div className="max-w-7xl mx-auto">
         {/* HEADER */}
         <div className="mb-8">
-          <button
-            type="button"
-            onClick={onBack}
-            className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
-          >
-            ← Back to Dashboard
-          </button>
-
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-md">

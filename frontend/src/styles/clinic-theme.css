@@ -1,0 +1,302 @@
+/* =====================================================================
+   ImuniX - Clinic Admin look (blue -> green)
+
+   Everything is scoped to .cz-shell--clinic, which DashboardLayout adds
+   when it is rendered for the clinic admin (dashboard + every clinic page
+   via StaffShell). Other roles are not affected.
+
+   It reuses the --cz-* tokens, so the dark theme keeps working. Motion is
+   kept small on purpose: short fades, a 2px hover lift, colour changes.
+   ===================================================================== */
+
+/* ---------- Shell + sidebar ---------- */
+.cz-shell--clinic {
+  background:
+    radial-gradient(900px 420px at 0 -80px, rgba(37, 99, 235, 0.14), transparent 70%),
+    radial-gradient(900px 420px at 100% -80px, rgba(16, 185, 129, 0.16), transparent 70%),
+    var(--cz-bg);
+}
+
+html:not([data-theme="dark"]) .cz-shell--clinic .cz-sidebar {
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%);
+}
+
+.cz-shell--clinic .cz-nav__item,
+.cz-shell--clinic .cz-user,
+.cz-shell--clinic button,
+.cz-shell--clinic .cz-stat {
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease,
+    filter 0.18s ease;
+}
+
+.cz-shell--clinic .cz-nav__item:not(.is-active):hover {
+  background: var(--cz-grad-soft);
+}
+
+/* ---------- Pages inside the shell: drop their own full-page chrome ---------- */
+.cz-shell--clinic .worker-list-page,
+.cz-shell--clinic .assign-duty-main,
+.cz-shell--clinic .edit-profile-page,
+.cz-shell--clinic .clinic-dashboard,
+.cz-shell--clinic .clinic-page {
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+}
+
+.cz-shell--clinic .clinic-dashboard {
+  display: block;
+}
+
+.cz-shell--clinic .clinic-main {
+  padding: 0;
+  min-height: auto;
+}
+
+/* the sidebar already has Dashboard + Log out, so hide per-page copies */
+.cz-shell--clinic .worker-list-back,
+.cz-shell--clinic .assign-duty-back,
+.cz-shell--clinic .assign-duty-profile,
+.cz-shell--clinic .clinic-profile,
+.cz-shell--clinic .edit-profile-back {
+  display: none;
+}
+
+/* ---------- Colours: blue -> green ---------- */
+.cz-shell--clinic .worker-list-add,
+.cz-shell--clinic .dashboard-add-worker-btn,
+.cz-shell--clinic .assign-duty-submit,
+.cz-shell--clinic .bg-blue-600 {
+  background: var(--cz-grad);
+  color: #fff;
+  border-color: transparent;
+}
+
+.cz-shell--clinic .worker-list-add:hover,
+.cz-shell--clinic .dashboard-add-worker-btn:hover,
+.cz-shell--clinic .assign-duty-submit:hover:not(:disabled),
+.cz-shell--clinic .bg-blue-600:hover,
+.cz-shell--clinic .hover\:bg-blue-700:hover {
+  background: var(--cz-grad);
+  filter: brightness(1.07);
+}
+
+.cz-shell--clinic .text-blue-600,
+.cz-shell--clinic .worker-list-clinic-bar b,
+.cz-shell--clinic .worker-management-actions button:not(.worker-delete-btn) {
+  color: var(--cz-teal-700);
+}
+
+.cz-shell--clinic .worker-management-avatar,
+.cz-shell--clinic .worker-profile-avatar-large {
+  background: var(--cz-grad-soft);
+  color: var(--cz-teal-700);
+}
+
+.cz-shell--clinic .worker-list-spinner {
+  border-color: #d1fae5;
+  border-top-color: var(--cz-teal-600);
+}
+
+.cz-shell--clinic .assign-duty-banner,
+.cz-shell--clinic .cf-banner {
+  background:
+    radial-gradient(900px 320px at 88% -20%, rgba(16, 185, 129, 0.5), transparent 60%),
+    linear-gradient(118deg, #1d4ed8 0%, #0891b2 55%, #10b981 100%);
+  box-shadow: 0 24px 44px -26px rgba(8, 145, 178, 0.7);
+}
+
+.cz-shell--clinic .assign-duty-step-num.is-current {
+  background: var(--cz-blue-600);
+}
+
+.cz-shell--clinic .assign-duty-group.is-today .assign-duty-date-tile {
+  background: var(--cz-grad);
+}
+
+.cz-shell--clinic .clinic-header h1,
+.cz-shell--clinic .worker-list-header h1 {
+  color: var(--cz-ink);
+}
+
+/* ---------- Light hover lift on cards ---------- */
+.cz-shell--clinic .worker-management-card,
+.cz-shell--clinic .cf-item,
+.cz-shell--clinic .assign-duty-group {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.cz-shell--clinic .worker-management-card:hover {
+  transform: translateY(-2px);
+  border-color: #99f6e4;
+  box-shadow: 0 14px 28px -18px rgba(13, 148, 136, 0.45);
+}
+
+/* ---------- Reassign button + modal (Daily Duties) ---------- */
+.assign-duty-reassign {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+  padding: 6px 12px;
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+  background: #f0fdfa;
+  color: #0f766e;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+.assign-duty-reassign:hover {
+  background: #ccfbf1;
+  border-color: #2dd4bf;
+}
+.assign-duty-reassign:focus-visible {
+  outline: 3px solid rgba(13, 148, 136, 0.35);
+  outline-offset: 2px;
+}
+
+.assign-duty-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+  animation: clinic-fade 0.18s ease both;
+}
+.assign-duty-modal {
+  width: min(480px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  padding: 26px;
+  border-radius: 20px;
+  background: var(--cz-card, #fff);
+  color: var(--cz-text, #334155);
+  box-shadow: 0 25px 70px rgba(15, 23, 42, 0.3);
+  animation: clinic-pop 0.2s ease both;
+}
+.assign-duty-modal h3 {
+  margin: 0 0 6px;
+  color: var(--cz-ink, #0f172a);
+  font-size: 19px;
+  font-weight: 800;
+}
+.assign-duty-modal > p {
+  margin: 0 0 16px;
+  color: var(--cz-muted, #64748b);
+  font-size: 13.5px;
+}
+.assign-duty-modal-list {
+  display: grid;
+  gap: 8px;
+  max-height: 280px;
+  margin-bottom: 16px;
+  overflow: auto;
+}
+.assign-duty-modal-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--cz-line, #e2e8f0);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+.assign-duty-modal-option:hover {
+  border-color: #5eead4;
+}
+.assign-duty-modal-option.is-selected {
+  border-color: var(--cz-teal-600, #0d9488);
+  background: var(--cz-grad-soft);
+}
+.assign-duty-modal-option input {
+  accent-color: #0d9488;
+}
+.assign-duty-modal-option strong {
+  display: block;
+  color: var(--cz-ink, #0f172a);
+  font-size: 14px;
+}
+.assign-duty-modal-option small {
+  color: var(--cz-muted, #64748b);
+  font-size: 12px;
+}
+.assign-duty-modal-note {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 12.5px;
+}
+.assign-duty-modal-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 13px;
+}
+.assign-duty-modal-empty {
+  padding: 18px;
+  border: 1px dashed var(--cz-line, #cbd5e1);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--cz-muted, #64748b);
+  font-size: 13.5px;
+}
+.assign-duty-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.assign-duty-modal-actions button {
+  padding: 10px 18px;
+  border: 1px solid var(--cz-line, #dbe3ef);
+  border-radius: 10px;
+  background: var(--cz-card, #fff);
+  color: var(--cz-text, #334155);
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+.assign-duty-modal-actions .is-primary {
+  border-color: transparent;
+  background: var(--cz-grad);
+  color: #fff;
+}
+.assign-duty-modal-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@keyframes clinic-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes clinic-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cz-shell--clinic *,
+  .assign-duty-modal-overlay,
+  .assign-duty-modal {
+    animation: none !important;
+    transition: none !important;
+  }
+  .cz-shell--clinic .worker-management-card:hover {
+    transform: none;
+  }
+}
