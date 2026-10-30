@@ -462,12 +462,17 @@ function App() {
             />
           )}
 
+          
           {page === "addClinic" && (
             <AddClinic
               onBack={() => setPage("dashboard")}
               onClinicCreated={() => setPage("dashboard")}
+              onManageVaccines={() => setPage("addVaccine")}
+              onManageSchedules={() => setPage("addVaccineSchedule")}
+              onManageCampaigns={() => setPage("addCampaign")}
             />
           )}
+
 
           {page === "addVaccine" && (
             <StaffShell
@@ -617,28 +622,29 @@ function App() {
       </main>
 
       {!isCitizenArea &&
-        page !== "dashboard" &&
-        page !== "clinicDashboard" &&
-        page !== "citizenDashboard" &&
-        page !== "editProfile" &&
-        page !== "workerDashboard" &&
-        page !== "logDose" &&
-        page !== "bookAppointment" &&
-        page !== "myCertificate" &&
-        page !== "myVaccinations" &&
-        page !== "verifyCertificate" &&
-        page !== "showWork" &&
-        page !== "feedback" &&
-        page !== "clinicFeedback" &&
-        page !== "workerAppointments" &&
-        page !== "addWorker" &&
-        page !== "addVaccine" &&
-        page !== "addVaccineSchedule" &&
-        page !== "addCampaign" &&
-        page !== "guestCheckIn" &&
-        page !== "workerList" &&
-        page !== "inventory" &&
-        page !== "assignDuty" && <Footer />}
+      page !== "dashboard" &&
+      page !== "clinicDashboard" &&
+      page !== "citizenDashboard" &&
+      page !== "editProfile" &&
+      page !== "workerDashboard" &&
+      page !== "logDose" &&
+      page !== "bookAppointment" &&
+      page !== "myCertificate" &&
+      page !== "myVaccinations" &&
+      page !== "verifyCertificate" &&
+      page !== "showWork" &&
+      page !== "feedback" &&
+      page !== "clinicFeedback" &&
+      page !== "workerAppointments" &&
+      page !== "addWorker" &&
+      page !== "addClinic" &&
+      page !== "addVaccine" &&
+      page !== "addVaccineSchedule" &&
+      page !== "addCampaign" &&
+      page !== "guestCheckIn" &&
+      page !== "workerList" &&
+      page !== "inventory" &&
+      page !== "assignDuty" && <Footer />}
     </div>
   );
 }
